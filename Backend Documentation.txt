@@ -1,0 +1,569 @@
+# Backend Documentation
+
+## Project Structure Overview
+
+```
+SERVER/
+├── config/                 # Configuration files
+├── dist/                  # Compiled TypeScript output
+├── src/                   # Source code
+│   ├── controllers/       # Route controllers
+│   ├── middleware/        # Middleware functions
+│   ├── models/           # Data models
+│   ├── routes/           # API routes
+│   ├── scripts/          # Utility scripts
+│   ├── services/         # Business logic services
+│   └── utils/            # Utility functions
+├── tests/                # Test files
+└── node_modules/         # Dependencies
+```
+
+## Configuration Files (config/)
+
+### firebase.js
+- Firebase Admin SDK initialization
+- Exports: `admin`, `db`, `auth`, `storage` instances
+- Handles service account credentials and app initialization
+- Includes comprehensive error handling and diagnostics
+
+### multer-config.js
+- File upload configuration
+- Handles multipart form data
+- Configures storage and file filtering
+- Sets file size limits and allowed types
+
+### ConfigurationService.js
+- Environment variable management
+- Configuration validation
+- Service configuration for different environments
+- Handles sensitive data and API keys
+
+### vision.js
+- Google Cloud Vision API client setup
+- OCR configuration
+- Image processing settings
+
+## Core Services (src/services/)
+
+### NotificationService.js
+Key functionalities:
+- Email notifications using SendGrid
+- Push notifications
+- Alert management
+- Notification preferences
+
+Important methods:
+```javascript
+sendNotification(userId, notification)
+updateChannelPreference(userId, channel, enabled)
+getUserPreferences(userId)
+updatePreferences(userId, preferences)
+getNotifications(userId, options)
+markAsRead(userId, notificationId)
+```
+
+### AlertService.js
+Key functionalities:
+- Stock alerts
+- Price change alerts
+- Expiry warnings
+- Alert prioritization
+
+Important methods:
+```javascript
+createAlert(data)
+resolveAlert(alertId, userId, resolution)
+getActiveAlerts(userId, filters)
+_setupEscalation(alert)
+_escalateAlert(alert, escalationLevel)
+```
+
+### AnalyticsService.js
+Key functionalities:
+- Price trend analysis
+- Spending analysis
+- Inventory analytics
+- Vendor analysis
+- Predictive analytics
+
+Important methods:
+```javascript
+analyzePrices(userId, productId, options)
+analyzeSpending(userId, startDate, endDate, options)
+analyzeInventory(userId)
+analyzeVendors(userId, options)
+predictStockNeeds(userId, productId)
+getSpendingTrends(data)
+calculatePredictionConfidence(historical, predictedValue)
+```
+
+### StockTrackingService.js
+Key functionalities:
+- Stock movement tracking
+- Batch operations
+- Stock auditing
+- Location management
+
+Important methods:
+```javascript
+trackStockMovement(data)
+getCurrentStock(productId)
+getStockHistory(productId, options)
+getStockByLocation(locationId)
+stockAudit(productId)
+```
+
+### DocumentProcessingService.js
+Key functionalities:
+- Image preprocessing and optimization
+- Text extraction using Google Cloud Vision
+- Document classification
+- Receipt data parsing
+- File storage management
+
+Important methods:
+```javascript
+processDocument(file, userId)
+_optimizeImage(buffer)
+_extractText(imageBuffer)
+_classifyDocument(textData)
+_processBasedOnType(textData, documentType)
+```
+
+### ReceiptProcessingService.js
+Key functionalities:
+- Receipt-specific text parsing
+- Item extraction and categorization
+- Price calculation
+- Vendor identification
+
+Important methods:
+```javascript
+processReceipt(imageFile, userId)
+_parseReceiptData(extractedText)
+_extractItems(text)
+_extractTotal(text)
+_validateAndClean(receiptData)
+```
+
+### AuthenticationService.js
+Key functionalities:
+- User registration and login
+- Token verification
+- User preference management
+- Firebase Authentication integration
+
+Important methods:
+```javascript
+register(userData)
+login(credentials)
+verifyToken(token)
+updateProfile(userId, updateData)
+```
+
+### InventoryManagementService.js
+Key functionalities:
+- Stock tracking
+- Product management
+- Alert generation
+- Inventory analytics
+
+Important methods:
+```javascript
+updateStock(productId, quantity, type)
+getInventoryStatus(userId)
+adjustStockLevels(productId, adjustments)
+checkStockAlerts()
+```
+
+## Models (src/models/)
+
+### Receipt.js
+Properties:
+- id
+- userId
+- documentType
+- vendor
+- date
+- total
+- items
+- imageUrl
+- status
+
+Methods:
+```javascript
+save()
+findById(id)
+findByUserId(userId)
+validate()
+```
+
+### Product.js
+Properties:
+- id
+- name
+- category
+- description
+- currentStock
+- unitPrice
+- minStockLevel
+- reorderPoint
+
+Methods:
+```javascript
+updateStock(quantity, type)
+checkStockAlerts()
+validate()
+```
+
+### Category.js
+Properties:
+- id
+- name
+- userId
+- color
+- budget
+
+Methods:
+```javascript
+save()
+findByUserId(userId)
+validate()
+```
+
+## Controllers (src/controllers/)
+
+### receiptController.js
+Endpoints:
+```javascript
+POST /api/receipts/upload         // Upload single receipt
+POST /api/receipts/upload/bulk    // Upload multiple receipts
+GET /api/receipts                 // Get user receipts
+GET /api/receipts/:id            // Get single receipt
+PUT /api/receipts/:id            // Update receipt
+DELETE /api/receipts/:id         // Delete receipt
+```
+
+### categoryController.js
+Endpoints:
+```javascript
+POST /api/categories             // Create category
+GET /api/categories             // Get all categories
+GET /api/categories/:id         // Get single category
+PUT /api/categories/:id         // Update category
+DELETE /api/categories/:id      // Delete category
+```
+
+### inventoryController.js
+Endpoints:
+```javascript
+POST /api/products              // Create product
+GET /api/products              // Get products
+PUT /api/products/:id          // Update product
+POST /api/products/:id/stock   // Update stock
+GET /api/stock-movements       // Get stock movements
+GET /api/alerts                // Get inventory alerts
+```
+
+## Middleware (src/middleware/)
+
+### auth/auth.js
+- Token verification
+- User authentication
+- Request authorization
+- Firebase token validation
+
+### validation/validation.js
+- Request data validation
+- Input sanitization
+- Schema validation
+- Error formatting
+
+### validation/documentValidation.js
+Key functionalities:
+- Image dimension validation
+- File type validation
+- File size validation
+- Batch upload validation
+
+Important methods:
+```javascript
+validateFileUpload(req, res, next)
+validateImageDimensions(req, res, next)
+validateProcessingOptions(req, res, next)
+validateBatchProcessing(req, res, next)
+```
+
+### performance/
+#### networkPerformance.js
+- Request timing
+- Network metrics tracking
+- Bandwidth monitoring
+- Response size tracking
+
+#### performanceMonitoring.js
+- API performance monitoring
+- Resource usage tracking
+- Response time logging
+- Error rate monitoring
+
+### upload.js
+- File upload handling
+- File type validation
+- Size restrictions
+- Error handling
+- Multipart form processing
+
+### auth/auth.js
+- Token verification
+- User authentication
+- Request authorization
+- Firebase token validation
+
+### validation/validation.js
+- Request data validation
+- Input sanitization
+- Schema validation
+- Error formatting
+
+### upload.js
+- File upload handling
+- File type validation
+- Size restrictions
+- Error handling
+
+## Utilities (src/utils/)
+
+### error/AppError.js
+- Custom error handling
+- Error classification
+- Status code management
+- Operational error handling
+
+### logger.js
+- Winston logger configuration
+- Log level management
+- Log file rotation
+- Error tracking
+
+### validators.js
+- Input validation rules
+- Data type checking
+- Required field validation
+- Custom validation functions
+
+## API Routes (src/routes/)
+
+### analyticsRoutes.js
+```javascript
+GET /api/analytics/prices/:productId     // Get price analytics
+GET /api/analytics/spending              // Get spending analysis
+GET /api/analytics/vendors               // Get vendor analysis
+GET /api/analytics/inventory             // Get inventory analytics
+GET /api/analytics/categories/:categoryId // Get category analysis
+GET /api/analytics/dashboard             // Get dashboard analytics
+POST /api/analytics/export               // Export analytics data
+POST /api/analytics/custom               // Get custom analytics
+```
+
+### alertRoutes.js
+```javascript
+POST /api/alerts                    // Create alert
+GET /api/alerts                     // Get alerts
+POST /api/alerts/:id/resolve        // Resolve alert
+PUT /api/alerts/preferences         // Update alert preferences
+GET /api/alerts/history             // Get alert history
+```
+
+### diagnosticRoutes.js
+```javascript
+GET /api/diagnostic/check-firebase   // Check Firebase connection
+GET /api/diagnostic/check-permissions // Check service permissions
+```
+
+### notificationRoutes.js
+```javascript
+GET /api/notifications              // Get user notifications
+PUT /api/notifications/:id/read     // Mark notification as read
+PUT /api/notifications/preferences  // Update notification preferences
+POST /api/notifications/subscribe   // Subscribe to push notifications
+```
+
+### receiptRoutes.js
+```javascript
+POST /upload                 // Upload receipt
+GET /                       // List receipts
+GET /:id                    // Get receipt
+PUT /:id                    // Update receipt
+DELETE /:id                 // Delete receipt
+POST /process-text          // Process text
+GET /:id/analysis          // Get receipt analysis
+POST /export               // Export receipts
+GET /categories/summary    // Get categories summary
+```
+
+### categoryRoutes.js
+```javascript
+POST /                     // Create category
+GET /                     // List categories
+GET /:id                  // Get category
+PUT /:id                  // Update category
+DELETE /:id               // Delete category
+```
+
+### inventoryRoutes.js
+```javascript
+POST /products            // Create product
+GET /products            // List products
+PUT /products/:id        // Update product
+POST /products/:id/stock // Update stock
+GET /stock-movements     // Get stock movements
+GET /alerts              // Get alerts
+```
+
+## Authentication Flow
+
+1. User Registration:
+```javascript
+POST /api/auth/register
+Body: {
+  email: string,
+  password: string,
+  name: string
+}
+Response: {
+  user: UserObject,
+  token: string
+}
+```
+
+2. User Login:
+```javascript
+POST /api/auth/login
+Body: {
+  email: string,
+  password: string
+}
+Response: {
+  user: UserObject,
+  token: string
+}
+```
+
+3. Token Verification:
+```javascript
+POST /api/auth/verify-token
+Body: {
+  token: string
+}
+Response: {
+  user: UserObject,
+  token: string
+}
+```
+
+## Document Processing Flow
+
+1. Upload Document:
+```javascript
+POST /api/receipts/upload
+Body: FormData {
+  document: File
+}
+```
+
+2. Processing Steps:
+- Image optimization
+- Text extraction
+- Document classification
+- Data parsing
+- Data validation
+- Storage
+- Response generation
+
+3. Response Format:
+```javascript
+{
+  status: 'success',
+  data: {
+    receipt: ReceiptObject,
+    warnings: Array<Warning>
+  }
+}
+```
+
+## Error Handling
+
+Standard error response format:
+```javascript
+{
+  status: 'error',
+  message: string,
+  stack?: string // In development only
+}
+```
+
+Error types:
+1. ValidationError (400)
+2. AuthenticationError (401)
+3. AuthorizationError (403)
+4. NotFoundError (404)
+5. OperationalError (500)
+
+## Environment Variables Required
+
+```bash
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Firebase Admin Configuration
+FIREBASE_PROJECT_ID=project-reciept-reader-id
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@project-reciept-reader-id.iam.gserviceaccount.com
+FIREBASE_STORAGE_BUCKET=project-reciept-reader-id.firebasestorage.app
+
+# SendGrid Configuration
+SENDGRID_API_KEY=your-sendgrid-api-key
+SENDGRID_FROM_EMAIL=iliakatsva@gmail.com
+
+# Google Cloud Vision API
+GOOGLE_APPLICATION_CREDENTIALS=./config/service-account.json
+
+# Frontend Configuration
+FRONTEND_URL=http://localhost:3000
+
+# File Upload Configurations
+MAX_FILE_SIZE=10485760  # 10MB in bytes
+ALLOWED_MIME_TYPES=image/jpeg,image/png,image/heic,image/heif,application/pdf
+MIN_IMAGE_WIDTH=500
+MIN_IMAGE_HEIGHT=500
+MAX_IMAGE_WIDTH=5000
+MAX_IMAGE_HEIGHT=5000
+```
+
+## Testing
+
+Test files location: `/tests/`
+Key test files:
+- analyticsCalculation.test.js
+- categorySystem.test.js
+- documentProcessing.test.js
+- inventoryManagement.test.js
+- receiptParser-tester.js
+
+## Dependencies
+
+Key dependencies:
+- @google-cloud/vision
+- firebase-admin
+- express
+- multer
+- sharp
+- winston
+
+Development dependencies:
+- typescript
+- jest
+- supertest
+- nodemon

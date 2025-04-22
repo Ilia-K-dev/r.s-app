@@ -1,0 +1,239 @@
+CLIENT/
+├── .expo/
+├── extra/
+├── node_modules/
+├── public/
+├── src/
+│   ├── core/
+│   │   ├── components/
+│   │   │   └── ErrorBoundary.js
+│   │   ├── config/
+│   │   │   ├── api.config.js
+│   │   │   ├── constants.js
+│   │   │   ├── firebase.js
+│   │   │   └── theme.config.js
+│   │   ├── contexts/
+│   │   │   ├── AuthContext.js
+│   │   │   └── ToastContext.js
+│   │   ├── pages/
+│   │   │   ├── DashboardPage.js
+│   │   │   ├── NotFoundPage.js
+│   │   │   ├── ReceiptsPage.js
+│   │   │   ├── ReportsPage.js
+│   │   │   └── SettingsPage.js
+│   │   ├── routes/
+│   │   │   └── index.js
+│   │   └── types/
+│   │       ├── api.ts
+│   │       ├── authTypes.ts
+│   │       ├── common.ts
+│   │       └── routes.ts
+│   │
+│   ├── features/
+│   │   ├── analytics/
+│   │   │   ├── components/
+│   │   │   │   ├── dashboard/
+│   │   │   │   │   ├── AnalyticsDashboard.js
+│   │   │   │   │   ├── DashboardStats.js
+│   │   │   │   │   ├── PredictiveCharts.js
+│   │   │   │   │   ├── RecentReceipts.js
+│   │   │   │   │   └── SpendingSummary.js
+│   │   │   │   │
+│   │   │   │   ├── reports/
+│   │   │   │   │   ├── BudgetAnalysis.js
+│   │   │   │   │   ├── BudgetProgress.js
+│   │   │   │   │   ├── CategoryBreakdown.js
+│   │   │   │   │   ├── MonthlyTrends.js
+│   │   │   │   │   ├── Progress.js
+│   │   │   │   │   ├── ReportFilters.js
+│   │   │   │   │   └── SpendingBreakdown.js
+│   │   │   │   │
+│   │   │   │   ├── MonthlyTrends.js
+│   │   │   │   ├── PredictiveAnalytics.js
+│   │   │   │   ├── SpendingChart.js
+│   │   │   │   └── SpendingTrends.js
+│   │   │   │
+│   │   │   ├── hooks/
+│   │   │   │   ├── useAnalytics.js
+│   │   │   │   └── useReports.js
+│   │   │   │
+│   │   │   ├── pages/
+│   │   │   │   ├── CategoryReportPage.js
+│   │   │   │   ├── ReportDetailPage.js
+│   │   │   │   └── SpendingReportPage.js
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   ├── analyticsService.js
+│   │   │   │   └── reportsService.js
+│   │   │   │
+│   │   │   └── utils/
+│   │   │       └── analyticsCalculations.js
+│   │   │
+│   │   ├── auth/
+│   │   │   ├── components/
+│   │   │   │   ├── ForgotPasswordPage.js
+│   │   │   │   ├── LoginPage.js
+│   │   │   │   └── RegisterPage.js
+│   │   │   │
+│   │   │   ├── hooks/
+│   │   │   │   └── useAuth.js
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   └── authService.js
+│   │   │   │
+│   │   │   └── types/
+│   │   │       └── authTypes.ts
+│   │   │
+│   │   ├── categories/
+│   │   │   ├── hooks/
+│   │   │   │   └── useCategories.js
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   └── categories.js
+│   │   │   │
+│   │   │   └── types/
+│   │   │       └── categoryTypes.ts
+│   │   │
+│   │   ├── documents/
+│   │   │   ├── components/
+│   │   │   │   ├── BaseDocumentHandler.js
+│   │   │   │   ├── DocumentPreview.js
+│   │   │   │   ├── DocumentScanner.js
+│   │   │   │   ├── FileUploader.js
+│   │   │   │   ├── ReceiptPreview.js
+│   │   │   │   └── ReceiptScanner.js
+│   │   │   │
+│   │   │   ├── hooks/
+│   │   │   │   ├── useCamera.js
+│   │   │   │   ├── useDocumentScanner.js
+│   │   │   │   └── useOCR.js
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   ├── documentProcessingService.js
+│   │   │   │   ├── ocr.js
+│   │   │   │   └── visionService.js
+│   │   │   │
+│   │   │   └── utils/
+│   │   │       ├── imageProcessing.js
+│   │   │       ├── receiptProcessing.js
+│   │   │       └── validation.js
+│   │   │
+│   │   ├── inventory/
+│   │   │   ├── components/
+│   │   │   │   ├── InventoryItem.js
+│   │   │   │   ├── InventoryList.js
+│   │   │   │   ├── StockAlerts.js
+│   │   │   │   └── StockManager.js
+│   │   │   │
+│   │   │   ├── hooks/
+│   │   │   │   ├── useInventory.js
+│   │   │   │   └── useStockManagement.js
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   ├── inventoryService.js
+│   │   │   │   └── stockService.js
+│   │   │   │
+│   │   │   └── utils/
+│   │   │       └── stockCalculations.js
+│   │   │
+│   │   ├── receipts/
+│   │   │   ├── components/
+│   │   │   │   ├── ReceiptCard.js
+│   │   │   │   ├── ReceiptDetail.js
+│   │   │   │   ├── ReceiptEdit.js
+│   │   │   │   ├── ReceiptFilters.js
+│   │   │   │   ├── ReceiptForm.js
+│   │   │   │   └── ReceiptList.js
+│   │   │   │
+│   │   │   ├── hooks/
+│   │   │   │   └── useReceipts.js
+│   │   │   │
+│   │   │   ├── pages/
+│   │   │   │   └── ReceiptDetailPage.js
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   └── receipts.js
+│   │   │   │
+│   │   │   └── utils/
+│   │   │       ├── extra-formatters.js
+│   │   │       └── validation.js
+│   │   │
+│   │   ├── settings/
+│   │   │   ├── components/
+│   │   │   │   ├── CategorySettings.js
+│   │   │   │   ├── ExportSettings.js
+│   │   │   │   ├── NotificationSettings.js
+│   │   │   │   └── ProfileSettings.js
+│   │   │   │
+│   │   │   ├── hooks/
+│   │   │   │   └── useSettings.js
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   └── settingsService.js
+│   │   │   │
+│   │   │   └── utils/
+│   │   │       └── settingsHelpers.js
+│   │   │
+│   │   └── shared/
+│   │       ├── components/
+│   │       │   ├── charts/
+│   │       │   │   ├── ChartComponent.js
+│   │       │   │   ├── ChartHelpers.js
+│   │       │   │   └── ChartWrapper.js
+│   │       │   │
+│   │       │   ├── forms/
+│   │       │   │   ├── Button.js
+│   │       │   │   ├── Dropdown.js
+│   │       │   │   ├── Input.js
+│   │       │   │   └── Switch.js
+│   │       │   │
+│   │       │   ├── layout/
+│   │       │   │   ├── Footer.js
+│   │       │   │   ├── Layout.js
+│   │       │   │   ├── Navbar.js
+│   │       │   │   ├── PageHeader.js
+│   │       │   │   └── Sidebar.js
+│   │       │   │
+│   │       │   └── ui/
+│   │       │       ├── Alert.js
+│   │       │       ├── Badge.js
+│   │       │       ├── Card.js
+│   │       │       ├── DateRangePicker.js
+│   │       │       ├── Loading.js
+│   │       │       ├── Modal.js
+│   │       │       ├── PerformanceOptimizedList.js
+│   │       │       ├── SearchBar.js
+│   │       │       ├── Table.js
+│   │       │       └── Tooltip.js
+│   │
+│   ├── shared/
+│   │   ├── services/
+│   │   │   ├── api.js
+│   │   │   └── storage.js
+│   │   │
+│   │   ├── styles/
+│   │   │   ├── index.css
+│   │   │   └── tailwind.css
+│   │   │
+│   │   └── utils/
+│   │       ├── currency.js
+│   │       ├── date.js
+│   │       ├── fileHelpers.js
+│   │       ├── formatters.js
+│   │       ├── helpers.js
+│   │       ├── logger.js
+│   │       └── validation.js
+│   │
+│   └── utils/
+│       ├── App.js
+│       ├── index.js
+│       ├── routes.js
+│       └── tailwind.config.js
+│
+├── .env.development
+├── .eslintrc.js
+├── .prettierrc
+├── app.json
+├── package-lock.json
+├── package.json
+└── tsconfig.json

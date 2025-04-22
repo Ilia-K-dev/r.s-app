@@ -1,0 +1,146 @@
+backend/
+├── config/
+│   ├── firebase.js               ✅ Complete
+│   ├── firebase-config.json      ✅ Complete
+│   ├── service-account.json      ✅ Complete
+│   ├── vision.js                 ✅ Complete
+│   └── multer-config.js          ✅ Complete
+│
+├── src/
+│   ├── controllers/
+│   │   ├── authController.js     ✅ Complete
+│   │   ├── receiptController.js  ✅ Complete
+│   │   ├── reportController.js   ✅ Complete
+│   │   └── categoryController.js ✅ Complete
+│   │
+│   ├── models/
+│   │   ├── Category.js           ✅ Complete
+│   │   ├── Receipt.js           🔄 Needs Update (MongoDB -> Firebase)
+│   │   └── User.js              ✅ Complete
+│   │
+│   ├── routes/
+│   │   ├── authRoutes.js        ✅ Complete
+│   │   ├── receiptRoutes.js     ✅ Complete
+│   │   └── reportRoutes.js      ✅ Complete
+│   │
+│   ├── middleware/
+│   │   ├── auth.js              ✅ Complete
+│   │   ├── upload.js            ✅ Complete
+│   │   └── validation.js        ✅ Complete
+│   │
+│   ├── services/
+│   │   ├── receiptService.js    ✅ Complete
+│   │   ├── reportService.js     ✅ Complete
+│   │   └── visionService.js     ✅ Complete
+│   │
+│   ├── utils/
+│   │   ├── errorHandler.js      ✅ Complete
+│   │   ├── receiptParser.js     ✅ Complete
+│   │   └── validators.js        ✅ Complete
+│   │
+│   └── app.js                   ✅ Complete
+│
+└── package.json                  ✅ Complete
+
+## Frontend Structure
+frontend/
+├── public/
+│   ├── favicon.ico              ✅ Complete
+│   ├── index.html              ✅ Complete
+│   └── manifest.json           ✅ Complete
+│
+├── src/
+│   ├── components/
+│   │   ├── common/
+│   │   │   ├── Alert.js         ✅ Complete
+│   │   │   ├── Badge.js         ✅ Complete
+│   │   │   ├── Button.js        ✅ Complete
+│   │   │   ├── Card.js          ✅ Complete
+│   │   │   ├── DateRangePicker.js ✅ Complete
+│   │   │   ├── Dropdown.js      ✅ Complete
+│   │   │   ├── ErrorBoundary.js ✅ Complete (Added)
+│   │   │   ├── FileUploader.js  ✅ Complete
+│   │   │   ├── Input.js         ✅ Complete
+│   │   │   ├── Loading.js       ✅ Complete
+│   │   │   ├── Modal.js         ✅ Complete
+│   │   │   ├── Progress.js      ✅ Complete
+│   │   │   ├── SearchBar.js     ✅ Complete
+│   │   │   ├── Switch.js        ✅ Complete
+│   │   │   └── Table.js         ✅ Complete
+│   │   │
+│   │   ├── layout/
+│   │   │   ├── Footer.js        ✅ Complete
+│   │   │   ├── Layout.js        ✅ Complete
+│   │   │   ├── Navbar.js        ✅ Complete
+│   │   │   └── Sidebar.js       ✅ Complete
+│   │   │
+│   │   ├── receipts/
+│   │   │   ├── ReceiptCard.js   ✅ Complete
+│   │   │   ├── ReceiptDetail.js 🔄 Needs Update
+│   │   │   ├── ReceiptEdit.js   ✅ Complete
+│   │   │   ├── ReceiptForm.js   ✅ Complete
+│   │   │   ├── ReceiptList.js   ✅ Complete
+│   │   │   └── ReceiptUploader.js ✅ Complete
+│   │   │
+│   │   ├── reports/
+│   │   │   ├── charts/
+│   │   │   │   ├── DonutChart.js  ✅ Complete
+│   │   │   │   ├── LineChart.js   ✅ Complete
+│   │   │   │   └── BarChart.js    🔄 Needs Update
+│   │   │   ├── BudgetProgress.js  ✅ Complete
+│   │   │   ├── MonthlyTrends.js   ✅ Complete
+│   │   │   ├── ReportFilters.js   ✅ Complete
+│   │   │   └── SpendingChart.js   ✅ Complete
+│   │   │
+│   │   └── settings/
+│   │       ├── CategorySettings.js    ✅ Complete
+│   │       ├── NotificationSettings.js ✅ Complete
+│   │       └── ProfileSettings.js     ✅ Complete
+│   │
+│   ├── config/
+│   │   ├── api.config.js       🔴 Missing
+│   │   ├── firebase.js         ✅ Complete
+│   │   ├── theme.config.js     ✅ Complete
+│   │   └── routes.config.js    🔴 Missing
+│   │
+│   ├── contexts/
+│   │   ├── AuthContext.js      ✅ Complete
+│   │   └── ToastContext.js     ✅ Complete
+│   │
+│   ├── hooks/
+│   │   ├── useAuth.js          ✅ Complete
+│   │   ├── useCategories.js    ✅ Complete
+│   │   ├── useReceipts.js      ✅ Complete
+│   │   └── useToast.js         ✅ Complete
+│   │
+│   ├── pages/
+│   │   ├── auth/
+│   │   │   ├── LoginPage.js    ✅ Complete
+│   │   │   └── RegisterPage.js ✅ Complete
+│   │   ├── DashboardPage.js    🔄 Needs Update
+│   │   ├── ReceiptsPage.js     ✅ Complete
+│   │   ├── ReportsPage.js      🔄 Needs Update
+│   │   └── SettingsPage.js     ✅ Complete
+│   │
+│   ├── services/
+│   │   └── api/
+│   │       ├── auth.js         ✅ Complete
+│   │       ├── receipts.js     ✅ Complete
+│   │       └── reports.js      ✅ Complete
+│   │
+│   ├── utils/
+│   │   ├── analytics.js       🔴 Missing
+│   │   ├── currency.js        ✅ Complete
+│   │   ├── date.js           ✅ Complete
+│   │   ├── formatters.js     ✅ Complete
+│   │   ├── logger.js         ✅ Complete
+│   │   ├── storage.js        ✅ Complete
+│   │   └── validation.js     ✅ Complete
+│   │
+│   ├── App.js                ✅ Complete
+│   └── index.js              ✅ Complete
+│
+├── .env.development          ✅ Complete
+├── .eslintrc.js             ✅ Complete
+├── .prettierrc              ✅ Complete
+└── package.json             ✅ Complete

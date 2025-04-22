@@ -1,0 +1,13 @@
+export function uploadReceipt(req: any, res: any, next: any): Promise<void>;
+export function uploadBulkReceipts(req: any, res: any, next: any): Promise<void>;
+export function getReceipts(req: any, res: any, next: any): Promise<void>;
+export function getReceiptById(req: any, res: any, next: any): Promise<void>;
+export function updateReceipt(req: any, res: any, next: any): Promise<void>;
+export function deleteReceipt(req: any, res: any, next: any): Promise<void>;
+export function processScannedText(req: any, res: any, next: any): Promise<void>;
+export function getReceiptAnalysis(req: any, res: any, next: any): Promise<void>;
+export function exportReceipts(req: any, res: any, next: any): Promise<void>;
+export function getCategoriesSummary(req: any, res: any, next: any): Promise<void>;
+export function getSpendingTrends(req: any, res: any, next: any): Promise<void>;
+export function comparePrices(req: any, res: any, next: any): Promise<void>;
+export function getSimilarReceipts(req: any, res: any, next: any): Promise<void>;

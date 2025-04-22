@@ -1,0 +1,124 @@
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"isOperational":true,"level":"error","message":"Application error: Failed to complete user registration","stack":"Error: Failed to complete user registration\n    at register (C:\\Users\\user\\Documents\\app.v3\\server\\src\\controllers\\authController.js:124:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"error","statusCode":500}
+{"isOperational":true,"level":"error","message":"Application error: Failed to complete user registration","stack":"Error: Failed to complete user registration\n    at register (C:\\Users\\user\\Documents\\app.v3\\server\\src\\controllers\\authController.js:124:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"error","statusCode":500}
+{"isOperational":true,"level":"error","message":"Application error: Failed to complete user registration","stack":"Error: Failed to complete user registration\n    at register (C:\\Users\\user\\Documents\\app.v3\\server\\src\\controllers\\authController.js:124:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"error","statusCode":500}
+{"isOperational":true,"level":"error","message":"Application error: Failed to complete user registration","stack":"Error: Failed to complete user registration\n    at register (C:\\Users\\user\\Documents\\app.v3\\server\\src\\controllers\\authController.js:124:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"error","statusCode":500}
+{"isOperational":true,"level":"error","message":"Application error: Failed to complete user registration","stack":"Error: Failed to complete user registration\n    at register (C:\\Users\\user\\Documents\\app.v3\\server\\src\\controllers\\authController.js:124:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"error","statusCode":500}
+{"isOperational":true,"level":"error","message":"Application error: Failed to complete user registration","stack":"Error: Failed to complete user registration\n    at register (C:\\Users\\user\\Documents\\app.v3\\server\\src\\controllers\\authController.js:124:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"error","statusCode":500}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"isOperational":true,"level":"error","message":"Application error: Authentication failed","stack":"Error: Authentication failed\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\src\\middleware\\auth.js:19:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"fail","statusCode":401}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"isOperational":true,"level":"error","message":"Application error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.","stack":"Error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\src\\middleware\\auth.js:34:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"fail","statusCode":401}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"isOperational":true,"level":"error","message":"Application error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.","stack":"Error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\src\\middleware\\auth.js:34:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"fail","statusCode":401}
+{"isOperational":true,"level":"error","message":"Application error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.","stack":"Error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\src\\middleware\\auth.js:34:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"fail","statusCode":401}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"isOperational":true,"level":"error","message":"Application error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.","stack":"Error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\src\\middleware\\auth.js:34:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"fail","statusCode":401}
+{"isOperational":true,"level":"error","message":"Application error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.","stack":"Error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\src\\middleware\\auth.js:34:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"fail","statusCode":401}
+{"isOperational":true,"level":"error","message":"Application error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.","stack":"Error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\src\\middleware\\auth.js:34:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"fail","statusCode":401}
+{"isOperational":true,"level":"error","message":"Application error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.","stack":"Error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\src\\middleware\\auth.js:34:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"fail","statusCode":401}
+{"isOperational":true,"level":"error","message":"Application error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.","stack":"Error: verifyIdToken() expects an ID token, but was given a custom token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\src\\middleware\\auth.js:34:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","status":"fail","statusCode":401}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"level":"info","message":"✅ Server is running on port 5000"}
+{"level":"info","message":"Environment: development"}
+{"enabledValidations":["validateDimensions","validateOptions"],"level":"info","message":"Created validation middleware chain","middlewareCount":3,"service":"your-service-name"}
+{"level":"info","message":"Route mounted successfully: diagnosticRoutes","timestamp":"2025-02-18T22:49:54.300Z"}
+{"enabledValidations":["validateDimensions","validateOptions","validateBatch"],"level":"info","message":"Created validation middleware chain","middlewareCount":4,"service":"your-service-name"}
+{"level":"info","message":"Route mounted successfully: authRoutes","timestamp":"2025-02-18T22:49:54.303Z"}
+{"level":"info","message":"Route mounted successfully: receiptRoutes","timestamp":"2025-02-18T22:49:54.303Z"}
+{"level":"info","message":"Route mounted successfully: reportRoutes","timestamp":"2025-02-18T22:49:54.304Z"}
+{"level":"info","message":"Route mounted successfully: categoryRoutes","timestamp":"2025-02-18T22:49:54.304Z"}
+{"level":"info","message":"All routes initialized successfully","timestamp":"2025-02-18T22:49:54.305Z"}
+{"level":"info","message":"✅ Server is running on port 5000","timestamp":"2025-02-18T22:49:54.309Z"}
+{"level":"info","message":"Environment: development","timestamp":"2025-02-18T22:49:54.310Z"}
+{"error":"No authentication token provided","level":"error","message":"Application error:","method":"GET","path":"/api/receipts/scan","stack":"Error: No authentication token provided\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\dist\\middleware\\auth\\auth.js:8:19)\n    at Layer.handle [as handle_request] (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at Function.handle (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n    at Layer.handle [as handle_request] (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:328:13)","timestamp":"2025-02-18T22:50:04.204Z"}
+{"enabledValidations":["validateDimensions","validateOptions"],"level":"info","message":"Created validation middleware chain","middlewareCount":3,"service":"your-service-name"}
+{"level":"info","message":"Route mounted successfully: diagnosticRoutes","timestamp":"2025-02-18T22:53:09.006Z"}
+{"enabledValidations":["validateDimensions","validateOptions","validateBatch"],"level":"info","message":"Created validation middleware chain","middlewareCount":4,"service":"your-service-name"}
+{"level":"info","message":"Route mounted successfully: authRoutes","timestamp":"2025-02-18T22:53:09.008Z"}
+{"level":"info","message":"Route mounted successfully: receiptRoutes","timestamp":"2025-02-18T22:53:09.009Z"}
+{"level":"info","message":"Route mounted successfully: reportRoutes","timestamp":"2025-02-18T22:53:09.010Z"}
+{"level":"info","message":"Route mounted successfully: categoryRoutes","timestamp":"2025-02-18T22:53:09.011Z"}
+{"level":"info","message":"All routes initialized successfully","timestamp":"2025-02-18T22:53:09.011Z"}
+{"level":"info","message":"✅ Server is running on port 5000","timestamp":"2025-02-18T22:53:09.016Z"}
+{"level":"info","message":"Environment: development","timestamp":"2025-02-18T22:53:09.017Z"}
+{"error":"No authentication token provided","level":"error","message":"Application error:","method":"GET","path":"/api/categories","stack":"Error: No authentication token provided\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\dist\\middleware\\auth\\auth.js:8:19)\n    at Layer.handle [as handle_request] (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at Function.handle (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n    at Layer.handle [as handle_request] (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:328:13)","timestamp":"2025-02-18T22:57:30.768Z"}
+{"error":"No authentication token provided","level":"error","message":"Application error:","method":"GET","path":"/api/categories","stack":"Error: No authentication token provided\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\dist\\middleware\\auth\\auth.js:8:19)\n    at Layer.handle [as handle_request] (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at Function.handle (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n    at Layer.handle [as handle_request] (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\user\\Documents\\app.v3\\server\\node_modules\\express\\lib\\router\\index.js:328:13)","timestamp":"2025-02-18T23:11:31.461Z"}
+{"error":"Authentication failed","level":"error","message":"Application error:","method":"POST","path":"/api/categories","stack":"Error: Authentication failed\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\dist\\middleware\\auth\\auth.js:45:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-02-18T23:12:44.814Z"}
+{"error":"Authentication failed","level":"error","message":"Application error:","method":"POST","path":"/api/categories","stack":"Error: Authentication failed\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\dist\\middleware\\auth\\auth.js:45:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-02-18T23:18:05.036Z"}
+{"error":"Authentication failed","level":"error","message":"Application error:","method":"POST","path":"/api/categories","stack":"Error: Authentication failed\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\dist\\middleware\\auth\\auth.js:45:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-02-18T23:21:02.815Z"}
+{"error":"Authentication failed","level":"error","message":"Application error:","method":"POST","path":"/api/categories","stack":"Error: Authentication failed\n    at authenticateUser (C:\\Users\\user\\Documents\\app.v3\\server\\dist\\middleware\\auth\\auth.js:45:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-02-18T23:21:38.663Z"}
+{"enabledValidations":["validateDimensions","validateOptions"],"level":"info","message":"Created validation middleware chain","middlewareCount":3,"service":"your-service-name"}
+{"level":"info","message":"Route mounted successfully: diagnosticRoutes","timestamp":"2025-02-18T23:30:59.662Z"}
+{"enabledValidations":["validateDimensions","validateOptions","validateBatch"],"level":"info","message":"Created validation middleware chain","middlewareCount":4,"service":"your-service-name"}
+{"level":"info","message":"Route mounted successfully: authRoutes","timestamp":"2025-02-18T23:30:59.663Z"}
+{"level":"info","message":"Route mounted successfully: receiptRoutes","timestamp":"2025-02-18T23:30:59.664Z"}
+{"level":"info","message":"Route mounted successfully: reportRoutes","timestamp":"2025-02-18T23:30:59.664Z"}
+{"level":"info","message":"Route mounted successfully: categoryRoutes","timestamp":"2025-02-18T23:30:59.665Z"}
+{"level":"info","message":"All routes initialized successfully","timestamp":"2025-02-18T23:30:59.665Z"}
+{"level":"info","message":"✅ Server is running on port 5000","timestamp":"2025-02-18T23:30:59.671Z"}
+{"level":"info","message":"Environment: development","timestamp":"2025-02-18T23:30:59.672Z"}
+{"enabledValidations":["validateDimensions","validateOptions"],"level":"info","message":"Created validation middleware chain","middlewareCount":3,"service":"your-service-name"}
+{"level":"info","message":"Route mounted successfully: diagnosticRoutes","timestamp":"2025-02-19T00:56:04.673Z"}
+{"enabledValidations":["validateDimensions","validateOptions","validateBatch"],"level":"info","message":"Created validation middleware chain","middlewareCount":4,"service":"your-service-name"}
+{"level":"info","message":"Route mounted successfully: authRoutes","timestamp":"2025-02-19T00:56:04.675Z"}
+{"level":"info","message":"Route mounted successfully: receiptRoutes","timestamp":"2025-02-19T00:56:04.676Z"}
+{"level":"info","message":"Route mounted successfully: reportRoutes","timestamp":"2025-02-19T00:56:04.678Z"}
+{"level":"info","message":"Route mounted successfully: categoryRoutes","timestamp":"2025-02-19T00:56:04.679Z"}
+{"level":"info","message":"All routes initialized successfully","timestamp":"2025-02-19T00:56:04.680Z"}
+{"level":"info","message":"✅ Server is running on port 5000","timestamp":"2025-02-19T00:56:04.690Z"}
+{"level":"info","message":"Environment: development","timestamp":"2025-02-19T00:56:04.691Z"}

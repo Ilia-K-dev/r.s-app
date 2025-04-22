@@ -1,0 +1,61 @@
+export = Receipt;
+declare class Receipt {
+    static findById(id: any): Promise<Receipt | null>;
+    static find(filters?: {}, options?: {}): Promise<any>;
+    static countDocuments(filters?: {}): Promise<any>;
+    constructor(data: any);
+    id: any;
+    userId: any;
+    documentType: any;
+    vendor: any;
+    date: any;
+    total: any;
+    subtotal: any;
+    tax: any;
+    category: any;
+    items: any;
+    imageUrl: any;
+    originalText: any;
+    confidence: any;
+    status: any;
+    notes: any;
+    metadata: {
+        createdAt: any;
+        lastModified: any;
+        originalFileName: any;
+        processedAt: any;
+        textLayout: any;
+        processingDetails: any;
+    };
+    paymentMethod: any;
+    location: any;
+    save(): Promise<this>;
+    remove(): Promise<void>;
+    toJSON(): {
+        userId: any;
+        documentType: any;
+        vendor: any;
+        date: any;
+        total: any;
+        subtotal: any;
+        tax: any;
+        category: any;
+        items: any;
+        imageUrl: any;
+        originalText: any;
+        confidence: any;
+        status: any;
+        notes: any;
+        metadata: {
+            createdAt: any;
+            lastModified: any;
+            originalFileName: any;
+            processedAt: any;
+            textLayout: any;
+            processingDetails: any;
+        };
+        paymentMethod: any;
+        location: any;
+    };
+    validate(): string[];
+}

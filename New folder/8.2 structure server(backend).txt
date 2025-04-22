@@ -1,0 +1,76 @@
+/app.v3
+-/client
+
+-/functions
+--/node_modules
+ .eslintrc.js
+ .gitignore
+  index.js
+  package-lock.json
+  package.json
+
+-/server
+--/config
+    firebase.js
+    multer-config.js  
+    service-account.json
+    vision.js
+
+--/node_modules
+    (all the files instaled with react project)
+
+--/src
+---/controllers
+     authController.js
+     categoryController.js
+     receiptController.js
+     reportController.js
+
+---/middleware
+     auth.js
+     upload.js
+     validation.js
+
+---/models  
+     Category.js
+     Receipt.js
+     User.js
+
+---/routes
+     authRoutes.js
+     categoryRoutes.js 
+     receiptRoutes.j
+     reportRoutes.js
+
+---/scripts
+     checkEnv.js
+
+---/services
+     receiptService.js
+     reportService.js
+     visionService.js
+
+---/utils
+     errorHandler.js  
+     receiptParser.js
+     validators.js
+
+---/tests
+     backend-tester.js
+     receiptparser-tester.js
+
+   .env
+   app.js
+   combined.log
+   error.log
+   firestore.rules
+   package-lock.json
+   package.json
+
+ .firebaserc
+ .gitignore
+ firebase.json
+ firestore.indexes.json
+ firestore.rules
+ storage.rules
+ 
