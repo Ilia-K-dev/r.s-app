@@ -3,8 +3,8 @@ const path = require('path');
 const dotenv = require('dotenv');
 const fs = require('fs');
 
-// Load environment variables
-dotenv.config();
+// Load environment variables relative to this config file's directory
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // Enhanced detailed error logging function
 function logDetailedError(error) {

@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/app.js",
-    "dev": "nodemon --ext ts --exec ts-node src/app.ts",
+    "dev": "nodemon src/app.js",
     "test": "node tests/backend-tester.js",
     "test:backend": "node tests/backend-tester.js",
     "clean": "rimraf dist",
