@@ -1,14 +1,15 @@
-import React, { useState } from 'react';//correct
-import { TrendLine, BarChart } from '../../../shared/components/charts/ChartComponent'//correct
-import { Dropdown } from '../../../shared/components/forms/Dropdown';//correct
-import { Card } from '../../../shared/components/ui/Card';//correct
-import { CATEGORIES } from '../../../features/categories/services/categories';//correct
+import React, { useState } from 'react'; //correct
+
+import { getCategories as CATEGORIES } from '../../../features/categories/services/categories'; //correct
+import { Dropdown } from '../../../shared/components/forms/Dropdown'; //correct
+import { Card } from '../../../shared/components/ui/Card'; //correct
+import { ChartComponent } from '../../../shared/components/charts/ChartComponent'; //correct
 
 export const CategoryReportPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [categoryData, setCategoryData] = useState({
     trends: [],
-    merchants: []
+    merchants: [],
   });
 
   // ... implementation
@@ -20,7 +21,7 @@ export const CategoryReportPage = () => {
         <Dropdown
           options={Object.values(CATEGORIES).map(cat => ({
             label: cat.name,
-            value: cat.id
+            value: cat.id,
           }))}
           value={selectedCategory}
           onChange={setSelectedCategory}
@@ -30,10 +31,7 @@ export const CategoryReportPage = () => {
 
       {selectedCategory && (
         <div className="space-y-8">
-          <TrendLine
-            data={categoryData.trends}
-            title="Category Spending Trend"
-          />
+          <TrendLine data={categoryData.trends} title="Category Spending Trend" />
           <BarChart
             data={categoryData.merchants}
             title="Top Merchants"

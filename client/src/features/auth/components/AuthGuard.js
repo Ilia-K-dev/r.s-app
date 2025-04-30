@@ -1,9 +1,9 @@
-import React from 'react';//correct
-import { Navigate, useLocation } from 'react-router-dom';//correct
-import { useAuth } from '../../auth/hooks/useAuth';//correct
-import { Loading } from '../../../shared/components/ui/Loading';//correct
+import React from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { Loading } from '../../../shared/components/ui/Loading';
 
-const Protected = ({ children }) => {
+const AuthGuard = ({ children }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -16,10 +16,11 @@ const Protected = ({ children }) => {
   }
 
   if (!user) {
+    // Redirect to login page and save attempted location
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;
 };
 
-export default Protected;
+export default AuthGuard;

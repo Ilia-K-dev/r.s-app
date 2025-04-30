@@ -1,0 +1,10 @@
+{"enabledValidations":["validateDimensions","validateOptions"],"level":"info","message":"Created validation middleware chain","middlewareCount":3,"service":"your-service-name"}
+{"level":"info","message":"Route mounted successfully: diagnosticRoutes","timestamp":"2025-04-23T20:41:51.958Z"}
+{"enabledValidations":["validateDimensions","validateOptions","validateBatch"],"level":"info","message":"Created validation middleware chain","middlewareCount":4,"service":"your-service-name"}
+{"level":"info","message":"Route mounted successfully: authRoutes","timestamp":"2025-04-23T20:41:51.960Z"}
+{"level":"info","message":"Route mounted successfully: receiptRoutes","timestamp":"2025-04-23T20:41:51.964Z"}
+{"level":"info","message":"Route mounted successfully: reportRoutes","timestamp":"2025-04-23T20:41:51.967Z"}
+{"level":"info","message":"Route mounted successfully: categoryRoutes","timestamp":"2025-04-23T20:41:51.968Z"}
+{"level":"info","message":"All routes initialized successfully","timestamp":"2025-04-23T20:41:51.971Z"}
+{"level":"info","message":"✅ Server is running on port 5001","timestamp":"2025-04-23T20:41:51.977Z"}
+{"level":"info","message":"Environment: development","timestamp":"2025-04-23T20:41:51.982Z"}

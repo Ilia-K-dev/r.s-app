@@ -1,7 +1,9 @@
-import React, { createContext, useState, useCallback } from 'react';//correct
-import { X } from 'lucide-react';//correct
+import React, { createContext, useState, useCallback } from 'react';
+import { X } from 'lucide-react';
 
-export const ToastContext = createContext({});
+export const ToastContext = createContext({
+  showToast: () => {},
+});
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
@@ -18,12 +20,6 @@ export const ToastProvider = ({ children }) => {
   const removeToast = useCallback((id) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   }, []);
-  const TOAST_TYPES = {
-    success: 'bg-green-500 text-white',
-    error: 'bg-red-500 text-white',
-    info: 'bg-blue-500 text-white',
-    warning: 'bg-yellow-500 text-white'
-  };
 
   return (
     <ToastContext.Provider value={{ showToast }}>
@@ -53,3 +49,5 @@ export const ToastProvider = ({ children }) => {
     </ToastContext.Provider>
   );
 };
+
+export default ToastProvider;

@@ -7,11 +7,11 @@ export const visionService = {
     try {
       // Process the image first
       const processedImage = await processImage(file);
-      
+
       // Generate unique filename
       const filename = `receipts/${Date.now()}_${file.name}`;
       const storageRef = storage.ref(filename);
-      
+
       // Upload to Firebase Storage
       await storageRef.put(processedImage);
       const imageUrl = await storageRef.getDownloadURL();
@@ -20,21 +20,21 @@ export const visionService = {
       const response = await fetch('/api/vision/detect-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl })
+        body: JSON.stringify({ imageUrl }),
       });
 
       if (!response.ok) throw new Error('Failed to process receipt');
-      
+
       const data = await response.json();
       return {
         text: data.text,
         imageUrl,
         confidence: data.confidence,
-        items: data.items || []
+        items: data.items || [],
       };
     } catch (error) {
       console.error('Vision service error:', error);
       throw new Error('Failed to process receipt image');
     }
-  }
+  },
 };

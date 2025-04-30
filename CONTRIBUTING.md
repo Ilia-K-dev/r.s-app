@@ -1,80 +1,72 @@
-# Contributing to Receipt Scanner App
+# Contributing to the Receipt Scanner Application
 
-Thank you for considering contributing to Receipt Scanner App! This document outlines the process for contributing to the project.
+Thank you for your interest in contributing to the Receipt Scanner Application! We welcome contributions from everyone. By participating in this project, you agree to abide by our code of conduct.
 
-## Code of Conduct
+## How to Contribute
 
-In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to make participation in our project a harassment-free experience for everyone.
+1.  **Fork the repository:** Start by forking the main repository to your GitHub account.
+2.  **Clone your forked repository:**
+    ```bash
+    git clone [your forked repository URL]
+    cd app.v3
+    ```
+3.  **Set up the development environment:** Follow the instructions in the [README.md](README.md) to set up Firebase and install dependencies.
+4.  **Create a new branch:** Create a new branch for your feature or bug fix. Use a descriptive name (e.g., `feature/add-inventory-sorting`, `fix/ocr-parsing-error`).
+    ```bash
+    git checkout -b your-branch-name
+    ```
+5.  **Make your changes:** Implement your feature or bug fix.
+    - Follow the established code style guidelines (see below).
+    - Add necessary documentation (code comments, updates to README, API docs, etc.).
+    - Add or update tests to cover your changes.
+6.  **Test your changes:**
+    - Run the application locally to verify functionality.
+    - Run all tests to ensure nothing is broken.
+    ```bash
+    # Example commands (refer to README for specifics)
+    cd server && npm test
+    cd client && npm test
+    ```
+7.  **Commit your changes:** Write clear and concise commit messages.
+    ```bash
+    git add .
+    git commit -m "feat: Add inventory sorting"
+    ```
+8.  **Push your changes to your forked repository:**
+    ```bash
+    git push origin your-branch-name
+    ```
+9.  **Create a Pull Request (PR):**
+    - Go to the original repository on GitHub.
+    - Click the "New pull request" button.
+    - Select your branch and the `develop` branch as the base.
+    - Fill out the pull request template, including a clear description of your changes, linked issues, and completing the checklists.
 
-## How Can I Contribute?
+## Code Style Guidelines
 
-### Reporting Bugs
+- We follow standard JavaScript/React/Node.js best practices.
+- Use consistent indentation (2 spaces).
+- Follow the existing naming conventions.
+- Write clear and readable code.
+- Use JSDoc comments for functions, classes, and components.
 
-- Before creating bug reports, please check the issue tracker as you might find that you don't need to create one.
-- When you are creating a bug report, please include as many details as possible:
-  - Use a clear and descriptive title
-  - Describe the exact steps to reproduce the problem
-  - Provide specific examples to demonstrate the steps
-  - Describe the behavior you observed and what you expected to see
-  - Include screenshots if possible
+## Pull Request Process
 
-### Suggesting Enhancements
+- All pull requests should be opened against the `develop` branch.
+- Your PR will be reviewed by a maintainer.
+- Address any feedback or requested changes.
+- Once approved, your PR will be merged.
 
-- Enhancement suggestions are tracked as GitHub issues.
-- Provide a clear and detailed explanation of the feature you want to see
-- Explain why this enhancement would be useful to most users
+## Development Environment Setup
 
-### Pull Requests
+Refer to the "Installation Instructions" and "Development Setup" sections in the [README.md](README.md) for detailed instructions on setting up your development environment.
 
-- Fill in the required template
-- Do not include issue numbers in the PR title
-- Follow the coding style used throughout the project
-- Include appropriate tests
-- Ensure all tests pass
-- Document new code based on the project's documentation standards
+## Security
 
-## Development Process
+- **Never** commit sensitive information such as API keys, passwords, or service account files. Use environment variables and `.gitignore` to prevent this.
+- Be mindful of potential security vulnerabilities when writing code.
+- The pull request template includes a security checklist to help ensure best practices are followed.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## Licensing
 
-## Styleguides
-
-### Git Commit Messages
-
-- Use the present tense ("Add feature" not "Added feature")
-- Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
-- Limit the first line to 72 characters or less
-- Reference issues and pull requests after the first line
-
-### JavaScript Styleguide
-
-- All JavaScript code must adhere to the [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript)
-- Use ES6 features where applicable
-- Prefer const over let. Only use let if rebinding is necessary
-- No var
-- Avoid using console.log in production code
-
-### React Styleguide
-
-- Use functional components with hooks instead of class components
-- Use destructuring for props
-- Use named exports for components
-
-## Additional Notes
-
-### Issue and Pull Request Labels
-
-This section lists the labels we use to help us track and manage issues and pull requests.
-
-* `bug` - Issues for bugs in the code
-* `enhancement` - Issues for new features or improvements
-* `documentation` - Issues related to documentation
-* `good first issue` - Good for newcomers
-* `help wanted` - Extra attention is needed
-* `invalid` - Issues that are invalid or non-reproducible
-* `question` - Issues that are a question
-* `wontfix` - Issues that will not be worked on
+By contributing to the Receipt Scanner Application, you agree that your contributions will be licensed under the project's [LICENSE](LICENSE) file.

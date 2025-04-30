@@ -1,4 +1,4 @@
-import React from 'react';//correct
+import React from 'react'; //correct
 import {
   LineChart,
   Line,
@@ -12,11 +12,12 @@ import {
   Bar,
   PieChart,
   Pie,
-  Cell
+  Cell,
 } from 'recharts'; //correct
-import { Card } from '../../../../shared/components/ui/Card';//correct
-import { formatCurrency } from '../../../../shared/utils/currency';//correct
-import { formatDate } from '../../../../shared/utils/date';//correct
+
+import { Card } from '../../../../shared/components/ui/Card'; //correct
+import { formatCurrency } from '../../../../shared/utils/currency'; //correct
+import { formatDate } from '../../../../shared/utils/date'; //correct
 
 export const SpendingTrendChart = ({ data }) => (
   <Card className="h-[400px]">
@@ -24,25 +25,15 @@ export const SpendingTrendChart = ({ data }) => (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-        <XAxis 
-          dataKey="month" 
-          stroke="#6B7280"
-          fontSize={12}
-        />
-        <YAxis
-          stroke="#6B7280"
-          fontSize={12}
-          tickFormatter={value => formatCurrency(value)}
-        />
+        <XAxis dataKey="month" stroke="#6B7280" fontSize={12} />
+        <YAxis stroke="#6B7280" fontSize={12} tickFormatter={value => formatCurrency(value)} />
         <Tooltip
           content={({ active, payload, label }) => {
             if (!active || !payload) return null;
             return (
               <div className="bg-white p-3 shadow-lg border rounded-lg">
                 <p className="font-medium">{label}</p>
-                <p className="text-primary-600">
-                  {formatCurrency(payload[0].value)}
-                </p>
+                <p className="text-primary-600">{formatCurrency(payload[0].value)}</p>
               </div>
             );
           }}
@@ -78,10 +69,7 @@ export const CategoryBreakdownChart = ({ data }) => {
             dataKey="value"
           >
             {data.map((entry, index) => (
-              <Cell 
-                key={`cell-${index}`} 
-                fill={COLORS[index % COLORS.length]} 
-              />
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
           <Tooltip
@@ -92,9 +80,7 @@ export const CategoryBreakdownChart = ({ data }) => {
                 <div className="bg-white p-3 shadow-lg border rounded-lg">
                   <p className="font-medium">{data.name}</p>
                   <p>{formatCurrency(data.value)}</p>
-                  <p className="text-sm text-gray-500">
-                    {(data.percentage).toFixed(1)}%
-                  </p>
+                  <p className="text-sm text-gray-500">{data.percentage.toFixed(1)}%</p>
                 </div>
               );
             }}
@@ -112,11 +98,7 @@ export const VendorPerformanceChart = ({ data }) => (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-        <XAxis 
-          dataKey="name" 
-          stroke="#6B7280"
-          fontSize={12}
-        />
+        <XAxis dataKey="name" stroke="#6B7280" fontSize={12} />
         <YAxis
           stroke="#6B7280"
           fontSize={12}
@@ -150,17 +132,13 @@ export const InventoryValueChart = ({ data }) => (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-        <XAxis 
-          dataKey="date" 
+        <XAxis
+          dataKey="date"
           stroke="#6B7280"
           fontSize={12}
           tickFormatter={value => formatDate(value, 'MMM dd')}
         />
-        <YAxis
-          stroke="#6B7280"
-          fontSize={12}
-          tickFormatter={value => formatCurrency(value)}
-        />
+        <YAxis stroke="#6B7280" fontSize={12} tickFormatter={value => formatCurrency(value)} />
         <Tooltip
           content={({ active, payload, label }) => {
             if (!active || !payload) return null;
@@ -188,25 +166,15 @@ export const TurnoverRateChart = ({ data }) => (
   <Card className="h-[400px]">
     <h3 className="text-lg font-semibold mb-4">Inventory Turnover Rate</h3>
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart 
-        data={data}
-        layout="vertical"
-        margin={{ left: 100 }}
-      >
+      <BarChart data={data} layout="vertical" margin={{ left: 100 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-        <XAxis 
+        <XAxis
           type="number"
           stroke="#6B7280"
           fontSize={12}
           tickFormatter={value => `${value.toFixed(1)}x`}
         />
-        <YAxis
-          type="category"
-          dataKey="name"
-          stroke="#6B7280"
-          fontSize={12}
-          width={100}
-        />
+        <YAxis type="category" dataKey="name" stroke="#6B7280" fontSize={12} width={100} />
         <Tooltip
           content={({ active, payload, label }) => {
             if (!active || !payload) return null;
@@ -222,11 +190,7 @@ export const TurnoverRateChart = ({ data }) => (
             );
           }}
         />
-        <Bar 
-          dataKey="rate" 
-          fill="#0EA5E9"
-          radius={[0, 4, 4, 0]}
-        />
+        <Bar dataKey="rate" fill="#0EA5E9" radius={[0, 4, 4, 0]} />
       </BarChart>
     </ResponsiveContainer>
   </Card>

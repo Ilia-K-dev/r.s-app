@@ -1,36 +1,36 @@
-import React, { useMemo } from 'react';//correct
+import React, { useMemo } from 'react'; //correct
 import {
-  LineChart, Line,
-  BarChart, Bar,
-  PieChart, Pie,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
   Cell,
-  XAxis, YAxis,
+  XAxis,
+  YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
-} from 'recharts';//correct
-import { generateChartColors } from '../../../shared/components/charts/chartHelpers';//correct
-import { formatDate } from '../../../shared/utils/date';//correct
-import { formatCurrency } from '../../../shared/utils/currency';//correct
+  ResponsiveContainer,
+} from 'recharts'; //correct
 
-export const ChartComponent = ({
-  type = 'line',
-  data = [],
-  config = {},
-  height = 400
-}) => {
+import { generateChartColors } from '../../../shared/components/charts/chartHelpers'; //correct
+import { formatCurrency } from '../../../shared/utils/currency'; //correct
+import { formatDate } from '../../../shared/utils/date'; //correct
+
+export const ChartComponent = ({ type = 'line', data = [], config = {}, height = 400 }) => {
   const {
     xAxis = 'date',
     yAxis = 'value',
     color = '#0EA5E9',
-    formatter = (value) => value,
+    formatter = value => value,
     dateFormat = 'MMM dd',
     showGrid = true,
     showLegend = true,
     colors = [],
     innerRadius,
-    outerRadius
+    outerRadius,
   } = config;
 
   const chartColors = useMemo(() => {
@@ -44,19 +44,11 @@ export const ChartComponent = ({
         return (
           <LineChart data={data}>
             {showGrid && <CartesianGrid strokeDasharray="3 3" />}
-            <XAxis
-              dataKey={xAxis}
-              tickFormatter={value => formatDate(value, dateFormat)}
-            />
+            <XAxis dataKey={xAxis} tickFormatter={value => formatDate(value, dateFormat)} />
             <YAxis tickFormatter={formatter} />
             <Tooltip />
             {showLegend && <Legend />}
-            <Line
-              type="monotone"
-              dataKey={yAxis}
-              stroke={color}
-              activeDot={{ r: 8 }}
-            />
+            <Line type="monotone" dataKey={yAxis} stroke={color} activeDot={{ r: 8 }} />
           </LineChart>
         );
 
@@ -64,10 +56,7 @@ export const ChartComponent = ({
         return (
           <BarChart data={data}>
             {showGrid && <CartesianGrid strokeDasharray="3 3" />}
-            <XAxis
-              dataKey={xAxis}
-              tickFormatter={value => formatDate(value, dateFormat)}
-            />
+            <XAxis dataKey={xAxis} tickFormatter={value => formatDate(value, dateFormat)} />
             <YAxis tickFormatter={formatter} />
             <Tooltip />
             {showLegend && <Legend />}
@@ -90,10 +79,7 @@ export const ChartComponent = ({
               label
             >
               {data.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`}
-                  fill={chartColors[index % chartColors.length]}
-                />
+                <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
               ))}
             </Pie>
             <Tooltip />

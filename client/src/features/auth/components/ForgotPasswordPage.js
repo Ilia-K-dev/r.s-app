@@ -1,10 +1,11 @@
-import React, { useState } from 'react';//correct
-import { Link } from 'react-router-dom';//correct
-import { Input } from '../../../shared/components/forms/Input';//correct
-import { Button } from '../../../shared/components/forms/Button';//correct
-import { Alert } from '../../../shared/components/ui/Alert';//correct
-import { useAuth } from '../../auth/hooks/useAuth';//correct
-import { Mail, ArrowLeft } from 'lucide-react';//correct
+import { Mail, ArrowLeft } from 'lucide-react'; //correct
+import React, { useState } from 'react'; //correct
+import { Link } from 'react-router-dom'; //correct
+
+import { Button } from '../../../shared/components/forms/Button'; //correct
+import { Input } from '../../../shared/components/forms/Input'; //correct
+import { Alert } from '../../../shared/components/ui/Alert'; //correct
+import { useAuth } from '../../auth/hooks/useAuth'; //correct
 
 export const ForgotPasswordPage = () => {
   const { resetPassword } = useAuth();
@@ -13,7 +14,7 @@ export const ForgotPasswordPage = () => {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setError('');
     setSuccess(false);
@@ -33,21 +34,17 @@ export const ForgotPasswordPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-            Reset your password
-          </h2>
+          <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">Reset your password</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Enter your email address and we'll send you a link to reset your password.
           </p>
         </div>
 
-        {error && (
-          <Alert type="error" message={error} />
-        )}
+        {error && <Alert type="error" message={error} />}
 
         {success && (
-          <Alert 
-            type="success" 
+          <Alert
+            type="success"
             message="Password reset link has been sent to your email address. Please check your inbox."
           />
         )}
@@ -59,17 +56,12 @@ export const ForgotPasswordPage = () => {
             icon={Mail}
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             placeholder="Enter your email address"
           />
 
           <div>
-            <Button
-              type="submit"
-              fullWidth
-              loading={loading}
-              disabled={!email || loading}
-            >
+            <Button type="submit" fullWidth loading={loading} disabled={!email || loading}>
               Send reset link
             </Button>
           </div>

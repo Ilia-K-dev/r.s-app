@@ -1,14 +1,15 @@
-import { createBrowserRouter } from 'react-router-dom';//correct
-import { Layout } from '../../shared/components/layout/Layout';//correct
-import { DashboardPage } from '../pages/DashboardPage';//correct
-import { ReceiptsPage } from '../pages/ReceiptsPage';//correct
-import { ReportsPage } from '../pages/ReportsPage';//correct
-import { SettingsPage } from '../pages/SettingsPage';//correct
-import { LoginPage } from '../../features/auth/components/LoginPage';//correct
-import { RegisterPage } from '../../features/auth/components/RegisterPage';//correct
-import { ForgotPasswordPage } from '../../features/auth/components/ForgotPasswordPage';//correct
-import { NotFoundPage } from '../pages/NotFoundPage';//correct
-import Protected from '../../features/auth/components/AuthGuard';//correct
+import { createBrowserRouter } from 'react-router-dom'; //correct
+
+import Protected from '../../features/auth/components/AuthGuard'; //correct
+import { ForgotPasswordPage } from '../../features/auth/components/ForgotPasswordPage'; //correct
+import { LoginPage } from '../../features/auth/components/LoginPage'; //correct
+import { RegisterPage } from '../../features/auth/components/RegisterPage'; //correct
+import { Layout } from '../../shared/components/layout/Layout'; //correct
+import { DashboardPage } from '../pages/DashboardPage'; //correct
+import { NotFoundPage } from '../pages/NotFoundPage'; //correct
+import { ReceiptsPage } from '../pages/ReceiptsPage'; //correct
+import { ReportsPage } from '../pages/ReportsPage'; //correct
+import { SettingsPage } from '../pages/SettingsPage'; //correct
 
 const router = createBrowserRouter([
   {
@@ -22,34 +23,34 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <DashboardPage />
+        element: <DashboardPage />,
       },
       {
         path: 'receipts',
-        element: <ReceiptsPage />
+        element: <ReceiptsPage />,
       },
       {
         path: 'reports',
-        element: <ReportsPage />
+        element: <ReportsPage />,
       },
       {
         path: 'settings',
-        element: <SettingsPage />
-      }
-    ]
+        element: <SettingsPage />,
+      },
+    ],
   },
   {
     path: '/login',
-    element: <LoginPage />
+    element: <LoginPage />,
   },
   {
     path: '/register',
-    element: <RegisterPage />
+    element: <RegisterPage />,
   },
   {
     path: '/forgot-password',
-    element: <ForgotPasswordPage />
-  }
+    element: <ForgotPasswordPage />,
+  },
 ]);
 
 export default router;

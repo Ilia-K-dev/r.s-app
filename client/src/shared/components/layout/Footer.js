@@ -1,5 +1,4 @@
-export const Footer = () => {
-  return (
+export const Footer = () => (
     <footer className="bg-white border-t">
       <div className="max-w-7xl mx-auto py-6 px-4">
         <div className="flex justify-between items-center">
@@ -21,4 +20,3 @@ export const Footer = () => {
       </div>
     </footer>
   );
-};

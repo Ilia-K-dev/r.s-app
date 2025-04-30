@@ -1,0 +1,850 @@
+# Receipt Scanner Application: Issues and Recommendations
+
+## Critical Issues
+
+### 1. Direct Client-to-Firebase Access
+
+**Issue:** Many client-side components, hooks, and services directly interact with Firestore and Storage, bypassing the server API. This practice undermines security, duplicates business logic, and tightly couples the client to the database structure.
+
+**Affected Components:**
+- `useReceipts`, `receiptApi` (Receipt Management)
+- `useInventory`, `useStockManagement`, `inventoryService` (Inventory Tracking)
+- `analyticsService`, `reportsApi` (Analytics)
+- `documentProcessingService`, `visionService` (Document Processing)
+
+**Impact:**
+- Security vulnerabilities (relying solely on Firestore rules)
+- Business logic duplication between client and server
+- Inconsistent data validation
+- No server-side analytics processing
+- Missing stock movement records for client-initiated updates
+
+**Recommendation:**
+- Refactor all client-side code to exclusively use the server API for data operations
+- Remove all direct Firestore/Storage calls (`getDocs`, `addDoc`, `updateDoc`, `deleteDoc`, `uploadBytes`, etc.)
+- Ensure consistent business logic execution on the server
+
+### 2. Incomplete Firestore Security Rules
+
+**Issue:** Security rules are only defined for a few collections (`receipts`, `categories`, `users`), leaving many critical collections potentially vulnerable.
+
+**Affected Collections:**
+- `products`, `inventory`, `stockMovements`
+- `alerts`, `vendors`, `documents`
+- `notifications`, `notificationPreferences`
+
+**Impact:**
+- Unauthorized data access is possible
+- Users might be able to view or modify others' data
+- Potential data breaches
+
+**Recommendation:**
+- Immediately define comprehensive security rules for all collections
+- Follow the pattern of user-based access control:
+  ```
+  allow read, write: if request.auth.uid == resource.data.userId;
+  ```
+- Add additional validation rules for data integrity
+
+### 3. Server Service Redundancy
+
+**Issue:** Multiple server-side services have overlapping responsibilities, creating confusion about the source of truth for business logic.
+
+**Primary Overlaps:**
+- `InventoryManagementService` vs. `stockTrackingService`
+- `DocumentProcessingService` vs. `ReceiptProcessingService` vs. `visionService`
+
+**Impact:**
+- Code maintenance challenges
+- Inconsistent logic execution
+- Confusing development experience
+
+**Recommendation:**
+- Consolidate inventory management into a single authoritative service
+- Refactor document processing to have clear responsibilities:
+  - `DocumentProcessingService` as the main orchestrator
+  - `visionService` as a simple utility for Vision API
+  - `ReceiptProcessingService` focused solely on receipt-specific parsing
+
+## High-Priority Issues
+
+### 4. Authentication Flow Complexity
+
+**Issue:** The authentication system uses a complex mix of standard Firebase ID tokens and server-generated custom tokens.
+
+**Impact:**
+- Confusion about token lifecycle and usage
+- Potential security risks from improper token handling
+- Redundant user creation (both client and server create users)
+
+**Recommendation:**
+- Simplify token strategy to primarily use Firebase ID tokens
+- Eliminate custom token generation unless absolutely necessary
+- Refactor server `/api/auth/register` endpoint to handle only Firestore document creation after client Firebase Auth registration
+- Remove the insecure server `/api/auth/login` endpoint (which doesn't verify passwords)
+
+### 5. OCR Parsing Robustness
+
+**Issue:** Text extraction from receipts relies heavily on regular expressions, making it brittle when receipt formats vary.
+
+**Impact:**
+- Inconsistent data extraction
+- Missing or incorrect receipt information
+- Poor user experience requiring manual corrections
+
+**Recommendation:**
+- Enhance parsing logic to leverage Vision API's bounding box information
+- Consider using structured document text detection if available
+- Implement a feedback mechanism for failed parsing to improve accuracy over time
+- Consider specialized receipt parsing libraries or services as alternatives
+
+### 6. Client-Side Data Processing
+
+**Issue:** Analytics and reporting features often fetch large datasets for client-side processing.
+
+**Impact:**
+- Poor performance with large datasets
+- Excessive network traffic
+- Slow user experience
+- Redundant calculations
+
+**Recommendation:**
+- Move all data aggregation and calculations to the server
+- Implement efficient Firestore queries with proper indexing
+- Use dedicated analytics API endpoints that return pre-calculated results
+- Implement robust server-side caching (Redis or similar)
+
+## Medium-Priority Issues
+
+### 7. Model Role Confusion
+
+**Issue:** The relationship and responsibilities between related models (`Product` vs. `Inventory`, `Document` vs. `Receipt`) are unclear.
+
+**Recommendation:**
+- Clarify model relationships and responsibilities
+- Consider:
+  - `Product`: Core definition, thresholds, price, category
+  - `Inventory`: Actual quantity, location
+  - `Document`: Raw uploaded documents before processing
+  - `Receipt`: Structured data after processing
+
+### 8. Background Processing for Long Operations
+
+**Issue:** Resource-intensive operations like bulk uploads, OCR processing, and report generation are handled synchronously.
+
+**Recommendation:**
+- Implement a background job system for long-running tasks
+- Use Firebase Cloud Functions or a dedicated queue system
+- Return job IDs immediately for status tracking
+- Notify users when processing completes
+
+### 9. Testing Coverage
+
+**Issue:** Limited evidence of comprehensive testing throughout the application.
+
+**Recommendation:**
+- Implement unit tests for critical business logic, especially in services
+- Add integration tests for API endpoints
+- Implement UI component tests for key user flows
+- Prioritize testing for security-sensitive features (auth, data access)
+
+## Implementation Roadmap
+
+### Phase 1: Security Hardening (Immediate)
+
+1. Implement comprehensive Firestore security rules for all collections
+2. Add Storage security rules for all used paths
+3. Secure sensitive API endpoints (e.g., diagnostic routes)
+
+### Phase 2: Client Architecture Refactoring (High Priority)
+
+1. Refactor client data access to use server API exclusively
+2. Remove direct Firestore/Storage interactions from all client code
+3. Consolidate overlapping server services
+4. Simplify authentication token strategy
+
+### Phase 3: Feature Enhancement (Medium Priority)
+
+1. Improve OCR parsing robustness
+2. Implement background processing for long-running operations
+3. Enhance analytics with server-side processing
+4. Clarify model roles and relationships
+
+### Phase 4: Performance and Testing (Ongoing)
+
+1. Optimize database queries with proper indexing
+2. Implement robust server-side caching
+3. Develop comprehensive test suite
+4. Monitor and address performance bottlenecks
+
+## Code Examples
+
+### Example 1: Refactoring Client-Side Data Access
+
+**Before:**
+```javascript
+// client/src/features/receipts/hooks/useReceipts.js
+const useReceipts = () => {
+  const [receipts, setReceipts] = useState([]);
+  const { user } = useAuth();
+  
+  const fetchReceipts = async () => {
+    const receiptsRef = collection(db, 'receipts');
+    const q = query(receiptsRef, where('userId', '==', user.uid));
+    const snapshot = await getDocs(q);
+    setReceipts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  };
+  
+  const addReceipt = async (receiptData) => {
+    await addDoc(collection(db, 'receipts'), {
+      ...receiptData,
+      userId: user.uid,
+      createdAt: new Date().toISOString()
+    });
+    fetchReceipts();
+  };
+  
+  // ... other operations
+  
+  useEffect(() => {
+    if (user) fetchReceipts();
+  }, [user]);
+  
+  return { receipts, addReceipt, /* other functions */ };
+};
+```
+
+**After:**
+```javascript
+// client/src/features/receipts/hooks/useReceipts.js
+const useReceipts = () => {
+  const [receipts, setReceipts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const { getAuthToken } = useAuth();
+  
+  const fetchReceipts = async (filters = {}) => {
+    try {
+      setLoading(true);
+      const token = await getAuthToken();
+      const response = await axios.get('/api/receipts', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: filters
+      });
+      setReceipts(response.data.data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching receipts:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const addReceipt = async (receiptData) => {
+    try {
+      setLoading(true);
+      const token = await getAuthToken();
+      await axios.post('/api/receipts', receiptData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchReceipts();
+      return true;
+    } catch (err) {
+      setError(err.message);
+      console.error('Error adding receipt:', err);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // ... other operations
+  
+  useEffect(() => {
+    fetchReceipts();
+  }, []);
+  
+  return { receipts, loading, error, addReceipt, fetchReceipts /* other functions */ };
+};
+```
+
+### Example 2: Comprehensive Firestore Security Rules
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(resource) {
+      return isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    function isValidProduct(data) {
+      return data.name is string && data.name.size() > 0
+          && data.unitPrice is number && data.unitPrice >= 0
+          && data.userId is string;
+    }
+    
+    // Rules for each collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if false; // Prevent deletion
+    }
+    
+    match /receipts/{docId} {
+      allow read: if isOwner(resource);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(resource);
+      allow delete: if isOwner(resource);
+    }
+    
+    match /products/{docId} {
+      allow read: if isOwner(resource);
+      allow create: if isAuthenticated() && 
+                     request.resource.data.userId == request.auth.uid && 
+                     isValidProduct(request.resource.data);
+      allow update: if isOwner(resource);
+      allow delete: if isOwner(resource);
+    }
+    
+    match /inventory/{docId} {
+      allow read: if isOwner(resource);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(resource);
+      allow delete: if isOwner(resource);
+    }
+    
+    match /stockMovements/{docId} {
+      allow read: if isOwner(resource);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if false; // Stock movements should be immutable
+      allow delete: if false; // Prevent deletion for audit purposes
+    }
+    
+    match /alerts/{docId} {
+      allow read: if isOwner(resource);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(resource) && 
+                     (request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['status', 'resolvedAt', 'resolvedBy']));
+      allow delete: if false; // Prevent deletion for record keeping
+    }
+    
+    match /categories/{docId} {
+      allow read: if isOwner(resource);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(resource);
+      allow delete: if isOwner(resource);
+    }
+    
+    match /vendors/{docId} {
+      allow read: if isOwner(resource);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(resource);
+      allow delete: if isOwner(resource);
+    }
+    
+    match /documents/{docId} {
+      allow read: if isOwner(resource);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(resource);
+      allow delete: if isOwner(resource);
+    }
+    
+    match /notifications/{docId} {
+      allow read: if isOwner(resource);
+      allow create: if false; // Only server should create
+      allow update: if isOwner(resource) && 
+                     (request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['status', 'readAt']));
+      allow delete: if isOwner(resource);
+    }
+  }
+}
+```
+
+### Example 3: Consolidating Server Services
+
+**Before:**
+```javascript
+// server/src/services/inventory/InventoryManagementService.js
+class InventoryManagementService {
+  async updateStock(userId, productId, quantity, type, reason = '') {
+    return await db.runTransaction(async (transaction) => {
+      // Get product
+      const productRef = db.collection('products').doc(productId);
+      const productDoc = await transaction.get(productRef);
+      
+      if (!productDoc.exists || productDoc.data().userId !== userId) {
+        throw new AppError('Product not found', 404);
+      }
+      
+      const product = productDoc.data();
+      const previousStock = product.currentStock;
+      let newStock;
+      
+      // Calculate new stock
+      switch (type) {
+        case 'add':
+          newStock = previousStock + quantity;
+          break;
+        case 'subtract':
+          newStock = Math.max(0, previousStock - quantity);
+          break;
+        case 'adjust':
+          newStock = Math.max(0, quantity);
+          break;
+        default:
+          throw new AppError('Invalid stock update type', 400);
+      }
+      
+      // Update product stock
+      transaction.update(productRef, { 
+        currentStock: newStock,
+        'metadata.lastStockUpdate': new Date().toISOString()
+      });
+      
+      // Record stock movement
+      const movementRef = db.collection('stockMovements').doc();
+      transaction.set(movementRef, {
+        userId,
+        productId,
+        type,
+        quantity,
+        previousStock,
+        newStock,
+        reason,
+        date: new Date().toISOString(),
+        metadata: {
+          createdAt: new Date().toISOString()
+        }
+      });
+      
+      // Check stock levels and create alerts if needed
+      await this._checkStockLevels(transaction, userId, productId, product, newStock);
+      
+      return { 
+        previousStock, 
+        newStock, 
+        change: newStock - previousStock,
+        movementId: movementRef.id
+      };
+    });
+  }
+  
+  async _checkStockLevels(transaction, userId, productId, product, currentStock) {
+    // Create alerts for low stock, etc.
+    // ...
+  }
+  
+  // Other inventory methods...
+}
+
+// server/src/services/inventory/stockTrackingService.js
+class StockTrackingService {
+  async trackStockMovement(userId, productId, quantity, type, reason = '') {
+    // Get current stock
+    const productRef = db.collection('products').doc(productId);
+    const productDoc = await productRef.get();
+    
+    if (!productDoc.exists || productDoc.data().userId !== userId) {
+      throw new AppError('Product not found', 404);
+    }
+    
+    const product = productDoc.data();
+    const previousStock = product.currentStock;
+    let newStock;
+    
+    // Calculate new stock - similar logic to InventoryManagementService
+    switch (type) {
+      case 'add':
+        newStock = previousStock + quantity;
+        break;
+      // ... other cases
+    }
+    
+    // Save movement record
+    const movementRef = await db.collection('stockMovements').add({
+      userId,
+      productId,
+      type,
+      quantity,
+      previousStock,
+      newStock,
+      reason,
+      date: new Date().toISOString(),
+      metadata: {
+        createdAt: new Date().toISOString()
+      }
+    });
+    
+    // Update product stock
+    await productRef.update({
+      currentStock: newStock,
+      'metadata.lastStockUpdate': new Date().toISOString()
+    });
+    
+    // Check for low stock
+    this._checkStockLevels(userId, productId, product, newStock);
+    
+    return { previousStock, newStock, movementId: movementRef.id };
+  }
+  
+  // Duplicative methods...
+}
+```
+
+**After:**
+```javascript
+// server/src/services/inventory/InventoryService.js
+class InventoryService {
+  async updateStock(userId, productId, quantity, type, reason = '', options = {}) {
+    return await db.runTransaction(async (transaction) => {
+      // Get product
+      const productRef = db.collection('products').doc(productId);
+      const productDoc = await transaction.get(productRef);
+      
+      if (!productDoc.exists || productDoc.data().userId !== userId) {
+        throw new AppError('Product not found', 404);
+      }
+      
+      const product = productDoc.data();
+      const previousStock = product.currentStock;
+      let newStock;
+      
+      // Calculate new stock
+      switch (type) {
+        case 'add':
+          newStock = previousStock + quantity;
+          break;
+        case 'subtract':
+          newStock = Math.max(0, previousStock - quantity);
+          break;
+        case 'adjust':
+          newStock = Math.max(0, quantity);
+          break;
+        case 'transfer':
+          // Handle transfers to other locations
+          newStock = Math.max(0, previousStock - quantity);
+          if (options.destinationId) {
+            await this._increaseStockAtLocation(
+              transaction, userId, options.destinationId, quantity, reason
+            );
+          }
+          break;
+        default:
+          throw new AppError('Invalid stock update type', 400);
+      }
+      
+      // Update product stock
+      transaction.update(productRef, { 
+        currentStock: newStock,
+        'metadata.lastStockUpdate': new Date().toISOString()
+      });
+      
+      // Record stock movement
+      const movementRef = db.collection('stockMovements').doc();
+      const movementData = {
+        userId,
+        productId,
+        type,
+        quantity,
+        previousStock,
+        newStock,
+        reason,
+        date: new Date().toISOString(),
+        reference: options.reference || null,
+        location: options.location || null,
+        cost: options.cost || null,
+        notes: options.notes || '',
+        metadata: {
+          createdAt: new Date().toISOString(),
+          createdBy: options.createdBy || userId,
+          documentType: options.documentType || null,
+          documentId: options.documentId || null
+        }
+      };
+      
+      transaction.set(movementRef, movementData);
+      
+      // Check stock levels and create alerts if needed
+      await this._checkStockLevels(transaction, userId, productId, product, newStock);
+      
+      // If enabled, send notifications for critical alerts
+      if (options.sendNotifications !== false && 
+          (newStock <= product.minStockLevel || newStock === 0)) {
+        // Queue notification - will be sent after transaction completes
+        this.notificationsToSend.push({
+          userId,
+          productId,
+          product: product.name,
+          currentStock: newStock,
+          threshold: product.minStockLevel,
+          type: newStock === 0 ? 'out_of_stock' : 'low_stock'
+        });
+      }
+      
+      return { 
+        previousStock, 
+        newStock, 
+        change: newStock - previousStock,
+        movementId: movementRef.id
+      };
+    }).then(result => {
+      // After transaction succeeds, send any queued notifications
+      this._sendPendingNotifications();
+      return result;
+    });
+  }
+  
+  // Stock movement history
+  async getStockMovements(userId, filters = {}) {
+    let query = db.collection('stockMovements')
+      .where('userId', '==', userId);
+      
+    // Apply filters (productId, date range, type, etc.)
+    if (filters.productId) {
+      query = query.where('productId', '==', filters.productId);
+    }
+    
+    if (filters.startDate && filters.endDate) {
+      query = query.where('date', '>=', filters.startDate)
+                   .where('date', '<=', filters.endDate);
+    }
+    
+    // Always sort by date descending for recent movements first
+    query = query.orderBy('date', 'desc');
+    
+    // Apply pagination if requested
+    if (filters.limit) {
+      query = query.limit(filters.limit);
+    }
+    
+    if (filters.startAfter) {
+      const startAfterDoc = await db.collection('stockMovements').doc(filters.startAfter).get();
+      if (startAfterDoc.exists) {
+        query = query.startAfter(startAfterDoc);
+      }
+    }
+    
+    const snapshot = await query.get();
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  }
+  
+  // Audit methods, alert handling, and other inventory functions...
+}
+```
+
+### Example 4: Improved OCR Parsing Logic
+
+**Before:**
+```javascript
+// Simple regex-based parsing
+async function _extractReceiptData(text) {
+  // Try to find the merchant name (usually at the top)
+  const merchantRegex = /^([A-Z][A-Z\s]+)[\n\r]/m;
+  const merchantMatch = text.match(merchantRegex);
+  const merchant = merchantMatch ? merchantMatch[1].trim() : 'Unknown Merchant';
+  
+  // Try to find the date
+  const dateRegex = /(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/;
+  const dateMatch = text.match(dateRegex);
+  let date = new Date().toISOString();
+  if (dateMatch) {
+    const [_, day, month, year] = dateMatch;
+    date = new Date(`${month}/${day}/${year.length === 2 ? '20' + year : year}`).toISOString();
+  }
+  
+  // Try to find the total
+  const totalRegex = /TOTAL[\s\:]*\$?(\d+\.\d{2})/i;
+  const totalMatch = text.match(totalRegex);
+  const total = totalMatch ? parseFloat(totalMatch[1]) : 0;
+  
+  // Try to extract items (very simplistic)
+  const items = [];
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const itemRegex = /(.+)\s+(\d+)\s+\$?(\d+\.\d{2})/;
+    const itemMatch = line.match(itemRegex);
+    if (itemMatch) {
+      const [_, name, quantity, price] = itemMatch;
+      items.push({
+        name: name.trim(),
+        quantity: parseInt(quantity, 10),
+        price: parseFloat(price),
+        total: parseInt(quantity, 10) * parseFloat(price)
+      });
+    }
+  }
+  
+  return {
+    vendor: merchant,
+    date,
+    total,
+    items,
+    originalText: text
+  };
+}
+```
+
+**After:**
+```javascript
+// Enhanced parsing using Vision API layout information
+async function _extractReceiptData(ocrResult) {
+  const { text, fullTextAnnotation } = ocrResult;
+  
+  // Extract all text blocks with their bounding boxes
+  const blocks = fullTextAnnotation.pages.flatMap(page => 
+    page.blocks.map(block => ({
+      text: block.paragraphs.flatMap(p => p.words.map(w => 
+        w.symbols.map(s => s.text).join('')
+      )).join(' '),
+      boundingBox: block.boundingBox,
+      confidence: block.confidence
+    }))
+  );
+  
+  // Sort blocks by vertical position (top to bottom)
+  blocks.sort((a, b) => {
+    return a.boundingBox.vertices[0].y - b.boundingBox.vertices[0].y;
+  });
+  
+  // Try to find the merchant name (typically in the first few blocks, larger font)
+  const potentialMerchants = blocks.slice(0, 3)
+    .filter(block => block.text.length > 2)
+    .map(block => block.text.trim());
+  
+  // Filter out common non-merchant headers
+  const merchantFilters = ['receipt', 'invoice', 'ticket', 'order', 'thank you'];
+  const merchant = potentialMerchants.find(text => 
+    !merchantFilters.some(filter => text.toLowerCase().includes(filter))
+  ) || 'Unknown Merchant';
+  
+  // Find date using both position and regex patterns
+  let date = new Date().toISOString();
+  const dateFormats = [
+    // MM/DD/YYYY
+    { regex: /(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/, groups: [2, 1, 3] },
+    // DD/MM/YYYY
+    { regex: /(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/, groups: [1, 2, 3] },
+    // YYYY-MM-DD
+    { regex: /(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/, groups: [3, 2, 1] },
+    // Text dates like "Jan 1, 2023"
+    { regex: /([A-Za-z]{3,9})\s+(\d{1,2})[,\s]+(\d{4})/, isText: true }
+  ];
+  
+  // Find date block - look for blocks containing "date" label or matching date patterns
+  const dateKeywords = ['date', 'issued', 'purchase'];
+  const dateBlock = blocks.find(block => 
+    dateKeywords.some(keyword => block.text.toLowerCase().includes(keyword))
+    || dateFormats.some(format => format.regex.test(block.text))
+  );
+  
+  if (dateBlock) {
+    for (const format of dateFormats) {
+      const match = dateBlock.text.match(format.regex);
+      if (match) {
+        if (format.isText) {
+          // Handle text dates
+          const monthMap = {
+            'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+            'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+          };
+          
+          const monthStr = match[1].toLowerCase().substring(0, 3);
+          const month = monthMap[monthStr];
+          const day = parseInt(match[2], 10);
+          const year = parseInt(match[3], 10);
+          
+          if (month !== undefined && day && year) {
+            date = new Date(year, month, day).toISOString();
+            break;
+          }
+        } else {
+          // Handle numeric dates
+          const [_, g1, g2, g3] = match;
+          const day = parseInt(g1, 10);
+          const month = parseInt(g2, 10) - 1; // Zero-based month
+          let year = parseInt(g3, 10);
+          
+          // Handle 2-digit years
+          if (year < 100) {
+            year = year < 50 ? 2000 + year : 1900 + year;
+          }
+          
+          if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+            const tempDate = new Date(year, month, day);
+            // Validate date is reasonable (not in future, not too far in past)
+            const now = new Date();
+            if (tempDate <= now && tempDate >= new Date(now.getFullYear() - 5, 0, 1)) {
+              date = tempDate.toISOString();
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // Find total using both position and patterns
+  let total = 0;
+  
+  // Total often appears in the bottom section of the receipt
+  const bottomBlocks = blocks.slice(-Math.min(10, blocks.length));
+  const totalKeywords = ['total', 'amount', 'sum', 'balance'];
+  
+  // Try to find a block containing total keyword followed by a number
+  const totalBlock = bottomBlocks.find(block => 
+    totalKeywords.some(keyword => 
+      block.text.toLowerCase().includes(keyword)
+    ) && /\d+\.\d{2}/.test(block.text)
+  );
+  
+  if (totalBlock) {
+    // Extract amount from the total block
+    const totalRegex = /[\$€£]?\s*(\d+[.,]\d{2})/;
+    const match = totalBlock.text.match(totalRegex);
+    if (match) {
+      total = parseFloat(match[1].replace(',', '.'));
+    }
+  }
+  
+  // Extract items using horizontal alignment and price patterns
+  const items = [];
+  
+  // Group blocks that might contain items (middle section of receipt)
+  const potentialItemBlocks = blocks.slice(
+    Math.min(5, Math.floor(blocks.length * 0.2)),
+    Math.max(blocks.length - 5, Math.ceil(blocks.length * 0.8))
+  );
+  
+  // Extract lines that match item patterns
+  // Use alignment to distinguish item descriptions from prices
+  for (const block of potentialItemBlocks) {
+    // Split block into lines
+    const blockLines = block.text.split(/\n|\r/);
+    
+    for (const line of blockLines) {
+      // Various item patterns
+      // 1. Description followed by quantity and price
+      // 2. Description followed by price
+      // 3. Description with price on far right
+      
+      // Try different patterns
+      const patterns = [
+        // Description  Qty  Price
+        /(.+)\s+(\d+)\s+[\$€£]?\s*(\d+[.,]\d{2})/,
+        // Description  Price
+        /(.+)\s+[\$€£]?\s*(\d+[.,]\d{2})$/,
+        // Description @ Unit price
+        /(.+)\s+@\s+[\$€£]?\s*(\d+[

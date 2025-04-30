@@ -1,11 +1,12 @@
-import React, { useState } from 'react';//correct
-import { ReportFilters } from '../../features/analytics/components/reports/ReportFilters';//correct
-import { SpendingChart } from '../../features/analytics/components/SpendingChart';//correct
-import { CategoryBreakdown } from '../../features/analytics/components/CategoryBreakdown';//correct
-import { MonthlyTrends } from '../../features/analytics/components/MonthlyTrends';//correct
-import { useReceipts } from '../../features/receipts/hooks/useReceipts';//correct
-import { Card } from '../../shared/components/ui/Card';//correct
-import { Loading } from '../../shared/components/ui/Loading';//correct
+import React, { useState } from 'react'; //correct
+
+import CategoryBreakdown from '../../features/analytics/components/CategoryBreakdown'; //correct
+import { MonthlyTrends } from '../../features/analytics/components/MonthlyTrends'; //correct
+import { ReportFilters } from '../../features/analytics/components/reports/ReportFilters'; //correct
+import { SpendingChart } from '../../features/analytics/components/SpendingChart'; //correct
+import { useReceipts } from '../../features/receipts/hooks/useReceipts'; //correct
+import { Card } from '../../shared/components/ui/Card'; //correct
+import { Loading } from '../../shared/components/ui/Loading'; //correct
 
 export const ReportsPage = () => {
   const { receipts, loading } = useReceipts();
@@ -13,7 +14,7 @@ export const ReportsPage = () => {
     reportType: 'spending',
     startDate: null,
     endDate: null,
-    category: null
+    category: null,
   });
 
   if (loading) {
@@ -29,11 +30,7 @@ export const ReportsPage = () => {
       case 'trends':
         return <MonthlyTrends data={receipts} />;
       case 'budget':
-        return (
-          <Card title="Budget Progress">
-            {/* Budget progress content */}
-          </Card>
-        );
+        return <Card title="Budget Progress">{/* Budget progress content */}</Card>;
       default:
         return null;
     }
@@ -46,17 +43,17 @@ export const ReportsPage = () => {
       <ReportFilters
         filters={filters}
         onChange={setFilters}
-        onReset={() => setFilters({
-          reportType: 'spending',
-          startDate: null,
-          endDate: null,
-          category: null
-        })}
+        onReset={() =>
+          setFilters({
+            reportType: 'spending',
+            startDate: null,
+            endDate: null,
+            category: null,
+          })
+        }
       />
 
-      <div className="grid gap-6">
-        {renderReport()}
-      </div>
+      <div className="grid gap-6">{renderReport()}</div>
     </div>
   );
 };

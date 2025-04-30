@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';//correct
-import { ReceiptList } from '../../features/receipts/components/ReceiptList';//correct
-import { ReceiptFilters } from '../../features/receipts/components//ReceiptFilters';//correct
+import { Plus } from 'lucide-react'; //correct
+import React, { useState, useEffect } from 'react'; //correct
+
+import { ReceiptFilters } from '../../features/receipts/components//ReceiptFilters'; //correct
+import ReceiptForm from '../../features/receipts/components/ReceiptForm'; //correct
+import ReceiptList from '../../features/receipts/components/ReceiptList'; //correct
 import { ReceiptUploader } from '../../features/receipts/components/ReceiptUploader';
-import { ReceiptForm } from '../../features/receipts/components/ReceiptForm';//correct
-import { Modal } from '../../shared/components/ui/Modal';//correct
-import { Button } from '../../shared/components/forms/Button';//correct
-import { useReceipts } from '../../features/receipts/hooks/useReceipts';//correct
+import { useReceipts } from '../../features/receipts/hooks/useReceipts'; //correct
+import { Button } from '../../shared/components/forms/Button'; //correct
+import { Modal } from '../../shared/components/ui/Modal'; //correct
 import { useToast } from '../../shared/hooks/useToast';
-import { Plus } from 'lucide-react';//correct
 
 export const ReceiptsPage = () => {
   const { receipts, loading, error, fetchReceipts } = useReceipts();
@@ -17,10 +18,10 @@ export const ReceiptsPage = () => {
     search: '',
     dateRange: '',
     category: '',
-    sortBy: 'date_desc'
+    sortBy: 'date_desc',
   });
 
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = newFilters => {
     setFilters(newFilters);
     fetchReceipts(newFilters);
   };
@@ -30,7 +31,7 @@ export const ReceiptsPage = () => {
       search: '',
       dateRange: '',
       category: '',
-      sortBy: 'date_desc'
+      sortBy: 'date_desc',
     });
     fetchReceipts();
   };
@@ -44,10 +45,7 @@ export const ReceiptsPage = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Receipts</h1>
-        <Button
-          onClick={() => setIsFormOpen(true)}
-          icon={Plus}
-        >
+        <Button onClick={() => setIsFormOpen(true)} icon={Plus}>
           Add Receipt
         </Button>
       </div>
@@ -60,21 +58,13 @@ export const ReceiptsPage = () => {
         onReset={handleResetFilters}
       />
 
-      <ReceiptList
-        receipts={receipts}
-        loading={loading}
-        error={error}
-      />
+      <ReceiptList receipts={receipts} loading={loading} error={error} />
 
-      <Modal
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        title="Add Receipt"
-      >
+      <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title="Add Receipt">
         <ReceiptForm
-          onSubmit={async (data) => {
+          addReceipt={useReceipts().addReceipt}
+          onSubmit={async data => {
             try {
-              await addReceipt(data);
               showToast('Receipt added successfully', 'success');
               setIsFormOpen(false);
               fetchReceipts(filters);

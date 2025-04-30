@@ -1,11 +1,12 @@
-import { auth } from '../../../core/config/firebase';//correct
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   signOut,
-  updateProfile
-} from 'firebase/auth';//correct
+  updateProfile,
+} from 'firebase/auth'; //correct
+
+import { auth } from '../../../core/config/firebase'; //correct
 
 export const authApi = {
   login: async (email, password) => {
@@ -27,7 +28,7 @@ export const authApi = {
     }
   },
 
-  resetPassword: async (email) => {
+  resetPassword: async email => {
     try {
       await sendPasswordResetEmail(auth, email);
     } catch (error) {
@@ -49,5 +50,5 @@ export const authApi = {
     } catch (error) {
       throw new Error(error.message);
     }
-  }
+  },
 };

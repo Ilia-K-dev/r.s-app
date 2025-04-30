@@ -1,4 +1,5 @@
-const {onFinalize} = require("firebase-functions/v2/storage");
+const { StorageObjectData, getStorage } = require('firebase-admin/storage');
+const { onObjectFinalized, CloudEvent } = require('firebase-functions/v2/storage');
 const {onCall} = require("firebase-functions/v2/https"); // Corrected this line
 const vision = require("@google-cloud/vision");
 const admin = require("firebase-admin");

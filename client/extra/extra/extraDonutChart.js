@@ -1,10 +1,30 @@
 import React, { useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
-import { generateChartColors } from '../../../utils/chartHelpers';
-import { formatCurrency } from '../../src/shared/utils/currency';
+import { generateChartColors } from '../../../utils/chartHelpers'; // Assuming this utility exists
+import { formatCurrency } from '../../src/shared/utils/currency'; // Assuming this utility exists
 
 const RADIAN = Math.PI / 180;
 
+/**
+ * @typedef {object} DonutChartProps
+ * @property {Array<object>} [data=[]] - The data for the chart. Each object should have a name and value key.
+ * @property {string} [nameKey='name'] - The key in the data objects that represents the name/label.
+ * @property {string} [valueKey='value'] - The key in the data objects that represents the value.
+ * @property {string[]} [colors=[]] - Optional array of custom colors for the chart segments. If not provided, colors will be generated.
+ * @property {string|number} [innerRadius='60%'] - The inner radius of the donut chart. Can be a number or a percentage string.
+ * @property {string|number} [outerRadius='80%'] - The outer radius of the donut chart. Can be a number or a percentage string.
+ * @property {boolean} [showLegend=true] - Whether to display the legend.
+ * @property {boolean} [showTooltip=true] - Whether to display the tooltip on hover.
+ * @property {boolean} [showLabels=true] - Whether to display percentage labels on the segments.
+ * @property {number} [height=400] - The height of the chart container.
+ */
+
+/**
+ * @desc A reusable Donut Chart component using Recharts.
+ * Displays data as a donut chart with customizable options for appearance, legend, tooltip, and labels.
+ * @param {DonutChartProps} props - The component props.
+ * @returns {JSX.Element} - The rendered DonutChart component.
+ */
 const DonutChart = ({
   data = [],
   nameKey = 'name',
@@ -20,6 +40,7 @@ const DonutChart = ({
   // Generate colors if not provided
   const chartColors = useMemo(() => {
     if (colors.length >= data.length) return colors;
+    // Assuming generateChartColors utility exists and returns an array of colors
     return generateChartColors(data.length);
   }, [colors, data.length]);
 
@@ -37,6 +58,11 @@ const DonutChart = ({
   }, [formattedData]);
 
   // Custom label for the segments
+  /**
+   * @desc Renders custom percentage labels on the donut chart segments.
+   * @param {object} props - Props provided by Recharts.
+   * @returns {JSX.Element|null} - The rendered text element or null.
+   */
   const renderCustomizedLabel = ({
     cx,
     cy,
@@ -51,6 +77,7 @@ const DonutChart = ({
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
+    // Only show labels for segments larger than 5%
     return percent > 0.05 ? (
       <text
         x={x}
@@ -66,10 +93,16 @@ const DonutChart = ({
   };
 
   // Custom tooltip
+  /**
+   * @desc Renders a custom tooltip for the donut chart segments on hover.
+   * @param {object} props - Props provided by Recharts.
+   * @returns {JSX.Element|null} - The rendered tooltip element or null.
+   */
   const CustomTooltip = ({ active, payload }) => {
     if (!active || !payload || !payload.length) return null;
 
     const data = payload[0].payload;
+    // Assuming formatCurrency utility exists
     return (
       <div className="bg-white p-3 rounded-lg shadow-lg border">
         <p className="font-medium text-gray-900">{data.name}</p>
@@ -82,6 +115,11 @@ const DonutChart = ({
   };
 
   // Custom legend
+  /**
+   * @desc Renders a custom legend for the donut chart.
+   * @param {object} props - Props provided by Recharts.
+   * @returns {JSX.Element|null} - The rendered legend element or null.
+   */
   const CustomLegend = ({ payload }) => {
     if (!showLegend) return null;
 

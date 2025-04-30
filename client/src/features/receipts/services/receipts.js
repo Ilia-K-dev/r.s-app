@@ -1,197 +1,138 @@
-import { db, storage } from '../../../core/config/firebase';//correct
-import { 
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  getDoc,
-  startAfter,
-  limit
-} from 'firebase/firestore';//correct
-import { 
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject
-} from 'firebase/storage';//correct
+import api from '../../../shared/services/api'; // Assuming shared API service
+import axios from 'axios'; // Import axios for direct use in createReceipt/updateReceipt if needed for FormData
+import { auth } from '../../../core/config/firebase'; // Assuming Firebase auth for token
 
-const COLLECTION_NAME = 'receipts';
-const RECEIPTS_PER_PAGE = 10;
+const API_BASE_PATH = '/api/receipts';
+
+// Get authentication token (can be moved to a shared utility if used elsewhere)
+const getAuthToken = async () => {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+  return await user.getIdToken();
+};
+
 
 export const receiptApi = {
-  // Create new receipt
+  /**
+   * Uploads a new receipt.
+   * @param {object} receiptData - The form data for the receipt (excluding image file).
+   * @param {File} [imageFile] - The image file to upload.
+   * @returns {Promise<object>} - The API response data.
+   */
   createReceipt: async (receiptData, imageFile = null) => {
-    try {
-      let imageUrl = null;
-      if (imageFile) {
-        const storageRef = ref(storage, `receipts/${Date.now()}_${imageFile.name}`);
-        await uploadBytes(storageRef, imageFile);
-        imageUrl = await getDownloadURL(storageRef);
-      }
+    const token = await getAuthToken();
 
-      const docRef = await addDoc(collection(db, COLLECTION_NAME), {
-        ...receiptData,
-        imageUrl,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+    if (imageFile) {
+      const formData = new FormData();
+      formData.append('document', imageFile); // 'document' should match the field name in server upload middleware
+      formData.append('data', JSON.stringify(receiptData)); // Add receipt data as JSON field
+      formData.append('documentType', 'receipt'); // Specify document type
+
+      const response = await api.post(`${API_BASE_PATH}/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
+        }
       });
-
-      return {
-        id: docRef.id,
-        ...receiptData,
-        imageUrl
-      };
-    } catch (error) {
-      throw new Error('Failed to create receipt: ' + error.message);
+      return response.data;
+    } else {
+      // No image, just send JSON data (if server supports creating receipt without image)
+      const response = await api.post(API_BASE_PATH, receiptData, {
+         headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      return response.data;
     }
   },
 
-  // Get receipts with pagination and filters
-  getReceipts: async ({ 
-    userId,
-    startDate = null,
-    endDate = null,
-    category = null,
-    page = 1,
-    lastDoc = null
-  }) => {
+  /**
+   * Fetches receipts with filtering and pagination.
+   * @param {object} [options] - Options for filtering and pagination (category, dateRange, limit, startAfter, etc.).
+   * @returns {Promise<object>} - Paginated list of receipts and pagination info.
+   */
+  getReceipts: async (options = {}) => {
     try {
-      let q = query(
-        collection(db, COLLECTION_NAME),
-        where('userId', '==', userId),
-        orderBy('date', 'desc')
-      );
-
-      if (startDate) {
-        q = query(q, where('date', '>=', startDate));
-      }
-      if (endDate) {
-        q = query(q, where('date', '<=', endDate));
-      }
-      if (category) {
-        q = query(q, where('category', '==', category));
-      }
-
-      if (lastDoc) {
-        q = query(q, startAfter(lastDoc));
-      }
-
-      q = query(q, limit(RECEIPTS_PER_PAGE));
-
-      const snapshot = await getDocs(q);
-      const lastVisible = snapshot.docs[snapshot.docs.length - 1];
-      
-      const receipts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      return {
-        receipts,
-        lastDoc: lastVisible,
-        hasMore: receipts.length === RECEIPTS_PER_PAGE
-      };
+      // Pass filters and pagination options as query parameters
+      const response = await api.get(API_BASE_PATH, {
+        params: {
+          ...options
+        }
+      });
+      return response.data; // Assuming response.data contains { receipts: [...], pagination: {...} }
     } catch (error) {
-      throw new Error('Failed to fetch receipts: ' + error.message);
+      // The API interceptor should have already processed and logged the error
+      throw error; // Re-throw the error caught by the interceptor
     }
   },
 
-  // Get single receipt by ID
-  getReceiptById: async (receiptId) => {
-    try {
-      const docRef = doc(db, COLLECTION_NAME, receiptId);
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        throw new Error('Receipt not found');
-      }
-
-      return {
-        id: docSnap.id,
-        ...docSnap.data()
-      };
-    } catch (error) {
-      throw new Error('Failed to fetch receipt: ' + error.message);
-    }
+  /**
+   * Gets a single receipt by ID.
+   * @param {string} id - The ID of the receipt.
+   * @returns {Promise<object>} - The receipt data.
+   */
+  getReceiptById: async (id) => {
+    const response = await api.get(`${API_BASE_PATH}/${id}`);
+    return response.data;
   },
 
-  // Update receipt
+  /**
+   * Updates an existing receipt.
+   * @param {string} receiptId - The ID of the receipt to update.
+   * @param {object} updateData - The update data for the receipt (excluding new image file).
+   * @param {File} [newImageFile] - A new image file to upload for the receipt.
+   * @returns {Promise<object>} - The API response data.
+   */
   updateReceipt: async (receiptId, updateData, newImageFile = null) => {
-    try {
-      const docRef = doc(db, COLLECTION_NAME, receiptId);
-      const receipt = await getDoc(docRef);
+    const token = await getAuthToken();
 
-      if (!receipt.exists()) {
-        throw new Error('Receipt not found');
-      }
+    if (newImageFile) {
+      const formData = new FormData();
+      formData.append('document', newImageFile); // 'document' should match the field name in server upload middleware
+      formData.append('data', JSON.stringify(updateData)); // Add receipt data as JSON field
+      formData.append('documentType', 'receipt'); // Specify document type
 
-      let imageUrl = updateData.imageUrl;
-
-      // Handle image update
-      if (newImageFile) {
-        // Delete old image if exists
-        if (receipt.data().imageUrl) {
-          const oldImageRef = ref(storage, receipt.data().imageUrl);
-          try {
-            await deleteObject(oldImageRef);
-          } catch (error) {
-            console.warn('Failed to delete old image:', error);
-          }
+      const response = await api.put(`${API_BASE_PATH}/${receiptId}/upload`, formData, {
+         headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
         }
-
-        // Upload new image
-        const storageRef = ref(storage, `receipts/${Date.now()}_${newImageFile.name}`);
-        await uploadBytes(storageRef, newImageFile);
-        imageUrl = await getDownloadURL(storageRef);
-      }
-
-      const updates = {
-        ...updateData,
-        imageUrl,
-        updatedAt: new Date().toISOString()
-      };
-
-      await updateDoc(docRef, updates);
-
-      return {
-        id: receiptId,
-        ...updates
-      };
-    } catch (error) {
-      throw new Error('Failed to update receipt: ' + error.message);
+      });
+      return response.data;
+    } else {
+      // No new image, just send JSON data
+      const response = await api.put(`${API_BASE_PATH}/${receiptId}`, updateData, {
+         headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      return response.data;
     }
   },
 
-  // Delete receipt
+  /**
+   * Deletes a receipt by ID.
+   * @param {string} receiptId - The ID of the receipt to delete.
+   * @returns {Promise<object>} - The API response data.
+   */
   deleteReceipt: async (receiptId) => {
-    try {
-      const docRef = doc(db, COLLECTION_NAME, receiptId);
-      const receipt = await getDoc(docRef);
+    const response = await api.delete(`${API_BASE_PATH}/${receiptId}`);
+    return response.data;
+  },
 
-      if (!receipt.exists()) {
-        throw new Error('Receipt not found');
-      }
-
-      // Delete image if exists
-      if (receipt.data().imageUrl) {
-        const imageRef = ref(storage, receipt.data().imageUrl);
-        try {
-          await deleteObject(imageRef);
-        } catch (error) {
-          console.warn('Failed to delete image:', error);
-        }
-      }
-
-      await deleteDoc(docRef);
-      return true;
-    } catch (error) {
-      throw new Error('Failed to delete receipt: ' + error.message);
-    }
+  /**
+   * Submits corrected data for a receipt.
+   * @param {string} receiptId - The ID of the receipt to correct.
+   * @param {object} correctedData - The corrected data.
+   * @returns {Promise<object>} - The API response data.
+   */
+  correctReceipt: async (receiptId, correctedData) => {
+    const response = await api.put(`${API_BASE_PATH}/correct/${receiptId}`, correctedData);
+    return response.data;
   }
 };
 

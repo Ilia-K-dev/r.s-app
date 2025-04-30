@@ -1,0 +1,195 @@
+# Receipt Scanner Application: Core Features Implementation
+
+## 1. Document Scanning and OCR
+
+### Implementation Details
+
+- **Client-Side Capture**
+  - `BaseDocumentHandler.js`: Core UI for document capture with preview and controls
+  - `DocumentScanner.js` & `ReceiptScanner.js`: Specialized components for documents/receipts
+  - `useCamera.js`: Hook for camera access with rear camera preference
+  - `useDocumentScanner.js`: Hook orchestrating the document processing workflow
+  - `FileUploader.js`: Drag-and-drop interface for file uploads
+
+- **Server-Side Processing**
+  - `preprocessing.js`: Uses Sharp for advanced image optimization:
+    - Noise reduction (median, blur, sharpen)
+    - Rotation correction (metadata orientation, skew correction)
+    - Color optimization (grayscale, thresholding, contrast)
+  - `DocumentProcessingService.js`: Orchestrates the processing pipeline:
+    1. Image optimization
+    2. Firebase Storage upload 
+    3. OCR via Google Cloud Vision API
+    4. Document classification
+    5. Text parsing based on document type
+  - `documentClassifier.js`: Classifies documents (receipt, invoice, warranty) using keyword patterns
+  
+- **OCR and Text Extraction**
+  - Google Cloud Vision API for text detection
+  - Returns full text and detailed annotations (blocks, words, symbols, bounding boxes)
+  - Confidence scores stored but not heavily utilized in parsing logic
+  
+- **Text Parsing Logic**
+  - Regex-based extraction for key fields:
+    - Vendor/store name
+    - Date
+    - Total amount
+    - Tax
+    - Payment method
+    - Items (name, quantity, price)
+  - Layout analysis (`_analyzeLayout`, `_detectColumns`, `_detectTables`) exists but not fully utilized
+
+### Issues and Limitations
+
+- **Multiple Processing Workflows**: Redundant implementations create confusion:
+  - Server-side `DocumentProcessingService` vs `ReceiptProcessingService` vs `visionService`
+  - Client-side `documentProcessingService` vs `ocr` vs `visionService`
+  
+- **Client-Side Database Access**: Some client services perform direct Firestore writes
+  
+- **Regex-Heavy Parsing**: Reliance on regular expressions makes parsing brittle when receipt formats vary
+  
+- **Underutilized OCR Features**: Limited use of bounding box data and layout information that could improve accuracy
+
+## 2. Receipt Management
+
+### Implementation Details
+
+- **Data Structure**
+  - `Receipt` model includes:
+    - Core fields: vendor, date, total, tax, category
+    - Items array: name, quantity, price, category
+    - Image URL and original OCR text
+    - Metadata: confidence, processing details
+  - Stored in Firestore `receipts` collection
+
+- **Client-Side Components**
+  - `ReceiptList.js`: Paginated display of receipt summaries
+  - `ReceiptCard.js`: Individual receipt summary with key details
+  - `ReceiptDetail.js`: Full receipt view with items breakdown
+  - `ReceiptForm.js`: Form for manual creation/editing with validation
+  - `ReceiptFilters.js`: UI for filtering by date, merchant, category
+  - `ReceiptUploader.js`: Interface for file uploads
+  
+- **Server-Side Implementation**
+  - API endpoints (`receiptRoutes.js`) for CRUD operations
+  - Receipt validation middleware
+  - `receiptController.js` for handling API requests
+  - `ReceiptProcessingService.js` for text parsing and receipt handling
+
+- **Filtering and Search**
+  - Client-side filtering via `ReceiptFilters` component
+  - Server-side query support for date range, category, vendor, amount
+
+### Issues and Limitations
+
+- **Direct Database Access**: Client components bypass server API, directly querying and modifying Firestore
+- **Redundant Logic**: Parsing and business logic duplicated between client and server
+- **Model Ambiguity**: Unclear relationship between `Document` and `Receipt` models
+
+## 3. Inventory Tracking
+
+### Implementation Details
+
+- **Data Models**
+  - `Product.js`: Core product definition (name, SKU, price, category, thresholds)
+  - `Inventory.js`: Stock levels for products at locations
+  - `StockMovement.js`: History of stock changes (add, subtract, adjust, transfer)
+  - `InventoryAlert.js`: Alerts triggered by stock conditions
+
+- **Client Components**
+  - `InventoryList.js`: Tabular view of inventory items
+  - `InventoryItem.js`: Individual item with quantity adjustment controls
+  - `StockAlerts.js`: Displays warnings for low stock items
+  - `StockManager.js`: Form for adding new inventory items
+
+- **Server Implementation**
+  - API endpoints for CRUD and stock operations
+  - `InventoryManagementService.js`: Handles stock updates, checks thresholds, creates alerts
+  - `stockTrackingService.js`: Records movements, handles audits
+
+- **Stock Logic**
+  - Maintains current stock levels
+  - Records all stock movements for history
+  - Calculates stock status based on thresholds
+  - Generates alerts when stock drops below thresholds
+
+### Issues and Limitations
+
+- **Service Redundancy**: Overlap between `InventoryManagementService` and `stockTrackingService`
+- **Direct Client DB Access**: Client components modify Firestore directly, bypassing server-side movement tracking
+- **Model Confusion**: Unclear separation between `Product` and `Inventory` models
+- **Inconsistent Movement Recording**: Client-side stock updates don't consistently create StockMovement records
+
+## 4. Analytics and Reporting
+
+### Implementation Details
+
+- **Visualization Components**
+  - Chart components using `recharts`:
+    - `SpendingChart.js`: Line chart for daily spending
+    - `CategoryBreakdown.js`: Pie chart for spending by category
+    - `SpendingTrends.js`: Aggregated spending trends
+    - `BudgetProgress.js`: Progress bars for category budgets
+    - `PredictiveCharts.js`: Various forecast visualizations
+  - Dashboard components:
+    - `DashboardStats.js`: Key metrics summary
+    - `SpendingSummary.js`: Combined charts and statistics
+    - `RecentReceipts.js`: Latest transactions
+
+- **Data Services**
+  - Client-side:
+    - `useAnalytics.js`: Hook for fetching analytics data
+    - `useReports.js`: Hook for report management with caching
+    - `analyticsCalculations.js`: Client-side calculation utilities
+  - Server-side:
+    - `analyticsService.js`: Complex calculations with caching
+    - `reportService.js`: Specific report generation
+
+- **Types of Insights**
+  - Spending: totals, trends, category breakdown, forecasts
+  - Inventory: value, status, turnover rates, stock predictions
+  - Budget: progress against category budgets, alerts
+  - Pricing: history, volatility, vendor comparisons
+  
+- **Export & Filter Capabilities**
+  - API endpoint for data export (CSV/PDF)
+  - Filtering by date, category, custom metrics
+
+### Issues and Limitations
+
+- **Client-Side Aggregation**: Many analytics calculations performed client-side after fetching large datasets
+- **Redundant Logic**: Analytics logic duplicated between client and server services
+- **Basic Caching**: Server-side uses simple in-memory caching
+- **Performance Concerns**: Heavy client-side processing for large datasets
+
+## 5. Authentication System
+
+### Implementation Details
+
+- **Authentication Methods**
+  - Email/password authentication via Firebase Auth
+  - Password reset functionality
+
+- **Client Components**
+  - `LoginPage.js`, `RegisterPage.js`, `ForgotPasswordPage.js`
+  - `AuthContext.js`: Global authentication state
+  - `AuthGuard.js`: Route protection component
+  - `useAuth.js`: Hook for authentication operations
+
+- **Server Implementation**
+  - `authenticateUser` middleware: Verifies Firebase ID tokens
+  - `authController.js`: Handles registration, login, token verification
+  - `AuthenticationService.js`: User management operations
+
+- **Token Strategy**
+  - Client obtains ID tokens from Firebase Auth
+  - Tokens attached to API requests as `Authorization: Bearer {token}`
+  - Server verifies tokens using Firebase Admin SDK
+
+### Issues and Limitations
+
+- **Custom Token Confusion**: Server generates custom tokens alongside standard ID tokens
+- **Redundant Registration**: Client and server both create users
+- **Insecure Login Endpoint**: Server `/login` doesn't verify passwords
+- **Limited Input Validation**: Basic validation without strict format/complexity checks

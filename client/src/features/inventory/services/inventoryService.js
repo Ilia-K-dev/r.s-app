@@ -1,120 +1,104 @@
-import { db } from '../../../core/config/firebase';//correct
-import { 
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  orderBy,
-  serverTimestamp
-} from 'firebase/firestore';//correct
+import { api } from '../../../shared/services/api'; // Use shared API helper
+import { logger } from '../../../shared/utils/logger'; // Assuming logger exists
+
+// Base path for inventory API endpoints
+const API_BASE_PATH = '/inventory';
 
 export const inventoryService = {
-  async getInventory(userId) {
-    try {
-      const inventoryRef = collection(db, 'inventory');
-      const q = query(
-        inventoryRef, 
-        where('userId', '==', userId),
-        orderBy('name', 'asc')
-      );
-
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-    } catch (error) {
-      console.error('Error fetching inventory:', error);
-      throw new Error('Failed to fetch inventory');
-    }
+  /**
+   * Fetches the user's inventory items from the backend.
+   * @param {string} userId - The user's ID (Backend should verify against authenticated user).
+   * @param {object} filters - Optional filters (e.g., search term, category).
+   * @returns {Promise<Array>} - A promise that resolves to an array of inventory items.
+   */
+  async getInventory(userId, filters = {}) {
+    // Filters would be passed as query parameters
+    const response = await api.get(API_BASE_PATH, { params: { userId, ...filters } });
+    return response.data; // Assuming backend returns the array directly
   },
 
+  /**
+   * Adds a new inventory item via the backend API.
+   * @param {string} userId - The user's ID (Backend should verify).
+   * @param {object} itemData - The data for the new item.
+   * @returns {Promise<object>} - A promise that resolves to the newly created item.
+   */
   async addItem(userId, itemData) {
-    try {
-      const inventoryRef = collection(db, 'inventory');
-      const newItem = {
-        ...itemData,
-        userId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-
-      const docRef = await addDoc(inventoryRef, newItem);
-      return {
-        id: docRef.id,
-        ...newItem
-      };
-    } catch (error) {
-      console.error('Error adding inventory item:', error);
-      throw new Error('Failed to add inventory item');
-    }
+    // userId might be redundant if backend uses auth token, but include if API expects it
+    const response = await api.post(API_BASE_PATH, { ...itemData, userId });
+    return response.data; // Assuming backend returns the created item with ID
   },
 
+  /**
+   * Updates an existing inventory item via the backend API.
+   * @param {string} itemId - The ID of the item to update.
+   * @param {object} updateData - The data to update.
+   * @returns {Promise<object>} - A promise that resolves to the updated item data.
+   */
   async updateItem(itemId, updateData) {
-    try {
-      const itemRef = doc(db, 'inventory', itemId);
-      const updates = {
-        ...updateData,
-        updatedAt: serverTimestamp()
-      };
-
-      await updateDoc(itemRef, updates);
-      return {
-        id: itemId,
-        ...updates
-      };
-    } catch (error) {
-      console.error('Error updating inventory item:', error);
-      throw new Error('Failed to update inventory item');
-    }
+    const response = await api.put(`${API_BASE_PATH}/${itemId}`, updateData);
+    return response.data; // Assuming backend returns the updated item
   },
 
+  /**
+   * Deletes an inventory item via the backend API.
+   * @param {string} itemId - The ID of the item to delete.
+   * @returns {Promise<boolean>} - A promise that resolves to true if successful.
+   */
   async deleteItem(itemId) {
-    try {
-      const itemRef = doc(db, 'inventory', itemId);
-      await deleteDoc(itemRef);
-      return true;
-    } catch (error) {
-      console.error('Error deleting inventory item:', error);
-      throw new Error('Failed to delete inventory item');
-    }
+    await api.delete(`${API_BASE_PATH}/${itemId}`);
+    return true;
   },
 
+  /**
+   * Updates the stock quantity of an item via the backend API.
+   * @param {string} itemId - The ID of the item.
+   * @param {number} quantity - The new quantity.
+   * @returns {Promise<boolean>} - A promise that resolves to true if successful.
+   */
   async updateStock(itemId, quantity) {
-    try {
-      const itemRef = doc(db, 'inventory', itemId);
-      await updateDoc(itemRef, {
-        quantity,
-        updatedAt: serverTimestamp()
-      });
-      return true;
-    } catch (error) {
-      console.error('Error updating stock:', error);
-      throw new Error('Failed to update stock');
-    }
+    // Assuming a dedicated endpoint for stock updates
+    await api.put(`${API_BASE_PATH}/${itemId}/stock`, { quantity });
+    return true;
   },
 
+  /**
+   * Checks for low stock items via the backend API.
+   * @param {string} userId - The user's ID (Backend should verify).
+   * @returns {Promise<Array>} - A promise that resolves to an array of low stock items.
+   */
   async checkLowStock(userId) {
-    try {
-      const inventoryRef = collection(db, 'inventory');
-      const q = query(
-        inventoryRef,
-        where('userId', '==', userId),
-        where('quantity', '<=', 0) // Adjust based on your stock logic
-      );
+    // Assuming an endpoint for low stock checks
+    const response = await api.get(`${API_BASE_PATH}/low-stock`, { params: { userId } });
+    return response.data;
+  },
 
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-    } catch (error) {
-      console.error('Error checking low stock:', error);
-      throw new Error('Failed to check low stock');
-    }
-  }
+  /**
+   * Fetches stock movement history for an item via the backend API.
+   * @param {string} itemId - The ID of the item.
+   * @returns {Promise<Array>} - A promise that resolves to an array of stock movements.
+   */
+  async getStockMovements(itemId) {
+    const response = await api.get(`${API_BASE_PATH}/${itemId}/movements`);
+    return response.data;
+  },
+
+  /**
+   * Adds a stock movement record via the backend API.
+   * @param {string} itemId - The ID of the item.
+   * @param {number} quantity - The quantity changed.
+   * @param {string} type - The type of movement (e.g., 'purchase', 'sale', 'adjustment').
+   * @param {string} reason - Optional reason for the movement.
+   * @returns {Promise<object>} - A promise that resolves to the created stock movement record.
+   */
+  async addStockMovement(itemId, quantity, type, reason) {
+    // Assuming a dedicated endpoint for adding movements
+    const response = await api.post(`${API_BASE_PATH}/movements`, {
+      itemId,
+      quantity,
+      movementType: type,
+      reason,
+    });
+    return response.data; // Assuming backend returns the created movement
+  },
 };

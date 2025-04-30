@@ -1,11 +1,89 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /receipts/{userId}/{fileName} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId
-                  && request.resource.size < 5 * 1024 * 1024
-                  && request.resource.contentType.matches('image/.*');
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
     }
+
+    // Helper function to check if the requesting user matches the userId in the path
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // --- User-Specific Paths ---
+
+    // Profile Images: Allow users to read/write their own profile images.
+    // Path: /profiles/{userId}/{fileName}
+    match /profiles/{userId}/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+                   // Validate file size (e.g., max 2MB)
+                   && request.resource.size < 2 * 1024 * 1024
+                   // Validate content type (allow common image types)
+                   && request.resource.contentType.matches('image/(jpeg|png|gif|webp)');
+      // Delete implicitly allowed under write conditions.
+    }
+
+    // General Documents (including Receipts if not separated): Allow users to manage their own documents.
+    // Path: /documents/{userId}/{fileName}
+    match /documents/{userId}/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+                   // Validate file size (e.g., max 10MB)
+                   && request.resource.size < 10 * 1024 * 1024
+                   // Validate content type (allow common image types and PDF)
+                   && request.resource.contentType.matches('image/(jpeg|png|gif|webp)|application/pdf');
+      // Delete implicitly allowed under write conditions.
+    }
+    
+    // Specific Receipt Images (If keeping separate from documents): Allow users to manage their own receipt images.
+    // Path: /receipts/{userId}/{fileName} 
+    // Consider merging into /documents/{userId}/{fileName} and using metadata for type.
+    match /receipts/{userId}/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+                   // Validate file size (e.g., max 5MB) - potentially different from general docs
+                   && request.resource.size < 5 * 1024 * 1024 
+                   // Validate content type (allow common image types)
+                   && request.resource.contentType.matches('image/(jpeg|png|gif|webp)');
+       // Delete implicitly allowed under write conditions.
+    }
+
+    // Inventory Item Images: Allow users to manage images associated with their inventory items.
+    // Path: /inventory/{userId}/{productId}/images/{imageId}
+    match /inventory/{userId}/{productId}/images/{imageId} {
+       // Need to verify ownership based on the inventory item document in Firestore.
+       // This requires a function to read Firestore data.
+       // function isInventoryOwner(userId, productId) {
+       //   return exists(/databases/$(database)/documents/inventory/$(productId)) &&
+       //          get(/databases/$(database)/documents/inventory/$(productId)).data.userId == userId;
+       // }
+       // allow read, write: if isAuthenticated() && isInventoryOwner(userId, productId) // Requires Firestore read permission
+       
+       // Simplified rule (less secure, relies on path userId):
+       allow read: if isOwner(userId); 
+       allow write: if isOwner(userId)
+                    // Validate file size (e.g., max 3MB)
+                    && request.resource.size < 3 * 1024 * 1024
+                    // Validate content type (allow common image types)
+                    && request.resource.contentType.matches('image/(jpeg|png|gif|webp)');
+       // Delete implicitly allowed under write conditions.
+    }
+
+    // Data Exports: Allow users to read/write their own exported data files.
+    // Path: /exports/{userId}/{fileName}
+    match /exports/{userId}/{fileName} {
+      allow read: if isOwner(userId);
+      // Write access should likely be restricted to backend/functions only.
+      allow write: if false; 
+      // Allow delete by owner? Or only backend?
+      allow delete: if isOwner(userId); 
+    }
+
+    // --- Removed Redundant/Old Paths ---
+    // match /users/{userId}/profile_image { ... } // Replaced by /profiles/{userId}/{fileName}
+
   }
 }
