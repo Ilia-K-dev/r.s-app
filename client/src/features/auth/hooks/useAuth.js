@@ -1,14 +1,15 @@
-import { useContext, useState, useEffect } from 'react';//correct
-import { AuthContext } from '../../../core/contexts/AuthContext';//correct
-import { auth } from '../../../core/config/firebase';//correct
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
-  updateProfile
-} from 'firebase/auth';//correct
-import { useToast } from '../../../shared/hooks/useToast';//correct'
+  updateProfile,
+} from 'firebase/auth'; //correct
+import { useContext, useState, useEffect } from 'react'; //correct
+
+import { auth } from '../../../core/config/firebase'; //correct
+import { useAuth as useAuthContext, AuthProvider, AuthContext } from '../../../core/contexts/AuthContext'; //correct
+import { useToast } from '../../../shared/hooks/useToast'; //correct'
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -97,7 +98,7 @@ export const useAuth = () => {
     }
   };
 
-  const resetPassword = async (email) => {
+  const resetPassword = async email => {
     setLoading(true);
     try {
       await sendPasswordResetEmail(auth, email);
@@ -121,7 +122,7 @@ export const useAuth = () => {
     }
   };
 
-  const updateUserProfile = async (data) => {
+  const updateUserProfile = async data => {
     setLoading(true);
     try {
       await updateProfile(auth.currentUser, data);
@@ -142,7 +143,7 @@ export const useAuth = () => {
     register,
     logout,
     resetPassword,
-    updateUserProfile
+    updateUserProfile,
   };
 };
 

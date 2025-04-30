@@ -1,213 +1,144 @@
-import React, { useState, useEffect } from 'react';//correct
-import { Card } from '../../../shared/components/ui/Card';//correct
-import { Switch } from '../../../shared/components/forms/Switch';//correct
-import { Button } from '../../../shared/components/forms/Button';//correct
-import { Input } from '../../../shared/components/forms/Input';//correct
-import { Alert } from '../../../shared/components/ui/Alert';//correct
-import { useSettings } from '../hooks/useSettings';//correct
-import { useToast } from '../../../shared/hooks/useToast';//correct
-import { 
-  Bell, 
-  Mail, 
-  MessageSquare, 
-  Receipt, 
-  PieChart, 
-  AlertTriangle,
-  Save
-} from 'lucide-react';//correct
+import React, { useState, useEffect } from 'react';
+import { Card } from '../../../shared/components/ui/Card';
+import { Button } from '../../../shared/components/forms/Button';
+import { Switch } from '../../../shared/components/forms/Switch';
+import { Alert } from '../../../shared/components/ui/Alert';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { useToast } from '../../../shared/hooks/useToast';
+import { Save, Bell } from 'lucide-react';
 
-const NotificationSettings = () => {
-  const { settings, updateSettings, loading, error } = useSettings();
+export const NotificationSettings = () => {
+  const { user } = useAuth();
   const { showToast } = useToast();
-  const [localSettings, setLocalSettings] = useState({
-    notifications: {
-      email: true,
-      push: false,
-      receiptUploads: true,
-      monthlyReports: true,
-      budgetAlerts: true,
-      threshold: 80
-    }
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  
+  const [preferences, setPreferences] = useState({
+    emailNotifications: false,
+    pushNotifications: false,
+    receiptProcessed: true,
+    monthlyReports: true,
+    lowStockAlerts: true
   });
-
-  // Initialize local settings from global settings
+  
   useEffect(() => {
-    if (settings?.notifications) {
-      setLocalSettings(prev => ({
-        ...prev,
-        notifications: {
-          ...prev.notifications,
-          ...settings.notifications
-        }
-      }));
+    const fetchNotificationPreferences = async () => {
+      // In a real app, fetch user preferences from the backend
+      // For this example, we'll use dummy data
+      setPreferences({
+        emailNotifications: true,
+        pushNotifications: false,
+        receiptProcessed: true,
+        monthlyReports: true,
+        lowStockAlerts: true
+      });
+    };
+    
+    if (user) {
+      fetchNotificationPreferences();
     }
-  }, [settings]);
-
-  const handleToggle = (key) => {
-    setLocalSettings(prev => ({
-      notifications: {
-        ...prev.notifications,
-        [key]: !prev.notifications[key]
-      }
-    }));
-  };
-
-  const handleThresholdChange = (e) => {
-    const value = parseInt(e.target.value) || 0;
-    setLocalSettings(prev => ({
-      notifications: {
-        ...prev.notifications,
-        threshold: Math.min(100, Math.max(0, value))
-      }
-    }));
-  };
-
-  const handleSave = async () => {
+  }, [user]);
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+    
     try {
-      await updateSettings(localSettings, 'notifications');
-      showToast('Notification settings updated successfully', 'success');
+      // In a real app, save preferences to the backend
+      // For now, we'll just simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setSuccess(true);
+      showToast('Notification settings updated', 'success');
     } catch (err) {
+      setError('Failed to update notification settings');
       showToast('Failed to update notification settings', 'error');
+    } finally {
+      setLoading(false);
     }
   };
-
-  const notificationTypes = [
-    {
-      id: 'email',
-      title: 'Email Notifications',
-      description: 'Receive notifications via email',
-      icon: Mail
-    },
-    {
-      id: 'push',
-      title: 'Push Notifications',
-      description: 'Receive notifications on your device',
-      icon: Bell
-    },
-    {
-      id: 'receiptUploads',
-      title: 'Receipt Processing',
-      description: 'Get notified when receipts are processed',
-      icon: Receipt
-    },
-    {
-      id: 'monthlyReports',
-      title: 'Monthly Reports',
-      description: 'Receive monthly spending summaries',
-      icon: PieChart
-    },
-    {
-      id: 'budgetAlerts',
-      title: 'Budget Alerts',
-      description: 'Get alerts when approaching category budgets',
-      icon: AlertTriangle
-    }
-  ];
-
+  
   return (
-    <Card>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Notification Settings
-            </h3>
-            <p className="text-sm text-gray-500">
-              Manage how you receive notifications
-            </p>
+    <Card className="p-6">
+      <h2 className="text-xl font-semibold mb-4">Notification Settings</h2>
+      
+      {error && (
+        <Alert 
+          type="error" 
+          message={error} 
+          className="mb-4" 
+        />
+      )}
+      
+      {success && (
+        <Alert 
+          type="success" 
+          message="Notification settings updated successfully" 
+          className="mb-4" 
+        />
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Notification Channels</h3>
+          
+          <div className="space-y-3">
+            <Switch
+              label="Email Notifications"
+              checked={preferences.emailNotifications}
+              onChange={(checked) => setPreferences({ ...preferences, emailNotifications: checked })}
+              description="Receive notifications via email"
+            />
+            
+            <Switch
+              label="Push Notifications"
+              checked={preferences.pushNotifications}
+              onChange={(checked) => setPreferences({ ...preferences, pushNotifications: checked })}
+              description="Receive in-app notifications"
+            />
           </div>
+        </div>
+        
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Notification Types</h3>
+          
+          <div className="space-y-3">
+            <Switch
+              label="Receipt Processed"
+              checked={preferences.receiptProcessed}
+              onChange={(checked) => setPreferences({ ...preferences, receiptProcessed: checked })}
+              description="Notify when a receipt has been processed"
+            />
+            
+            <Switch
+              label="Monthly Reports"
+              checked={preferences.monthlyReports}
+              onChange={(checked) => setPreferences({ ...preferences, monthlyReports: checked })}
+              description="Receive monthly spending reports"
+            />
+            
+            <Switch
+              label="Low Stock Alerts"
+              checked={preferences.lowStockAlerts}
+              onChange={(checked) => setPreferences({ ...preferences, lowStockAlerts: checked })}
+              description="Get alerted when inventory items are running low"
+            />
+          </div>
+        </div>
+        
+        <div className="flex justify-end">
           <Button
-            onClick={handleSave}
+            type="submit"
             loading={loading}
             icon={Save}
           >
-            Save Changes
+            Save Preferences
           </Button>
         </div>
-
-        {error && (
-          <Alert
-            type="error"
-            message={error}
-            className="mb-6"
-          />
-        )}
-
-        <div className="space-y-6">
-          {notificationTypes.map(({ id, title, description, icon: Icon }) => (
-            <div key={id} className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-full bg-primary-50">
-                  <Icon className="w-5 h-5 text-primary-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">{title}</h4>
-                  <p className="text-sm text-gray-500">{description}</p>
-                </div>
-              </div>
-              <Switch
-                checked={localSettings.notifications[id]}
-                onChange={() => handleToggle(id)}
-                disabled={loading}
-              />
-            </div>
-          ))}
-
-          {/* Budget Alert Threshold */}
-          {localSettings.notifications.budgetAlerts && (
-            <div className="pt-4 border-t">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-medium text-gray-900">
-                    Budget Alert Threshold
-                  </h4>
-                  <p className="text-sm text-gray-500">
-                    Get notified when category spending reaches this percentage of budget
-                  </p>
-                </div>
-                <div className="w-24">
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={localSettings.notifications.threshold}
-                    onChange={handleThresholdChange}
-                    disabled={loading}
-                    suffix="%"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Email Preferences */}
-          {localSettings.notifications.email && (
-            <div className="pt-4 border-t">
-              <h4 className="font-medium text-gray-900 mb-4">
-                Email Preferences
-              </h4>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">Daily Digest</span>
-                  <Switch
-                    checked={localSettings.notifications.dailyDigest}
-                    onChange={() => handleToggle('dailyDigest')}
-                    disabled={loading}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">Weekly Summary</span>
-                  <Switch
-                    checked={localSettings.notifications.weeklySummary}
-                    onChange={() => handleToggle('weeklySummary')}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      </form>
     </Card>
   );
 };

@@ -1,6 +1,6 @@
-import { db } from '../../../core/config/firebase';//correct
+import { db } from '../../../core/config/firebase'; //correct
 
-export const getUserSettings = async (userId) => {
+export const getUserSettings = async userId => {
   try {
     const settingsDoc = await db.collection('settings').doc(userId).get();
     if (settingsDoc.exists) {

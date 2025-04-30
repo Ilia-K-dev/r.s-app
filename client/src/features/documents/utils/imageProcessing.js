@@ -1,4 +1,3 @@
-
 // src/features/documents/utils/imageProcessing.js
 
 export const processImage = async (file, options = {}) => {
@@ -27,25 +26,31 @@ export const processImage = async (file, options = {}) => {
     canvas.height = height;
 
     // Apply transformations
-    ctx.translate(canvas.width/2, canvas.height/2);
-    ctx.rotate(rotation * Math.PI / 180);
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((rotation * Math.PI) / 180);
     ctx.scale(zoom, zoom);
     ctx.drawImage(
-      img, 
-      -img.width * scaleFactor / 2,
-      -img.height * scaleFactor / 2,
+      img,
+      (-img.width * scaleFactor) / 2,
+      (-img.height * scaleFactor) / 2,
       img.width * scaleFactor,
       img.height * scaleFactor
     );
 
     // Convert to blob
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        resolve(new File([blob], file.name, {
-          type: 'image/jpeg',
-          lastModified: Date.now()
-        }));
-      }, 'image/jpeg', 0.9);
+    return new Promise(resolve => {
+      canvas.toBlob(
+        blob => {
+          resolve(
+            new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            })
+          );
+        },
+        'image/jpeg',
+        0.9
+      );
     });
   } catch (error) {
     console.error('Image processing error:', error);

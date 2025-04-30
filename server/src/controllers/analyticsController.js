@@ -4,6 +4,20 @@ const logger = require('../utils/logger'); //good
 
 const analyticsController = {
   // Price Analytics
+
+  /**
+   * @desc Get price analytics and history for a specific product.
+   * @route GET /api/analytics/price/:productId
+   * @access Private (Authenticated User)
+   * @param {object} req - Express request object
+   * @param {object} req.params - Route parameters
+   * @param {string} req.params.productId - The ID of the product.
+   * @param {object} req.query - Query parameters for filtering by date range.
+   * @param {string} [req.query.startDate] - Start date for the price history (ISO 8601).
+   * @param {string} [req.query.endDate] - End date for the price history (ISO 8601).
+   * @param {object} res - Express response object
+   * @param {function} next - Express next middleware function
+   */
   async getPriceAnalytics(req, res, next) {
     try {
       const { productId } = req.params;
@@ -34,6 +48,19 @@ const analyticsController = {
   },
 
   // Spending Analysis
+
+  /**
+   * @desc Get spending analysis for the authenticated user within a date range.
+   * @route GET /api/analytics/spending
+   * @access Private (Authenticated User)
+   * @param {object} req - Express request object
+   * @param {object} req.query - Query parameters for date range and grouping.
+   * @param {string} req.query.startDate - Start date for the analysis (ISO 8601).
+   * @param {string} req.query.endDate - End date for the analysis (ISO 8601).
+   * @param {string} [req.query.groupBy='category'] - Field to group spending by ('category', 'vendor', 'month', etc.).
+   * @param {object} res - Express response object
+   * @param {function} next - Express next middleware function
+   */
   async getSpendingAnalysis(req, res, next) {
     try {
       const { startDate, endDate, groupBy = 'category' } = req.query;
@@ -61,6 +88,18 @@ const analyticsController = {
   },
 
   // Vendor Analysis
+
+  /**
+   * @desc Get vendor analysis, including price comparison and performance.
+   * @route GET /api/analytics/vendors
+   * @access Private (Authenticated User)
+   * @param {object} req - Express request object
+   * @param {object} req.query - Query parameters for filtering vendors/products.
+   * @param {string} [req.query.vendorIds] - Comma-separated list of vendor IDs to include.
+   * @param {string} [req.query.productIds] - Comma-separated list of product IDs for comparison.
+   * @param {object} res - Express response object
+   * @param {function} next - Express next middleware function
+   */
   async getVendorAnalysis(req, res, next) {
     try {
       const { vendorIds, productIds } = req.query;
@@ -79,9 +118,9 @@ const analyticsController = {
         potentialSavings: vendor.potentialSavings
       }));
 
-      res.status(200).json({ 
-        status: 'success', 
-        data: { comparison, performance, recommendations } 
+      res.status(200).json({
+        status: 'success',
+        data: { comparison, performance, recommendations }
       });
     } catch (error) {
       logger.error('Error getting vendor analysis:', error);
@@ -90,6 +129,15 @@ const analyticsController = {
   },
 
   // Inventory Analytics
+
+  /**
+   * @desc Get inventory analytics for the authenticated user.
+   * @route GET /api/analytics/inventory
+   * @access Private (Authenticated User)
+   * @param {object} req - Express request object
+   * @param {object} res - Express response object
+   * @param {function} next - Express next middleware function
+   */
   async getInventoryAnalytics(req, res, next) {
     try {
       const analytics = await analyticsService.getInventoryAnalytics(req.user.uid);
@@ -107,9 +155,9 @@ const analyticsController = {
           .slice(0, 5)
       };
 
-      res.status(200).json({ 
-        status: 'success', 
-        data: { analytics, roi, recommendations, summary } 
+      res.status(200).json({
+        status: 'success',
+        data: { analytics, roi, recommendations, summary }
       });
     } catch (error) {
       logger.error('Error getting inventory analytics:', error);
@@ -118,6 +166,20 @@ const analyticsController = {
   },
 
   // Category Analysis
+
+  /**
+   * @desc Get analysis for a specific category for the authenticated user.
+   * @route GET /api/analytics/categories/:categoryId
+   * @access Private (Authenticated User)
+   * @param {object} req - Express request object
+   * @param {object} req.params - Route parameters
+   * @param {string} req.params.categoryId - The ID of the category.
+   * @param {object} req.query - Query parameters for filtering by date range.
+   * @param {string} [req.query.startDate] - Start date for the analysis (ISO 8601).
+   * @param {string} [req.query.endDate] - End date for the analysis (ISO 8601).
+   * @param {object} res - Express response object
+   * @param {function} next - Express next middleware function
+   */
   async getCategoryAnalysis(req, res, next) {
     try {
       const { categoryId } = req.params;
@@ -147,6 +209,17 @@ const analyticsController = {
   },
 
   // Dashboard Analytics
+
+  /**
+   * @desc Get aggregated analytics data for the user dashboard.
+   * @route GET /api/analytics/dashboard
+   * @access Private (Authenticated User)
+   * @param {object} req - Express request object
+   * @param {object} req.query - Query parameters for time period.
+   * @param {string} [req.query.period='30d'] - Time period for analysis ('7d', '30d', '90d', '1y').
+   * @param {object} res - Express response object
+   * @param {function} next - Express next middleware function
+   */
   async getDashboardAnalytics(req, res, next) {
     try {
       const { period = '30d' } = req.query;
@@ -197,6 +270,18 @@ const analyticsController = {
   },
 
   // Advanced Analytics Methods
+
+  /**
+   * @desc Generates a price comparison report for specified products.
+   * @route GET /api/analytics/reports/price-comparison
+   * @access Private (Authenticated User)
+   * @param {object} req - Express request object
+   * @param {object} req.query - Query parameters for products and timeframe.
+   * @param {string} req.query.productIds - Comma-separated list of product IDs to compare.
+   * @param {number} req.query.timeframe - Timeframe in days for analysis.
+   * @param {object} res - Express response object
+   * @param {function} next - Express next middleware function
+   */
   async getPriceComparisonReport(req, res, next) {
     try {
       const { productIds, timeframe } = req.query;
@@ -204,7 +289,7 @@ const analyticsController = {
 
       const comparisons = await Promise.all(
         productIdArray.map(async productId => {
-          const elasticity = await advancedAnalyticsService.analyzePriceElasticity(
+          const elasticity = await analyticsService.analyzePriceElasticity( // Corrected service call
             req.user.uid,
             productId,
             parseInt(timeframe)
@@ -227,6 +312,13 @@ const analyticsController = {
   },
 
   // Helper Methods
+
+  /**
+   * @desc Calculates the moving average for a dataset.
+   * @param {Array<object>} data - Array of data points with an 'amount' field.
+   * @param {number} window - The window size for the moving average.
+   * @returns {Array<object>} - Array of data points with calculated moving average.
+   */
   _calculateMovingAverage(data, window) {
     const result = [];
     for (let i = window - 1; i < data.length; i++) {
@@ -241,10 +333,15 @@ const analyticsController = {
     return result;
   },
 
+  /**
+   * @desc Calculates the trend line (slope and intercept) for a dataset using linear regression.
+   * @param {Array<object>} data - Array of data points with an 'amount' field.
+   * @returns {object} - Object containing the slope and intercept of the trend line.
+   */
   _calculateTrend(data) {
     const n = data.length;
     let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-    
+
     data.forEach((point, index) => {
       sumX += index;
       sumY += point.amount;
@@ -258,6 +355,12 @@ const analyticsController = {
     return { slope, intercept };
   },
 
+  /**
+   * @desc Calculates a confidence score for a prediction based on historical data.
+   * @param {Array<object>} historical - Array of historical data points with an 'amount' field.
+   * @param {number} predictedValue - The predicted value.
+   * @returns {number} - Confidence score between 0 and 1.
+   */
   _calculatePredictionConfidence(historical, predictedValue) {
     const values = historical.map(h => h.amount);
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
@@ -266,6 +369,34 @@ const analyticsController = {
 
     const zScore = Math.abs(predictedValue - mean) / stdDev;
     return Math.max(0, 1 - (zScore / 3));
+  },
+
+  /**
+   * @desc Gets budget progress data for the authenticated user.
+   * @route GET /api/analytics/budget
+   * @access Private (Authenticated User)
+   * @param {object} req - Express request object
+   * @param {object} req.query - Query parameters for filtering by period and category.
+   * @param {string} [req.query.period='month'] - Budget period ('month', 'year', etc.).
+   * @param {string} [req.query.categoryId] - Filter by category ID.
+   * @param {object} res - Express response object
+   * @param {function} next - Express next middleware function
+   */
+  async getBudgetProgress(req, res, next) {
+    try {
+      const userId = req.user.uid;
+      const { period = 'month', categoryId } = req.query; // Allow filtering by period and category
+
+      const budgetProgress = await analyticsService.getBudgetProgress(userId, period, categoryId);
+
+      res.status(200).json({
+        status: 'success',
+        data: { budgetProgress }
+      });
+    } catch (error) {
+      logger.error('Error getting budget progress:', error);
+      next(new AppError(error.message, 400));
+    }
   }
 };
 

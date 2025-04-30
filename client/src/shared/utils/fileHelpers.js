@@ -5,7 +5,7 @@ import { logger } from './logger';
 /**
  * Formats file size into human-readable format
  */
-export const formatFileSize = (bytes) => {
+export const formatFileSize = bytes => {
   if (bytes === 0) return '0 Bytes';
 
   const k = 1024;
@@ -26,14 +26,12 @@ export const validateFileType = (file, allowedTypes) => {
 /**
  * Gets file extension from filename
  */
-export const getFileExtension = (filename) => {
-  return filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
-};
+export const getFileExtension = filename => filename.slice(((filename.lastIndexOf('.') - 1) >>> 0) + 2);
 
 /**
  * Creates an object URL for file preview
  */
-export const createFilePreview = (file) => {
+export const createFilePreview = file => {
   try {
     return URL.createObjectURL(file);
   } catch (error) {
@@ -45,7 +43,7 @@ export const createFilePreview = (file) => {
 /**
  * Revokes an object URL to prevent memory leaks
  */
-export const revokeFilePreview = (previewUrl) => {
+export const revokeFilePreview = previewUrl => {
   if (previewUrl) {
     URL.revokeObjectURL(previewUrl);
   }
@@ -54,9 +52,7 @@ export const revokeFilePreview = (previewUrl) => {
 /**
  * Validates file size against maximum allowed size
  */
-export const validateFileSize = (file, maxSize) => {
-  return file.size <= maxSize;
-};
+export const validateFileSize = (file, maxSize) => file.size <= maxSize;
 
 /**
  * Comprehensive file validation
@@ -66,7 +62,7 @@ export const validateFile = (file, options = {}) => {
     maxSize = 5 * 1024 * 1024, // Default 5MB
     acceptedTypes = ['image/jpeg', 'image/png', 'image/heic'],
     minDimensions = { width: 500, height: 500 },
-    maxDimensions = { width: 5000, height: 5000 }
+    maxDimensions = { width: 5000, height: 5000 },
   } = options;
 
   const errors = [];
@@ -89,18 +85,16 @@ export const validateFile = (file, options = {}) => {
 
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 };
 
 /**
  * Reads file as Data URL
  */
-export const readFileAsDataUrl = (file) => {
-  return new Promise((resolve, reject) => {
+export const readFileAsDataUrl = file => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
-};

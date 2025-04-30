@@ -1,9 +1,18 @@
-import React, { useMemo } from 'react';//correct
-import { Card } from '../../../../shared/components/ui/Card';//correct
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';//correct
-import { formatCurrency } from '../../../../shared/utils/currency';//correct
-import { formatDate } from '../../../../shared/utils/date';//correct
-import { SpendingBreakdown } from '../reports/SpendingBreakdown';//correct
+import React, { useMemo } from 'react'; //correct
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'; //correct
+
+import { Card } from '../../../../shared/components/ui/Card'; //correct
+import { formatCurrency } from '../../../../shared/utils/currency'; //correct
+import { formatDate } from '../../../../shared/utils/date'; //correct
+import { SpendingBreakdown } from '../reports/SpendingBreakdown'; //correct
 
 export const SpendingSummary = ({ data = [], loading = false }) => {
   const chartData = useMemo(() => {
@@ -13,7 +22,7 @@ export const SpendingSummary = ({ data = [], loading = false }) => {
         acc[date] = {
           date,
           amount: 0,
-          count: 0
+          count: 0,
         };
       }
       acc[date].amount += receipt.total;
@@ -30,12 +39,8 @@ export const SpendingSummary = ({ data = [], loading = false }) => {
     return (
       <div className="bg-white p-4 shadow-lg rounded-lg border">
         <p className="font-medium text-gray-900">{label}</p>
-        <p className="text-sm text-gray-600">
-          Total: {formatCurrency(payload[0].value)}
-        </p>
-        <p className="text-sm text-gray-600">
-          Receipts: {payload[0].payload.count}
-        </p>
+        <p className="text-sm text-gray-600">Total: {formatCurrency(payload[0].value)}</p>
+        <p className="text-sm text-gray-600">Receipts: {payload[0].payload.count}</p>
       </div>
     );
   };
@@ -62,9 +67,20 @@ export const SpendingSummary = ({ data = [], loading = false }) => {
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
               <XAxis dataKey="date" stroke="#6B7280" fontSize={12} />
-              <YAxis stroke="#6B7280" fontSize={12} tickFormatter={value => formatCurrency(value)} />
+              <YAxis
+                stroke="#6B7280"
+                fontSize={12}
+                tickFormatter={value => formatCurrency(value)}
+              />
               <Tooltip content={<CustomTooltip />} />
-              <Line type="monotone" dataKey="amount" stroke="#0EA5E9" strokeWidth={2} dot={{ fill: '#0EA5E9', r: 4 }} activeDot={{ r: 6 }} />
+              <Line
+                type="monotone"
+                dataKey="amount"
+                stroke="#0EA5E9"
+                strokeWidth={2}
+                dot={{ fill: '#0EA5E9', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -81,7 +97,9 @@ export const SpendingSummary = ({ data = [], loading = false }) => {
           <div>
             <p className="text-sm text-gray-500">Avg. per Day</p>
             <p className="text-lg font-semibold text-gray-900">
-              {formatCurrency(chartData.reduce((sum, item) => sum + item.amount, 0) / chartData.length)}
+              {formatCurrency(
+                chartData.reduce((sum, item) => sum + item.amount, 0) / chartData.length
+              )}
             </p>
           </div>
           <div>

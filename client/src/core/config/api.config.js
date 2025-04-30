@@ -1,39 +1,40 @@
-import axios from 'axios';//correct
-import { auth } from './firebase';//correct
+import axios from 'axios'; //correct
+
+import { auth } from './firebase'; //correct
 
 // API Configuration
 export const API_CONFIG = {
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000',  // Default to local if environment variable is not set
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000', // Default to local if environment variable is not set
   timeout: parseInt(process.env.REACT_APP_API_TIMEOUT || '30000'),
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   },
   endpoints: {
     auth: {
       login: '/auth/login',
       register: '/auth/register',
       resetPassword: '/auth/reset-password',
-      verifyToken: '/auth/verify-token'
+      verifyToken: '/auth/verify-token',
     },
     receipts: {
       base: '/receipts',
       upload: '/receipts/upload',
-      getById: (id) => `/receipts/${id}`,
-      update: (id) => `/receipts/${id}`,
-      delete: (id) => `/receipts/${id}`
+      getById: id => `/receipts/${id}`,
+      update: id => `/receipts/${id}`,
+      delete: id => `/receipts/${id}`,
     },
     reports: {
       spending: '/reports/spending',
       categories: '/reports/categories',
-      monthly: '/reports/monthly'
+      monthly: '/reports/monthly',
     },
     categories: {
       base: '/categories',
-      getById: (id) => `/categories/${id}`,
-      update: (id) => `/categories/${id}`,
-      delete: (id) => `/categories/${id}`
-    }
-  }
+      getById: id => `/categories/${id}`,
+      update: id => `/categories/${id}`,
+      delete: id => `/categories/${id}`,
+    },
+  },
 };
 
 // Create axios instance
@@ -41,13 +42,13 @@ const api = axios.create({
   baseURL: API_CONFIG.baseURL,
   timeout: API_CONFIG.timeout,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 });
 
 // Request interceptor
 api.interceptors.request.use(
-  async (config) => {
+  async config => {
     // Get current user token
     const user = auth.currentUser;
     if (user) {
@@ -56,15 +57,13 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  error => Promise.reject(error)
 );
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => response.data,
-  async (error) => {
+  response => response.data,
+  async error => {
     const originalRequest = error.config;
 
     if (error.response) {

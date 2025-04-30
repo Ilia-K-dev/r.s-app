@@ -64,25 +64,66 @@ class Product {
     }
   }
 
-  static async findByUser(userId, filters = {}) {
+  /**
+   * Finds products for a user with filtering, sorting, and pagination.
+   * @param {string} userId - The ID of the user.
+   * @param {object} [options] - Options for filtering, sorting, and pagination.
+   * @param {string} [options.category] - Filter by category.
+   * @param {string} [options.status] - Filter by status.
+   * @param {string} [options.stockLevel] - Filter by stock level ('low', 'out_of_stock').
+   * @param {string} [options.search] - Search term for name, SKU, or barcode.
+   * @param {string} [options.sortBy='name'] - Field to sort by.
+   * @param {string} [options.sortOrder='asc'] - Sort order ('asc' or 'desc').
+   * @param {number} [options.limit] - Maximum number of results to return.
+   * @param {string} [options.startAfter] - Document ID to start pagination after (cursor).
+   * @returns {Promise<{products: Product[], lastVisible: string|null}>} - Paginated list of products and the last visible document ID.
+   */
+  static async findByUser(userId, options = {}) {
     try {
       let query = db.collection('products').where('userId', '==', userId);
 
       // Apply filters
-      if (filters.category) {
-        query = query.where('category', '==', filters.category);
+      if (options.category) {
+        query = query.where('category', '==', options.category);
       }
-      if (filters.status) {
-        query = query.where('status', '==', filters.status);
+      if (options.status) {
+        query = query.where('status', '==', options.status);
       }
-      if (filters.stockLevel === 'low') {
-        query = query.where('currentStock', '<=', 'minStockLevel');
+      // Note: Firestore does not support range filters on different fields in the same query.
+      // Stock level filtering ('low', 'out_of_stock') involves range checks and cannot be combined
+      // with other equality filters (like category or status) in a single query without composite indexes.
+      // Server-side filtering for stock level would require separate queries or a different approach.
+      // For now, basic equality filters (category, status) are applied server-side.
+
+      // Apply sorting
+      const sortBy = options.sortBy || 'name';
+      const sortOrder = options.sortOrder || 'asc';
+      query = query.orderBy(sortBy, sortOrder);
+
+      // Apply pagination
+      if (options.startAfter) {
+        const startAfterDoc = await db.collection('products').doc(options.startAfter).get();
+        if (startAfterDoc.exists) {
+          query = query.startAfter(startAfterDoc);
+        } else {
+           logger.warn(`StartAfter document not found: ${options.startAfter}`);
+           // Optionally handle this error or return the first page
+        }
+      }
+      if (options.limit) {
+        query = query.limit(options.limit);
       }
 
       const snapshot = await query.get();
-      return snapshot.docs.map(doc => new Product({ id: doc.id, ...doc.data() }));
+      const products = snapshot.docs.map(doc => new Product({ id: doc.id, ...doc.data() }));
+
+      // Determine the last visible document for the next page
+      const lastVisible = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null;
+      const hasNextPage = snapshot.docs.length === options.limit; // Simple check
+
+      return { products, lastVisible, hasNextPage };
     } catch (error) {
-      logger.error('Error finding products:', error);
+      logger.error('Error finding products with pagination/filtering:', error);
       throw new AppError('Failed to fetch products', 500);
     }
   }

@@ -1,22 +1,19 @@
-import React from 'react';//correct
-import { Card } from '../../../shared/components/ui/Card';//correct
+import React from 'react'; //correct
 
-export const BudgetProgress = ({ categories }) => {
-  return (
+import { Card } from '../../../shared/components/ui/Card'; //correct
+
+export const BudgetProgress = ({ categories }) => (
     <Card>
       <h3 className="text-lg font-semibold mb-4">Budget Progress</h3>
       <div className="space-y-4">
-        {categories.map((category) => {
+        {categories.map(category => {
           const percentage = (category.spent / category.budget) * 100;
-          const color = percentage > 90 ? 'red' : 
-                       percentage > 70 ? 'yellow' : 'green';
-          
+          const color = percentage > 90 ? 'red' : percentage > 70 ? 'yellow' : 'green';
+
           return (
             <div key={category.id} className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm font-medium text-gray-700">
-                  {category.name}
-                </span>
+                <span className="text-sm font-medium text-gray-700">{category.name}</span>
                 <span className="text-sm text-gray-500">
                   ${category.spent} / ${category.budget}
                 </span>
@@ -33,4 +30,3 @@ export const BudgetProgress = ({ categories }) => {
       </div>
     </Card>
   );
-};

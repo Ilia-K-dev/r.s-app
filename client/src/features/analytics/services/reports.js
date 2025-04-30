@@ -1,11 +1,6 @@
-import { db } from '../../../core/config/firebase';//correct
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  orderBy 
-} from 'firebase/firestore';//correct
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'; //correct
+
+import { db } from '../../../core/config/firebase'; //correct
 
 export const reportsApi = {
   getSpendingByCategory: async (userId, startDate, endDate) => {
@@ -18,11 +13,11 @@ export const reportsApi = {
         where('date', '<=', endDate),
         orderBy('date', 'desc')
       );
-      
+
       const snapshot = await getDocs(q);
       const receipts = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       // Group and sum by category
@@ -34,7 +29,7 @@ export const reportsApi = {
 
       return Object.entries(categoryTotals).map(([category, total]) => ({
         category,
-        total
+        total,
       }));
     } catch (error) {
       throw new Error('Failed to fetch spending by category');
@@ -45,7 +40,7 @@ export const reportsApi = {
     try {
       const startDate = new Date(year, 0, 1).toISOString();
       const endDate = new Date(year, 11, 31).toISOString();
-      
+
       const receiptsRef = collection(db, 'receipts');
       const q = query(
         receiptsRef,
@@ -58,7 +53,7 @@ export const reportsApi = {
       const snapshot = await getDocs(q);
       const receipts = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       // Group by month
@@ -69,12 +64,10 @@ export const reportsApi = {
       }, {});
 
       // Fill in missing months with 0
-      const months = Array.from({ length: 12 }, (_, i) => {
-        return {
+      const months = Array.from({ length: 12 }, (_, i) => ({
           month: new Date(year, i).toLocaleString('default', { month: 'short' }),
-          total: monthlyTotals[i] || 0
-        };
-      });
+          total: monthlyTotals[i] || 0,
+        }));
 
       return months;
     } catch (error) {
@@ -82,16 +75,14 @@ export const reportsApi = {
     }
   },
 
-  getBudgetProgress: async (userId) => {
+  getBudgetProgress: async userId => {
     try {
       // Get categories with budgets
       const categoriesRef = collection(db, 'categories');
-      const categoriesSnapshot = await getDocs(
-        query(categoriesRef, where('userId', '==', userId))
-      );
+      const categoriesSnapshot = await getDocs(query(categoriesRef, where('userId', '==', userId)));
       const categories = categoriesSnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       // Get current month's receipts
@@ -110,7 +101,7 @@ export const reportsApi = {
 
       const receipts = receiptsSnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       // Calculate spending by category
@@ -124,10 +115,10 @@ export const reportsApi = {
         id: category.id,
         name: category.name,
         budget: category.budget || 0,
-        spent: spending[category.name] || 0
+        spent: spending[category.name] || 0,
       }));
     } catch (error) {
       throw new Error('Failed to fetch budget progress');
     }
-  }
+  },
 };

@@ -1,0 +1,442 @@
+EDI AI Assistant (Cline) Work Plan
+
+Prompt 0: Create Master Work Plan Checklist
+Context Files for New Chat:
+
+comprehensive-summary.md
+technical-debt.md
+functionality-verification.md
+project-structure.md
+
+Prompt:
+Create a comprehensive master checklist for our Receipt Scanner application development work plan. This will serve as our primary tracking document for implementation progress.
+
+Tasks:
+1. Create a file named `receipt-scanner-master-checklist.md`.
+
+2. Structure the checklist in phases matching our work plan:
+   - Phase 1: Backend API Implementation
+   - Phase 2: Security Testing and Enhancement
+   - Phase 3: Missing UI Components and Enhancements
+   - Phase 4: OCR and Document Processing Improvements
+   - Phase 5: Performance Optimization and Testing
+   - Phase 6: Production Readiness
+
+3. For each phase, create detailed checklist items that:
+   - Are specific and actionable
+   - Include all subtasks from the work plan
+   - Can be individually marked as complete
+   - Identify dependencies between tasks where applicable
+
+4. For each task, include:
+   - [ ] Task name
+   - Brief description of what needs to be done
+   - Any related files or components
+   - An estimated complexity (Low/Medium/High)
+
+5. Add a progress tracking section at the top with:
+   - Overall completion percentage
+   - Phase-by-phase completion status
+   - Next priority tasks
+
+6. Include a "Recent Updates" section where progress can be recorded with dates.
+
+Format the checklist using proper Markdown so items can be checked off as they are completed. The checklist should be comprehensive enough to track all aspects of the development process outlined in our work plan.
+
+## Documentation and Checklist Requirements
+
+After completing this checklist creation:
+
+1. Create a detailed documentation file named `implementation-report-master-checklist.md` that includes:
+   - Explanation of the checklist structure
+   - How to use the checklist effectively
+   - Recommended update frequency
+   - How to track dependencies
+
+2. Create a meta-checklist named `checklist-creation-verification.md` with:
+   - [ ] Comprehensive phases included
+   - [ ] All tasks from work plan represented
+   - [ ] Proper Markdown formatting for checkboxes
+   - [ ] Progress tracking section included
+   - [ ] Recent updates section included
+   - [ ] Complexity estimates added
+
+Both files should be comprehensive enough that the project team can immediately begin using the master checklist for project tracking.
+
+Prompt 1: Implement Backend Inventory API Endpoints
+Context Files for New Chat (if needed):
+
+technical-debt.md
+project-structure.md
+service-consolidation-report.md
+4-Receipt Scanner Application Issues and Recommendations.txt
+code-changes-report.md
+
+Prompt:
+Implement the backend API endpoints for inventory management that support the refactored client-side inventoryService.js (which now uses API calls instead of direct Firestore access). 
+
+Tasks:
+1. Create/update the server-side controller file (server/src/controllers/inventoryController.js) with the following endpoints:
+   - GET /api/inventory - List all inventory items for a user
+   - GET /api/inventory/:id - Get a specific inventory item
+   - POST /api/inventory - Create a new inventory item
+   - PUT /api/inventory/:id - Update an inventory item
+   - DELETE /api/inventory/:id - Delete an inventory item
+   - PUT /api/inventory/:id/stock - Update stock levels
+   - GET /api/inventory/movements - Get stock movement history
+   - POST /api/inventory/movements - Create a stock movement record
+   - GET /api/inventory/low-stock - Get low stock alerts
+
+2. Create/update the routes file (server/src/routes/inventoryRoutes.js) to define these routes and connect them to the controller functions.
+
+3. Implement proper authentication middleware to ensure users can only access their own inventory data.
+
+4. Use the Firebase Admin SDK for Firestore operations, NOT client Firebase SDK.
+
+5. Follow the established error handling pattern using the AppError class and consistent response format.
+
+Each endpoint should verify user ownership, perform appropriate validations, and respond with standardized JSON formats matching what the refactored client expects.
+
+Make sure to include proper documentation comments explaining each function's purpose and parameters.
+Prompt 2: Document Processing API Enhancement
+Context Files for New Chat (if needed):
+
+service-consolidation-report.md
+vision-api-config-report.md
+code-changes-report.md
+2-Receipt Scanner Application Core Features Implementation.txt
+
+Prompt:
+Enhance the document processing API to improve OCR accuracy and provide better error handling. Build upon the existing document upload API that was created during the refactoring to remove direct Firebase Storage access.
+
+Tasks:
+1. Review the existing document controller (server/src/controllers/documentController.js) and service (server/src/services/document/documentService.js).
+
+2. Enhance the OCR processing function to:
+   - Improve text extraction accuracy with better preprocessing
+   - Implement more robust receipt data parsing (merchant name, date, total, items)
+   - Add confidence scores for extracted fields
+   - Handle different receipt formats and layouts
+   - Return more detailed extraction results to the client
+
+3. Add a new endpoint for receipt correction that allows users to:
+   - Submit corrections for incorrectly parsed receipts
+   - Store both the original OCR result and the corrected version
+   - Use corrections to potentially improve future parsing
+
+4. Implement comprehensive error handling specifically for OCR failures:
+   - Distinguish between image quality issues, parsing failures, and service errors
+   - Provide actionable feedback for users
+   - Log detailed diagnostics for internal improvement
+
+5. Create proper documentation for each function with clear descriptions of parameters, return values, and potential errors.
+
+Follow the established patterns for error handling, authentication, and API response formats. Ensure all Firebase operations use the Admin SDK.
+Prompt 3: Create Receipt List Page Component
+Context Files for New Chat (if needed):
+
+functionality-verification.md
+routing-consistency-report.md
+project-structure.md
+5-PublishCopyReceipt Scanner Application UI Component Library and Styling.txt
+
+Prompt:
+Create a dedicated ReceiptListPage component that will be used for the /receipts route. This component was identified as missing during the functionality verification process.
+
+Tasks:
+1. Create the file client/src/features/receipts/pages/ReceiptListPage.js.
+
+2. Implement a component that:
+   - Uses the useReceipts hook to fetch and manage receipt data
+   - Displays receipts in a list/grid format using the existing ReceiptList and ReceiptCard components
+   - Includes the ReceiptFilters component for filtering and search
+   - Adds a "New Receipt" button that directs to the receipt upload functionality
+   - Implements pagination for large lists of receipts
+   - Shows appropriate loading and error states
+
+3. Update the routes.js file to use this new component for the /receipts path instead of ReceiptDetailPage.
+
+4. Make sure the component follows the established design patterns:
+   - Uses Tailwind CSS for styling
+   - Follows the error handling standards in error-handling-standards.md
+   - Implements responsive design for mobile devices
+   - Uses shared components from the UI library
+
+The component should match the visual style of the rest of the application and provide a smooth user experience for browsing and filtering receipts.
+Prompt 4: Analytics API Server-Side Implementation
+Context Files for New Chat (if needed):
+
+4-Receipt Scanner Application Issues and Recommendations.txt
+technical-debt.md
+comprehensive-summary.md
+3-Receipt Scanner Application Security and Performance Analysis.txt
+
+Prompt:
+Implement or enhance the server-side analytics API to support the client-side analytics features. This addresses the technical debt of performing complex calculations client-side and avoids fetching large datasets for client-side processing.
+
+Tasks:
+1. Create/update the analytics controller (server/src/controllers/analyticsController.js) with the following endpoints:
+   - GET /api/analytics/spending - Get spending data with filtering options
+   - GET /api/analytics/categories - Get spending breakdown by category
+   - GET /api/analytics/trends - Get spending trends over time
+   - GET /api/analytics/inventory-value - Get inventory valuation analytics
+   - GET /api/analytics/budget - Get budget progress data
+
+2. Create/update the analytics routes file (server/src/routes/analyticsRoutes.js) to define these routes.
+
+3. Implement server-side data aggregation and calculation logic that:
+   - Uses efficient Firestore queries with proper indexing
+   - Performs calculations on the server instead of sending raw data to the client
+   - Implements basic caching for expensive calculations
+   - Returns only the processed results to the client
+
+4. Ensure proper authentication is applied so users can only access their own data.
+
+5. Follow the established error handling patterns with appropriate status codes and messages.
+
+The API should be designed to work with the existing client-side analytics components, particularly SpendingChart, CategoryBreakdown, and SpendingTrends.
+Prompt 5: Export API Implementation
+Context Files for New Chat (if needed):
+
+functionality-verification.md
+comprehensive-summary.md
+project-structure.md
+2-Receipt Scanner Application Core Features Implementation.txt
+
+Prompt:
+Implement a data export API that allows users to export their receipt and inventory data in various formats. This should support the ExportSettings component in the settings page.
+
+Tasks:
+1. Create a new controller (server/src/controllers/exportController.js) with the following endpoints:
+   - POST /api/exports/receipts - Generate a receipts export file
+   - POST /api/exports/inventory - Generate an inventory export file
+   - GET /api/exports/:id - Download a previously generated export
+
+2. Create the routes file (server/src/routes/exportRoutes.js) to define these routes.
+
+3. Implement the export generation logic that:
+   - Accepts parameters for date range, categories, and format (CSV, PDF, JSON)
+   - Retrieves the appropriate data from Firestore based on user ID and filters
+   - Formats the data into the requested export format
+   - Generates a file and stores it in Firebase Storage
+   - Returns a secure download URL to the client
+
+4. Use the Firebase Admin SDK for all Firestore and Storage operations.
+
+5. Implement proper authentication and ensure users can only export and access their own data.
+
+6. Follow established error handling patterns and response formats.
+
+The API should work with the existing ExportSettings component and support the configuration options it provides (format selection, date range, etc.).
+Prompt 6: Firebase Security Rules Testing Script
+Context Files for New Chat (if needed):
+
+updated-security-rules.md
+firebase-config-validation-report.md
+technical-debt.md
+4-Receipt Scanner Application Issues and Recommendations.txt
+
+Prompt:
+Create testing scripts for validating the Firebase security rules using the Firebase Emulator Suite. This will ensure the updated Firestore and Storage security rules are working as expected.
+
+Tasks:
+1. Create a testing directory (server/tests/security) for security rule tests.
+
+2. Implement test scripts for Firestore security rules that verify:
+   - Users can only read their own data across all collections
+   - Users cannot create documents with incorrect ownership (userId)
+   - Document validation works for all collections
+   - Immutable collections (stockMovements) cannot be modified/deleted
+   - Server-only creation works for notifications
+
+3. Implement test scripts for Storage security rules that verify:
+   - Users can only access their own files
+   - File size limits are enforced
+   - Content type restrictions are enforced
+   - Write restrictions are properly applied to server-only paths
+
+4. Create a README.md in the testing directory with:
+   - Instructions for setting up the Firebase Emulator Suite
+   - Commands for running the tests
+   - Explanation of the test scenarios
+
+5. Use the test scenarios outlined in the updated-security-rules.md document as a guide.
+
+The tests should be comprehensive and cover all the security rule improvements that were implemented. Each test should have clear failure messages that help identify the specific rule that failed.
+Prompt 7: Update Error Handling Implementation
+Context Files for New Chat (if needed):
+
+error-handling-standards.md
+comprehensive-summary.md
+technical-debt.md
+code-changes-report.md
+
+Prompt:
+Update the application's error handling to ensure consistent implementation of the standards defined in error-handling-standards.md across both client and server.
+
+Tasks:
+1. Review the current server-side error handling in app.js and controllers to ensure it follows the standard:
+   - Verify AppError class is used consistently
+   - Check that controllers properly use try/catch and next(error)
+   - Confirm the centralized error handler formats responses consistently
+
+2. Update client-side API services to follow the standard:
+   - Review services/*.js files
+   - Ensure consistent try/catch pattern
+   - Extract user-friendly messages from error responses
+   - Log detailed errors while exposing friendly messages to users
+
+3. Update hooks to properly:
+   - Set error state with user-friendly messages
+   - Use showToast for notifications
+   - Reset loading state in finally blocks
+
+4. Scan components to ensure they:
+   - Use loading state for indicators
+   - Display error messages with Alert components
+   - Handle specific error cases appropriately
+
+5. Create a helper utility (client/src/shared/utils/errorHandler.js) that centralizes common error handling logic.
+
+Focus on practical implementation rather than conceptual explanations. Make specific code changes to align existing implementations with the defined standards.
+Prompt 8: Performance Optimization for Large Datasets
+Context Files for New Chat (if needed):
+
+3-Receipt Scanner Application Security and Performance Analysis.txt
+4-Receipt Scanner Application Issues and Recommendations.txt
+technical-debt.md
+project-structure.md
+
+Prompt:
+Implement performance optimizations for handling large datasets, particularly in the receipt list and analytics components. Focus on reducing load times and improving responsiveness.
+
+Tasks:
+1. Enhance the PerformanceOptimizedList component (client/src/shared/components/ui/PerformanceOptimizedList.js):
+   - Ensure it uses virtualization with react-window
+   - Add proper height calculation based on viewport
+   - Implement efficient item rendering
+   - Add support for dynamic height items if needed
+
+2. Implement pagination and filtering improvements:
+   - Update API endpoints to support cursor-based pagination
+   - Add server-side filtering to reduce data transfer
+   - Implement data fetching with loading indicators
+
+3. Optimize components that deal with large datasets:
+   - Update ReceiptList to use PerformanceOptimizedList for efficiency
+   - Ensure analytics charts only request the data they need
+   - Implement data memoization where appropriate
+
+4. Add a caching layer:
+   - Create a simple cache utility for client-side data
+   - Implement cache invalidation logic
+   - Apply caching to frequently accessed, rarely changing data
+
+5. Analyze and fix render performance:
+   - Audit component re-renders
+   - Apply React.memo and useMemo where beneficial
+   - Review and optimize expensive calculations
+
+The optimizations should be practical and measurable, improving the user experience with large datasets without compromising functionality.
+Prompt 9: Centralize API Client Configuration
+Context Files for New Chat (if needed):
+
+code-changes-report.md
+project-structure.md
+comprehensive-summary.md
+tech-implementation-analysis.md
+
+Prompt:
+Enhance and standardize the shared API client utility to ensure consistent handling of authentication, error formatting, and request configuration across all API calls.
+
+Tasks:
+1. Review and update the shared API utility (client/src/shared/services/api.js):
+   - Ensure it creates an axios instance with a configurable base URL
+   - Add interceptors for authentication token injection
+   - Add interceptors for standardized error handling
+   - Implement request/response logging (development only)
+   - Add timeout handling
+
+2. Implement token refresh logic:
+   - Add logic to detect expired tokens
+   - Implement token refresh mechanism
+   - Handle auth failures appropriately
+
+3. Create convenience methods for common API patterns:
+   - api.get, api.post, etc. with standardized error handling
+   - Methods for handling file uploads
+   - Methods for downloading files
+
+4. Update service files to use this enhanced API client:
+   - Scan all service files using API calls
+   - Ensure consistent usage patterns
+   - Remove any duplicate logic
+
+5. Add configuration for different environments:
+   - Development, testing, production configurations
+   - Environment-specific behavior
+
+The goal is to have a single, robust API client that all services use, promoting consistency and reducing duplicated code across the application.
+Prompt 10: Documentation Update
+Context Files for New Chat (if needed):
+
+comprehensive-summary.md
+technical-documentation.md
+project-structure.md
+functionality-verification.md
+
+Prompt:
+Update the technical documentation to reflect the recent changes and enhancements to the application. Focus on providing clear, accurate documentation for developers.
+
+Tasks:
+1. Update technical-documentation.md to:
+   - Reflect the current architecture after refactoring
+   - Document the new API endpoints that have been implemented
+   - Explain the security enhancements made
+   - Describe the error handling standards
+
+2. Create or update API documentation:
+   - Document all available endpoints
+   - Include request/response formats
+   - Document authentication requirements
+   - Provide example requests/responses
+
+3. Update or create a developer getting started guide:
+   - Environment setup instructions
+   - Running the development environment
+   - Testing procedures
+   - Contribution guidelines
+
+4. Create user documentation for key features:
+   - Document scanning and uploading
+   - Receipt management
+   - Inventory tracking
+   - Analytics and reporting
+   - User settings and preferences
+
+5. Add inline documentation to key code files:
+   - Add JSDoc comments to important functions
+   - Include comments explaining complex logic
+   - Document component props with PropTypes
+
+The documentation should be comprehensive, accurate, and helpful for both new and experienced developers working on the project.
+
+## Documentation and Checklist Requirements
+
+After completing the implementation:
+
+1. Create a detailed documentation file named `implementation-report-[task-name].md` that includes:
+   - Summary of changes made
+   - List of files created or modified
+   - Key implementation decisions and reasoning
+   - Any potential improvements for future iterations
+   - Challenges encountered and how they were resolved
+
+2. Create a checklist file named `checklist-[task-name].md` with:
+   - [ ] Each subtask from this prompt listed as a checkable item
+   - [ ] Additional implementation details discovered during development
+   - [ ] Testing steps performed
+   - [ ] Verification of functionality
+   - [ ] Integration with existing code confirmed
+
+Both files should be comprehensive enough that another developer could understand exactly what was implemented and the current status of the work.

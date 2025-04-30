@@ -1,29 +1,15 @@
-import React, { useEffect } from 'react';//correct
-import { Outlet, useNavigate } from 'react-router-dom';//correct
-import { Navbar } from './Navbar';//correct
-import { Sidebar } from './Sidebar';//correct
-import { Footer } from './Footer';//correct
-import { useAuth } from '../../../features/auth/hooks/useAuth';//correct
-import { Loading } from '../ui/Loading';//correct
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import { Navbar } from './Navbar';
+import { Sidebar } from './Sidebar';
+import { Footer } from './Footer';
 
+/**
+ * @desc The main application layout component.
+ * Provides the overall structure including the Navbar, Sidebar, main content area (rendered via Outlet), and Footer.
+ * @returns {JSX.Element} - The rendered Layout component.
+ */
 export const Layout = () => {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/login');
-    }
-  }, [user, loading, navigate]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loading size="lg" />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -39,3 +25,5 @@ export const Layout = () => {
     </div>
   );
 };
+
+export default Layout;

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';//correct
-import { Link, useNavigate } from 'react-router-dom';//correct
-import { Input } from '../../../shared/components/forms/Input';//correct
-import { Button } from '../../../shared/components/forms/Button';//correct
-import { Alert } from '../../../shared/components/ui/Alert';//correct
-import { useAuth } from '../../auth/hooks/useAuth';//correct
-import { User, Mail, Lock } from 'lucide-react';//correct
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Input } from '../../../shared/components/forms/Input';
+import { Button } from '../../../shared/components/forms/Button';
+import { Alert } from '../../../shared/components/ui/Alert';
+import { useAuth } from '../hooks/useAuth';
+import { User, Mail, Lock } from 'lucide-react';
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -22,8 +22,14 @@ export const RegisterPage = () => {
     e.preventDefault();
     setError('');
 
+    // Basic validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -114,3 +120,5 @@ export const RegisterPage = () => {
     </div>
   );
 };
+
+export default RegisterPage;

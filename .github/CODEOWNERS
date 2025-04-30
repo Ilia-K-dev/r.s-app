@@ -1,0 +1,11 @@
+# This is a sample CODEOWNERS file.
+# You can use it to specify individuals or teams that own certain parts of the codebase.
+# When someone opens a pull request that modifies code owned by someone, that person or team will be automatically requested for review.
+
+# Assign default owners to the entire repository
+* @your-github-username # Replace with your GitHub username or team handle
+
+# Example: Assign ownership of specific directories
+# /client/ @your-frontend-team
+# /server/ @your-backend-team
+# /docs/ @your-docs-team

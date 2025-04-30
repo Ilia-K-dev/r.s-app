@@ -1,9 +1,14 @@
-import React from 'react';//correct
-import { Link } from 'react-router-dom';//correct
-import { useAuth } from '../../../features/auth/hooks/useAuth';//correct
-import { Bell, Settings, User } from 'lucide-react';//correct
-import { Button } from '../../../shared/components/forms/Button';//correct
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../../features/auth/hooks/useAuth';
+import { Bell, Settings, User } from 'lucide-react';
+import { Button } from '../forms/Button';
 
+/**
+ * @desc The main application Navbar component.
+ * Provides top navigation including the app title, links to notifications and settings, and a logout button when the user is authenticated.
+ * @returns {JSX.Element} - The rendered Navbar component.
+ */
 export const Navbar = () => {
   const { user, logout } = useAuth();
 
@@ -19,15 +24,15 @@ export const Navbar = () => {
           
           {user && (
             <div className="flex items-center space-x-4">
-              <Link 
-                to="/notifications" 
+              <Link
+                to="/notifications"
                 className="p-2 text-gray-400 hover:text-gray-500"
               >
                 <Bell className="w-6 h-6" />
               </Link>
               
-              <Link 
-                to="/settings" 
+              <Link
+                to="/settings"
                 className="p-2 text-gray-400 hover:text-gray-500"
               >
                 <Settings className="w-6 h-6" />
@@ -37,8 +42,8 @@ export const Navbar = () => {
                 <Button
                   variant="secondary"
                   onClick={logout}
-                  icon={User}
                 >
+                  <User className="w-5 h-5 mr-2" />
                   Logout
                 </Button>
               </div>
@@ -49,3 +54,5 @@ export const Navbar = () => {
     </nav>
   );
 };
+
+export default Navbar;

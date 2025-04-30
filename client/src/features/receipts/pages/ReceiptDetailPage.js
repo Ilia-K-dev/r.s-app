@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';//correct
-import { useParams, useNavigate } from 'react-router-dom';//correct
-import { useReceipts } from '../../../features/receipts/hooks/useReceipts';//correct
-import { useToast } from '../../../shared/hooks/useToast';//correct
-import { PageHeader } from '../../../shared/components/layout/PageHeader';//correct
-import { ReceiptPreview } from '../../../features/documents/components/ReceiptPreview';//correct
-import { ReceiptEdit } from '../../../features/receipts/components/ReceiptEdit';//correct
-import { Button } from '../../../shared/components/forms/Button';//correct
-import { Alert } from '../../../shared/components/ui/Alert';//correct
-import { Loading } from '../../../shared/components/ui/Loading'; //correct
-import { Modal } from '../../../shared/components/ui/Modal';//correct
-import { logger } from '../../../shared/utils/logger';//correct
-import { ChevronLeft, Edit, Trash, Download } from 'lucide-react';//correct
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useReceipts } from '../hooks/useReceipts';
+import { useToast } from '../../../shared/hooks/useToast';
+import { PageHeader } from '../../../shared/components/layout/PageHeader';
+import { ReceiptDetail } from '../components/ReceiptDetail';
+import { ReceiptEdit } from '../components/ReceiptEdit';
+import { Button } from '../../../shared/components/forms/Button';
+import { Alert } from '../../../shared/components/ui/Alert';
+import { Loading } from '../../../shared/components/ui/Loading';
+import { Modal } from '../../../shared/components/ui/Modal';
+import { ChevronLeft, Edit, Trash, Download } from 'lucide-react';
 
 const ReceiptDetailPage = () => {
   const { id } = useParams();
@@ -33,13 +32,15 @@ const ReceiptDetailPage = () => {
         setReceipt(data);
       } catch (err) {
         setError(err.message);
-        logger.error('Error fetching receipt:', err);
+        console.error('Error fetching receipt:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchReceipt();
+    if (id) {
+      fetchReceipt();
+    }
   }, [id, getReceiptById]);
 
   const handleEdit = () => {
@@ -57,7 +58,7 @@ const ReceiptDetailPage = () => {
       showToast('Receipt updated successfully', 'success');
     } catch (err) {
       showToast(err.message || 'Failed to update receipt', 'error');
-      logger.error('Error updating receipt:', err);
+      console.error('Error updating receipt:', err);
     }
   };
 
@@ -68,7 +69,7 @@ const ReceiptDetailPage = () => {
       navigate('/receipts');
     } catch (err) {
       showToast(err.message || 'Failed to delete receipt', 'error');
-      logger.error('Error deleting receipt:', err);
+      console.error('Error deleting receipt:', err);
     }
   };
 
@@ -87,7 +88,7 @@ const ReceiptDetailPage = () => {
       document.body.removeChild(link);
     } catch (err) {
       showToast('Failed to download receipt image', 'error');
-      logger.error('Error downloading receipt:', err);
+      console.error('Error downloading receipt:', err);
     }
   };
 
@@ -124,6 +125,7 @@ const ReceiptDetailPage = () => {
       <PageHeader
         title={isEditing ? "Edit Receipt" : "Receipt Details"}
         showBack
+        onBack={() => navigate('/receipts')}
         action={
           !isEditing && (
             <div className="flex space-x-2">
@@ -162,11 +164,9 @@ const ReceiptDetailPage = () => {
           onCancel={() => setIsEditing(false)}
         />
       ) : (
-        <ReceiptPreview
+        <ReceiptDetail
           receipt={receipt}
           imageUrl={receipt.imageUrl}
-          onEdit={handleEdit}
-          onDelete={() => setShowDeleteModal(true)}
           onDownload={handleDownload}
         />
       )}

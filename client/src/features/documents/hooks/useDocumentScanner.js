@@ -1,10 +1,11 @@
-import { useState, useCallback, useRef } from 'react';//correct
-import { visionService } from '../services/visionService';//correct
-import { documentProcessingService } from '../services/documentProcessingService';//correct
-import { useToast } from '../../../shared/hooks/useToast';//correct
-import { useAuth } from '../../auth/hooks/useAuth';//correct
-import { logger } from '../../../shared/utils/logger';//correct
-import { validateFile } from '../utils/validation';//correct
+import { useState, useCallback, useRef } from 'react';
+
+import { useToast } from '../../../shared/hooks/useToast';
+import { logger } from '../../../shared/utils/logger';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { documentProcessingService } from '../services/documentProcessingService';
+import { visionService } from '../services/visionService';
+import { validateFile } from '../../../shared/utils/fileHelpers'; // Updated import
 
 /**
  * Custom hook for document scanning and processing
@@ -13,14 +14,14 @@ import { validateFile } from '../utils/validation';//correct
 export const useDocumentScanner = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
-  
+
   // State for tracking document scanning process
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [processingStatus, setProcessingStatus] = useState({
     stage: 'idle', // 'idle' | 'uploading' | 'processing' | 'completed' | 'error'
-    progress: 0
+    progress: 0,
   });
 
   // Ref to store cancellation token for ongoing operations
@@ -31,15 +32,18 @@ export const useDocumentScanner = () => {
    * @param {File} file - File to validate
    * @returns {boolean} - Validation result
    */
-  const validateDocument = useCallback((file) => {
-    const validationResult = validateFile(file);
-    
-    if (!validationResult.isValid) {
-      showToast(validationResult.errors[0], 'error');
-      return false;
-    }
-    return true;
-  }, [showToast]);
+  const validateDocument = useCallback(
+    file => {
+      const validationResult = validateFile(file);
+
+      if (!validationResult.isValid) {
+        showToast(validationResult.errors[0], 'error');
+        return false;
+      }
+      return true;
+    },
+    [showToast]
+  );
 
   /**
    * Process document from file or camera input
@@ -47,71 +51,74 @@ export const useDocumentScanner = () => {
    * @param {Object} [options={}] - Additional processing options
    * @returns {Promise<Object>} Processed document data
    */
-  const processDocument = useCallback(async (file, options = {}) => {
-    // Reset previous state
-    setLoading(true);
-    setError(null);
-    setProcessingStatus({ stage: 'uploading', progress: 0 });
+  const processDocument = useCallback(
+    async (file, options = {}) => {
+      // Reset previous state
+      setLoading(true);
+      setError(null);
+      setProcessingStatus({ stage: 'uploading', progress: 0 });
 
-    try {
-      // Validate file
-      if (!validateDocument(file)) {
-        throw new Error('Invalid file');
+      try {
+        // Validate file
+        if (!validateDocument(file)) {
+          throw new Error('Invalid file');
+        }
+
+        // Create cancellation token
+        const cancelToken = new AbortController();
+        cancelTokenRef.current = cancelToken;
+
+        // Update processing status
+        setProcessingStatus({ stage: 'processing', progress: 25 });
+
+        // Process image
+        const processedImage = await documentProcessingService.preprocessImage(file);
+
+        // Upload to storage
+        setProcessingStatus({ stage: 'processing', progress: 50 });
+        const uploadResult = await documentProcessingService.uploadDocument(
+          processedImage,
+          user.id,
+          options.documentType || 'receipt'
+        );
+
+        // Extract text using Vision API
+        setProcessingStatus({ stage: 'processing', progress: 75 });
+        const extractedData = await visionService.processReceipt(uploadResult.imageUrl);
+
+        // Final processing and validation
+        const finalDocument = await documentProcessingService.parseExtractedData(
+          extractedData,
+          uploadResult
+        );
+
+        // Update state
+        setDocument(finalDocument);
+        setProcessingStatus({ stage: 'completed', progress: 100 });
+
+        // Show success toast
+        showToast('Document processed successfully', 'success');
+
+        return finalDocument;
+      } catch (err) {
+        // Log error
+        logger.error('Document processing error', err);
+
+        // Set error state
+        setError(err.message || 'Failed to process document');
+        setProcessingStatus({ stage: 'error', progress: 0 });
+
+        // Show error toast
+        showToast(err.message || 'Document processing failed', 'error');
+
+        throw err;
+      } finally {
+        // Reset loading state
+        setLoading(false);
       }
-
-      // Create cancellation token
-      const cancelToken = new AbortController();
-      cancelTokenRef.current = cancelToken;
-
-      // Update processing status
-      setProcessingStatus({ stage: 'processing', progress: 25 });
-
-      // Process image
-      const processedImage = await documentProcessingService.preprocessImage(file);
-
-      // Upload to storage
-      setProcessingStatus({ stage: 'processing', progress: 50 });
-      const uploadResult = await documentProcessingService.uploadDocument(
-        processedImage, 
-        user.id, 
-        options.documentType || 'receipt'
-      );
-
-      // Extract text using Vision API
-      setProcessingStatus({ stage: 'processing', progress: 75 });
-      const extractedData = await visionService.processReceipt(uploadResult.imageUrl);
-
-      // Final processing and validation
-      const finalDocument = await documentProcessingService.parseExtractedData(
-        extractedData, 
-        uploadResult
-      );
-
-      // Update state
-      setDocument(finalDocument);
-      setProcessingStatus({ stage: 'completed', progress: 100 });
-
-      // Show success toast
-      showToast('Document processed successfully', 'success');
-
-      return finalDocument;
-    } catch (err) {
-      // Log error
-      logger.error('Document processing error', err);
-
-      // Set error state
-      setError(err.message || 'Failed to process document');
-      setProcessingStatus({ stage: 'error', progress: 0 });
-
-      // Show error toast
-      showToast(err.message || 'Document processing failed', 'error');
-
-      throw err;
-    } finally {
-      // Reset loading state
-      setLoading(false);
-    }
-  }, [user, showToast, validateDocument]);
+    },
+    [user, showToast, validateDocument, documentProcessingService]
+  );
 
   /**
    * Cancel ongoing document processing
@@ -147,7 +154,7 @@ export const useDocumentScanner = () => {
     resetScanner,
 
     // Utility state
-    isProcessing: loading || processingStatus.stage === 'processing'
+    isProcessing: loading || processingStatus.stage === 'processing',
   };
 };
 

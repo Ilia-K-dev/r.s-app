@@ -1,4 +1,4 @@
-import React from 'react';//correct
+import React from 'react'; //correct
 import {
   LineChart,
   Line,
@@ -9,11 +9,12 @@ import {
   Legend,
   ResponsiveContainer,
   AreaChart,
-  Area
+  Area,
 } from 'recharts';
-import { Card } from '../../../../shared/components/ui/Card';//correct
-import { formatCurrency } from '../../../../shared/utils/currency';//correct
-import { formatDate } from '../../../../shared/utils/date';//correct
+
+import { Card } from '../../../../shared/components/ui/Card'; //correct
+import { formatCurrency } from '../../../../shared/utils/currency'; //correct
+import { formatDate } from '../../../../shared/utils/date'; //correct
 
 // Stock Prediction Chart
 export const StockPredictionChart = ({ data }) => (
@@ -28,10 +29,7 @@ export const StockPredictionChart = ({ data }) => (
           fontSize={12}
           tickFormatter={value => formatDate(value, 'MMM dd')}
         />
-        <YAxis
-          stroke="#6B7280"
-          fontSize={12}
-        />
+        <YAxis stroke="#6B7280" fontSize={12} />
         <Tooltip
           content={({ active, payload, label }) => {
             if (!active || !payload) return null;
@@ -77,11 +75,7 @@ export const PriceElasticityChart = ({ data }) => (
           fontSize={12}
           tickFormatter={value => formatCurrency(value)}
         />
-        <YAxis
-          stroke="#6B7280"
-          fontSize={12}
-          tickFormatter={value => `${value} units`}
-        />
+        <YAxis stroke="#6B7280" fontSize={12} tickFormatter={value => `${value} units`} />
         <Tooltip
           content={({ active, payload, label }) => {
             if (!active || !payload) return null;
@@ -95,18 +89,8 @@ export const PriceElasticityChart = ({ data }) => (
           }}
         />
         <Legend />
-        <Line
-          type="monotone"
-          dataKey="demand"
-          stroke="#0EA5E9"
-          strokeWidth={2}
-        />
-        <Line
-          type="monotone"
-          dataKey="elasticity"
-          stroke="#22C55E"
-          strokeWidth={2}
-        />
+        <Line type="monotone" dataKey="demand" stroke="#0EA5E9" strokeWidth={2} />
+        <Line type="monotone" dataKey="elasticity" stroke="#22C55E" strokeWidth={2} />
       </LineChart>
     </ResponsiveContainer>
   </Card>
@@ -119,16 +103,8 @@ export const SpendingForecastChart = ({ data }) => (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-        <XAxis
-          dataKey="month"
-          stroke="#6B7280"
-          fontSize={12}
-        />
-        <YAxis
-          stroke="#6B7280"
-          fontSize={12}
-          tickFormatter={value => formatCurrency(value)}
-        />
+        <XAxis dataKey="month" stroke="#6B7280" fontSize={12} />
+        <YAxis stroke="#6B7280" fontSize={12} tickFormatter={value => formatCurrency(value)} />
         <Tooltip
           content={({ active, payload, label }) => {
             if (!active || !payload) return null;
@@ -137,7 +113,10 @@ export const SpendingForecastChart = ({ data }) => (
                 <p className="font-medium">{label}</p>
                 <p>Historical: {payload[0].value ? formatCurrency(payload[0].value) : 'N/A'}</p>
                 <p>Forecast: {payload[1].value ? formatCurrency(payload[1].value) : 'N/A'}</p>
-                <p>Confidence: {payload[2]?.value ? `${(payload[2].value * 100).toFixed(1)}%` : 'N/A'}</p>
+                <p>
+                  Confidence:{' '}
+                  {payload[2]?.value ? `${(payload[2].value * 100).toFixed(1)}%` : 'N/A'}
+                </p>
               </div>
             );
           }}
@@ -158,12 +137,7 @@ export const SpendingForecastChart = ({ data }) => (
           strokeDasharray="5 5"
           dot={{ fill: '#22C55E', r: 4 }}
         />
-        <Line
-          type="monotone"
-          dataKey="confidence"
-          stroke="#EAB308"
-          strokeWidth={1}
-        />
+        <Line type="monotone" dataKey="confidence" stroke="#EAB308" strokeWidth={1} />
       </LineChart>
     </ResponsiveContainer>
   </Card>
@@ -176,11 +150,7 @@ export const SeasonalPatternChart = ({ data }) => (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-        <XAxis
-          dataKey="month"
-          stroke="#6B7280"
-          fontSize={12}
-        />
+        <XAxis dataKey="month" stroke="#6B7280" fontSize={12} />
         <YAxis
           stroke="#6B7280"
           fontSize={12}

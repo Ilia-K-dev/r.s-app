@@ -1,13 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateUser } = require('../middleware/auth/auth'); //good
-const analyticsController = require('../controllers/analyticsController'); //good
-const { validate } = require('../middleware/validation/validation'); //good
+const { authenticateUser } = require('../middleware/auth/auth');
+const analyticsController = require('../controllers/analyticsController');
+const { validate } = require('../middleware/validation/validation');
 
 // Apply authentication to all routes
 router.use(authenticateUser);
 
-// Price Analytics Routes
+// Analytics Routes (/api/analytics)
+
+// Price Analytics
 router.get('/prices/:productId',
   validate({
     params: {
@@ -21,7 +23,7 @@ router.get('/prices/:productId',
   analyticsController.getPriceAnalytics
 );
 
-// Spending Analysis Routes
+// Spending Analysis
 router.get('/spending',
   validate({
     query: {
@@ -33,7 +35,7 @@ router.get('/spending',
   analyticsController.getSpendingAnalysis
 );
 
-// Vendor Analysis Routes
+// Vendor Analysis
 router.get('/vendors',
   validate({
     query: {
@@ -44,12 +46,12 @@ router.get('/vendors',
   analyticsController.getVendorAnalysis
 );
 
-// Inventory Analytics Routes
+// Inventory Analytics
 router.get('/inventory',
   analyticsController.getInventoryAnalytics
 );
 
-// Category Analysis Routes
+// Category Analysis
 router.get('/categories/:categoryId',
   validate({
     params: {
@@ -63,7 +65,7 @@ router.get('/categories/:categoryId',
   analyticsController.getCategoryAnalysis
 );
 
-// Dashboard Analytics Route
+// Dashboard Analytics
 router.get('/dashboard',
   validate({
     query: {
@@ -73,7 +75,19 @@ router.get('/dashboard',
   analyticsController.getDashboardAnalytics
 );
 
-// Reports Routes
+// Budget Analytics
+router.get('/budget',
+  validate({
+    query: {
+      period: { type: 'string', optional: true, enum: ['month', 'year', 'all'] }, // Assuming budget can be viewed by month/year/all
+      categoryId: { type: 'string', optional: true } // Allow filtering by category
+    }
+  }),
+  analyticsController.getBudgetProgress
+);
+
+
+// Reports Routes (Keeping existing report routes for now, assuming they are needed)
 router.get('/reports/price-comparison',
   validate({
     query: {
@@ -116,7 +130,7 @@ router.get('/reports/spending-trends',
   analyticsController.getSpendingTrendsReport
 );
 
-// Export Routes
+// Export Routes (Keeping existing export route for now)
 router.post('/export',
   validate({
     body: {
@@ -128,7 +142,7 @@ router.post('/export',
   analyticsController.exportAnalytics
 );
 
-// Custom Analysis Routes
+// Custom Analysis Routes (Keeping existing custom route for now)
 router.post('/custom',
   validate({
     body: {
@@ -140,5 +154,6 @@ router.post('/custom',
   }),
   analyticsController.getCustomAnalytics
 );
+
 
 module.exports = router;

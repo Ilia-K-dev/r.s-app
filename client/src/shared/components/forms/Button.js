@@ -1,5 +1,5 @@
-import React from 'react';//correct
-import { Loading } from '../ui/Loading';//correct
+import React from 'react';
+import { Loading } from '../ui/Loading';
 
 export const Button = ({ 
   children, 
@@ -54,3 +54,5 @@ export const Button = ({
     </button>
   );
 };
+
+export default Button;

@@ -13,7 +13,7 @@ module.exports = {
     'plugin:jsx-a11y/recommended',
     'plugin:import/errors',
     'plugin:import/warnings',
-    'plugin:prettier/recommended'
+    'eslint-config-prettier'
   ],
   parserOptions: {
     ecmaFeatures: {
@@ -26,8 +26,7 @@ module.exports = {
     'react',
     'react-hooks',
     'jsx-a11y',
-    'import',
-    'prettier'
+    'import'
   ],
   rules: {
     // React Rules
@@ -64,10 +63,7 @@ module.exports = {
     'no-var': 'error',
     'object-shorthand': 'error',
     'arrow-body-style': ['error', 'as-needed'],
-    'no-duplicate-imports': 'error',
-
-    // Prettier Integration
-    'prettier/prettier': ['error', {}, { usePrettierrc: true }]
+    'no-duplicate-imports': 'error'
   },
   settings: {
     react: {

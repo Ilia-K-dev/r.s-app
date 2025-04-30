@@ -1,22 +1,19 @@
-import React from 'react';//correct
-import PropTypes from 'prop-types';//correct
-import { logger } from '../../shared/utils/logger';//correct
-import { Button } from '../../shared/components/forms/Button';//correct
-import { Alert } from '../../shared/components/ui/Alert';//correct
-import { RefreshCw, Home } from 'lucide-react';//correct
+import React from 'react';
+import PropTypes from 'prop-types';
+import { logger } from '../../shared/utils/logger';
+import { Button } from '../../shared/components/forms/Button';
+import { Alert } from '../../shared/components/ui/Alert';
+import { RefreshCw, Home } from 'lucide-react';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null
-    };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
+  
   componentDidCatch(error, errorInfo) {
     // Log the error
-    logger.error('Error Boundary caught an error:', {
+    logger.error("Error Boundary caught an error:", {
       error: error,
       errorInfo: errorInfo,
       componentStack: errorInfo.componentStack
@@ -33,11 +30,7 @@ class ErrorBoundary extends React.Component {
   }
 
   handleReset = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null
-    });
+    this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   handleReload = () => {
@@ -45,7 +38,7 @@ class ErrorBoundary extends React.Component {
   };
 
   handleNavigateHome = () => {
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   render() {
@@ -58,17 +51,18 @@ class ErrorBoundary extends React.Component {
                 Something went wrong
               </h2>
               <p className="mt-2 text-gray-600">
-                We're sorry for the inconvenience. This error has been logged and will be addressed.
+                We're sorry for the inconvenience. This error has been logged
+                and will be addressed.
               </p>
             </div>
 
             <Alert
               type="error"
-              message={this.state.error?.message || 'An unexpected error occurred'}
+              message={this.state.error?.message || "An unexpected error occurred"}
             />
 
             {/* Show error details in development */}
-            {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
+            {process.env.NODE_ENV === "development" && this.state.errorInfo && (
               <div className="mt-4">
                 <details className="cursor-pointer">
                   <summary className="text-sm text-gray-500 hover:text-gray-700">
@@ -84,11 +78,7 @@ class ErrorBoundary extends React.Component {
             )}
 
             <div className="flex flex-col space-y-4">
-              <Button
-                onClick={this.handleReload}
-                icon={RefreshCw}
-                fullWidth
-              >
+              <Button onClick={this.handleReload} icon={RefreshCw} fullWidth>
                 Try Again
               </Button>
 

@@ -16,6 +16,7 @@ const authRoutes = require('./routes/authRoutes');
 const receiptRoutes = require('./routes/receiptRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const documentRoutes = require('./routes/documentRoutes'); // Added document routes
 const diagnosticRoutes = require('./routes/diagnosticRoutes');
 
 // Import middleware
@@ -217,6 +218,12 @@ try {
       router: categoryRoutes,
       name: 'categoryRoutes',
       protected: process.env.NODE_ENV !== 'test' // Skip authentication in 'test' environment
+    },
+    {
+      path: '/api/documents',
+      router: documentRoutes,
+      name: 'documentRoutes',
+      protected: process.env.NODE_ENV !== 'test' // Assuming document uploads require auth
     }
   ];
 

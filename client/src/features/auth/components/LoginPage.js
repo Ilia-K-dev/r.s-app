@@ -1,13 +1,14 @@
-import React, { useState } from 'react';//correct
-import { Link, useNavigate } from 'react-router-dom';//correct
-import { Input } from '../../../shared/components/forms/Input';//correct
-import { Button } from '../../../shared/components/forms/Button';//correct
-import { Alert } from '../../../shared/components/ui/Alert';//correct
-import { useAuth } from '../../auth/hooks/useAuth';//correct
-import { Mail, Lock } from 'lucide-react';//correct
+import React, { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Input } from '../../../shared/components/forms/Input';
+import { Button } from '../../../shared/components/forms/Button';
+import { Alert } from '../../../shared/components/ui/Alert';
+import { useAuth } from '../hooks/useAuth';
+import { Mail, Lock } from 'lucide-react';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -16,6 +17,9 @@ export const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Get the redirect path if user was redirected to login
+  const from = location.state?.from?.pathname || '/';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -23,7 +27,8 @@ export const LoginPage = () => {
 
     try {
       await login(formData.email, formData.password);
-      navigate('/');
+      // Redirect to the page user was trying to access or home
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -110,3 +115,5 @@ export const LoginPage = () => {
     </div>
   );
 };
+
+export default LoginPage;
