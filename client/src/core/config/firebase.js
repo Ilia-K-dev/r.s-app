@@ -1,106 +1,66 @@
-import { initializeApp, getApps } from 'firebase/app';
+// File: client/src/core/config/firebase.js
+// Date: 2025-05-10
+// Description: Firebase configuration and service initialization.
+// Reasoning: Initializes Firebase app and services (Auth, Firestore, Storage) and configures offline persistence for Firestore.
+// Potential Optimizations: Replace hardcoded config with environment variables for production.
+
+import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore'; // Import enableIndexedDbPersistence
 import { getStorage } from 'firebase/storage';
 
-// --- Environment Variable Debugging ---
-function debugEnvironmentVariables() {
-  console.log('--- DEBUGGING ENVIRONMENT VARIABLES ---');
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-  // Log all REACT_APP_ variables found
-  const reactAppVars = Object.keys(process.env).filter(key => key.startsWith('REACT_APP_'));
-  console.log('Found REACT_APP_ variables:', reactAppVars);
-
-  // Log specific Firebase keys and their values (or indicate if missing)
-  const firebaseKeys = [
-    'REACT_APP_FIREBASE_API_KEY',
-    'REACT_APP_FIREBASE_AUTH_DOMAIN',
-    'REACT_APP_FIREBASE_PROJECT_ID',
-    'REACT_APP_FIREBASE_STORAGE_BUCKET',
-    'REACT_APP_FIREBASE_MESSAGING_SENDER_ID',
-    'REACT_APP_FIREBASE_APP_ID'
-  ];
-  firebaseKeys.forEach(key => {
-    console.log(`${key}:`, process.env[key] ? '*** SET ***' : '!!! NOT SET !!!'); // Avoid logging actual keys
-  });
-  console.log('--- END DEBUGGING ---');
+// Log configuration and initialization steps
+function log(message) {
+  console.log(`[Firebase] ${message}`);
 }
 
-// Call debug function early, only in development
-if (process.env.NODE_ENV === 'development') {
-  debugEnvironmentVariables();
-}
-// --- End Debugging ---
-
-
-// Define required environment variable keys
-const requiredEnvKeys = [
-  'REACT_APP_FIREBASE_API_KEY',
-  'REACT_APP_FIREBASE_AUTH_DOMAIN',
-  'REACT_APP_FIREBASE_PROJECT_ID',
-  'REACT_APP_FIREBASE_STORAGE_BUCKET',
-  'REACT_APP_FIREBASE_MESSAGING_SENDER_ID',
-  'REACT_APP_FIREBASE_APP_ID'
-];
-
-// Validate environment variables before creating the config object
-const validateEnvVariables = () => {
-  console.log("Validating Firebase environment variables...");
-  const missingKeys = requiredEnvKeys.filter(key => 
-    !process.env[key] || process.env[key].trim() === ''
-  );
-  
-  if (missingKeys.length > 0) {
-    const errorMsg = `CRITICAL ERROR: Missing or empty Firebase environment variables: ${missingKeys.join(', ')}. Check your .env file (e.g., .env.development in client/ folder), ensure all required REACT_APP_FIREBASE_... variables are set correctly, and restart the development server.`;
-    console.error(errorMsg); 
-    throw new Error(errorMsg); 
-  }
-  console.log("Firebase environment variables validated successfully.");
-};
-
-// Validate environment variables immediately
-validateEnvVariables(); 
-
-// Create the config object using the validated environment variables
+// Hardcoded configuration for development only
+// In production, this would be replaced with environment variables
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  apiKey: "AIzaSyAWx_ZcWGx8XoCl-fWO8TPJi7hzDrWjQ",
+  authDomain: "project-reciept-reader-id.firebaseapp.com",
+  projectId: "project-reciept-reader-id",
+  storageBucket: "project-reciept-reader-id.appspot.com",
+  messagingSenderId: "7474182423",
+  appId: "1:747418219423:web:f77288088223d55c3aa",
+  measurementId: "G-C7KLBLG2"
 };
 
 // Initialize Firebase
-let app;
-let auth;
-let db;
-let storage;
+log("Initializing Firebase app...");
+const app = initializeApp(firebaseConfig);
+log("Firebase app initialized successfully");
 
-try {
-  // Initialization check
-  if (!getApps().length) {
-    console.log("Initializing Firebase app...");
-    app = initializeApp(firebaseConfig);
-    console.log("Firebase app initialized.");
-  } else {
-    console.log("Firebase app already initialized.");
-    app = getApps()[0]; 
-  }
+// Initialize services
+const auth = getAuth(app);
+log("Auth service initialized");
 
-  // Initialize services
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  console.log("Firebase services (Auth, Firestore, Storage) initialized.");
+const db = getFirestore(app);
+log("Firestore service initialized");
 
-} catch (error) {
-  if (!error.message.startsWith('CRITICAL ERROR')) {
-      console.error('Firebase service initialization failed:', error);
-  }
-  throw error; 
-}
+// Enable offline persistence for Firestore
+// This allows the app to work offline and sync data when back online.
+// The default cache size is 40 MB. Consider setting a specific cache size limit
+// based on expected data volume and device storage constraints if needed.
+enableIndexedDbPersistence(db)
+  .then(() => {
+    log("Firestore offline persistence enabled");
+  })
+  .catch((err) => {
+    if (err.code == 'failed-precondition') {
+      // Multiple tabs open, persistence can only be enabled in one tab at a time.
+      log("Firestore persistence failed: Multiple tabs open.");
+    } else if (err.code == 'unimplemented') {
+      // The current browser does not support all of the features required to enable persistence
+      log("Firestore persistence failed: Browser does not support persistence.");
+    } else {
+      log("Firestore persistence failed:", err);
+    }
+  });
 
-// Export initialized services
-export { auth, db, storage, app }; 
-export default app;
+
+const storage = getStorage(app);
+log("Storage service initialized");
+
+// Export Firebase services
+export { app, auth, db, storage };

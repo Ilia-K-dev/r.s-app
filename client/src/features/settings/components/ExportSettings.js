@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card } from '../../../shared/components/ui/Card';
-import { Button } from '../../../shared/components/forms/Button';
+import { Button } from '../../../shared/components/ui/Button';
 import { Dropdown } from '../../../shared/components/forms/Dropdown';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { useToast } from '../../../shared/hooks/useToast';

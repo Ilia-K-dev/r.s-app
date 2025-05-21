@@ -1,15 +1,14 @@
+// Last updated: 2025-05-08 12:46:14
 const vision = require('@google-cloud/vision');
 const sharp = require('sharp');
 const { storage } = require('../../../config/firebase'); //good
-const logger = require('../../utils/logger'); //good
-const { AppError } = require('../../utils/error/AppError'); //good
-const { parseReceipt } = require('../../services/receipts/ReceiptProcessingService') //good
-const { parseInvoice } = require('../receipts/ReceiptProcessingService');//good
 const Papa = require('papaparse');
 const { preprocessImage } = require('../preprocessing'); //good
+const BaseService = require('../core/BaseService'); // Import BaseService
 
-class DocumentProcessingService {
+class DocumentProcessingService extends BaseService {
   constructor() {
+    super(); // Call the parent constructor
     this.visionClient = new vision.ImageAnnotatorClient({
       keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS
     });
@@ -114,8 +113,7 @@ class DocumentProcessingService {
         }
       };
     } catch (error) {
-      logger.error('Document processing error:', error);
-      throw new AppError(error.message, 500);
+      this.handleError(error); // Use BaseService error handling
     }
   }
   async classifyDocument(textData) {
@@ -123,8 +121,7 @@ class DocumentProcessingService {
       const classificationResult = await this._classifyDocumentType(textData);
       return classificationResult;
     } catch (error) {
-      logger.error('Document classification error:', error);
-      throw new AppError('Failed to classify document', 500);
+      this.handleError(error); // Use BaseService error handling
     }
   }
   // Image Processing Methods
@@ -163,13 +160,12 @@ class DocumentProcessingService {
       const stats = await pipeline.stats();
       pipeline = await this._enhanceImage(pipeline, metadata, stats);
   
-      return pipeline.jpeg({ 
+      return pipeline.jpeg({
         quality: this.processingConfig.quality,
         chromaSubsampling: '4:4:4' // Higher quality color sampling
       }).toBuffer();
     } catch (error) {
-      logger.error('Image optimization error:', error);
-      throw new AppError('Failed to optimize image', 500);
+      this.handleError(error); // Use BaseService error handling
     }
   }
 
@@ -200,8 +196,7 @@ class DocumentProcessingService {
 
       return pipeline;
     } catch (error) {
-      logger.error('Image enhancement error:', error);
-      throw error;
+      this.handleError(error); // Use BaseService error handling
     }
   }
 
@@ -211,7 +206,7 @@ class DocumentProcessingService {
       const [result] = await this.visionClient.textDetection(imageBuffer);
       
       if (!result.fullTextAnnotation) {
-        throw new AppError('No text detected in image', 400);
+        this.handleError(new AppError('No text detected in image', 400)); // Use BaseService error handling
       }
 
       // Process text blocks with position information
@@ -228,8 +223,7 @@ class DocumentProcessingService {
         language: this._detectLanguage(result.fullTextAnnotation.text)
       };
     } catch (error) {
-      logger.error('Text extraction error:', error);
-      throw new AppError('Failed to extract text from image', 500);
+      this.handleError(error); // Use BaseService error handling
     }
   }
 
@@ -1007,8 +1001,7 @@ class DocumentProcessingService {
 
       return url;
     } catch (error) {
-      logger.error('Image upload error:', error);
-      throw new AppError('Failed to upload image', 500);
+      this.handleError(error); // Use BaseService error handling
     }
   }
 }

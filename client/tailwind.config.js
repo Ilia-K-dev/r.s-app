@@ -21,5 +21,20 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
     "./public/index.html",
   ],
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+    plugin(function ({ addVariant }) {
+      addVariant('rtl', ['[dir="rtl"] &']);
+      addVariant('ltr', ['[dir="ltr"] &']);
+    }),
+  ],
+  // Enable RTL support
+  variants: {
+    extend: {
+      margin: ['rtl'],
+      padding: ['rtl'],
+      borderRadius: ['rtl'],
+      textAlign: ['rtl'],
+    },
+  },
 };

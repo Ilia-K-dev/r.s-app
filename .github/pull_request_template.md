@@ -1,42 +1,36 @@
 ## Description
 
-[Provide a brief description of the changes introduced by this pull request.]
+Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change.
 
-## Related Issues
+Fixes #[issue number]
 
-[Link any related issues using keywords like "Closes #", "Fixes #", etc.]
+## Type of change
+
+Please delete options that are not relevant.
+
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] This change requires a documentation update
+
+## How Has This Been Tested?
+
+Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration.
+
+- [ ] Test A
+- [ ] Test B
+
+## Documentation Updates
+
+Please describe any updates made to the documentation as part of this pull request. Include links to the updated documentation files.
 
 ## Checklist
 
-- [ ] I have read the [CONTRIBUTING.md](CONTRIBUTING.md)
-- [ ] I have followed the code style guidelines
-- [ ] I have added necessary documentation (code comments, README updates, etc.)
-- [ ] I have added/updated tests to cover the changes
-- [ ] All tests pass locally
-- [ ] I have verified the functionality in a development environment
-- [ ] I have checked for potential security vulnerabilities
-- [ ] I have ensured no sensitive information is included
-
-## Security Checklist
-
-- [ ] No hardcoded secrets, API keys, or credentials
-- [ ] No `.env` files or service account keys are included
-- [ ] Firebase config does not include actual API keys
-- [ ] Sensitive information is handled securely
-
-## Type of Change
-
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Enhancement
-- [ ] Documentation update
-- [ ] Refactoring
-- [ ] Other (please specify)
-
-## Screenshots (if applicable)
-
-[Add screenshots or GIFs to help visualize the changes]
-
-## Reviewers
-
-[@username]
+- [ ] My code follows the style guidelines of this project
+- [ ] I have performed a self-review of my own code
+- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have made corresponding changes to the documentation
+- [ ] My changes generate no new warnings
+- [ ] I have added tests that prove my fix is effective or that my feature works
+- [ ] New and existing unit tests pass locally with my changes
+- [ ] Any dependent changes have been merged and published in downstream modules

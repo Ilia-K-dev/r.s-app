@@ -1,6 +1,8 @@
-const { StorageObjectData, getStorage } = require('firebase-admin/storage');
-const { onObjectFinalized, CloudEvent } = require('firebase-functions/v2/storage');
-const {onCall} = require("firebase-functions/v2/https"); // Corrected this line
+require("firebase-admin/storage");
+const {onObjectFinalized} = require("firebase-functions/v2/storage");
+const {
+  onCall,
+} = require("firebase-functions/v2/https"); // Corrected this line
 const vision = require("@google-cloud/vision");
 const admin = require("firebase-admin");
 const logger = require("firebase-functions/logger");
@@ -12,7 +14,7 @@ admin.initializeApp();
 const client = new vision.ImageAnnotatorClient();
 
 // Process the uploaded receipt image
-exports.processReceipt = onFinalize(async (object) => {
+exports.processReceipt = onObjectFinalized(async (object) => {
   try {
     // Get the file details
     const file = object;

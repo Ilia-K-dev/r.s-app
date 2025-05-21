@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 const winston = require('winston');
 const multer = require('multer');
 const { admin, db } = require('../config/firebase');
+const { swaggerUi, swaggerSpec } = require('./config/swagger'); // Import Swagger
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -23,6 +24,7 @@ const diagnosticRoutes = require('./routes/diagnosticRoutes');
 const { handleMulterError, upload } = require('./middleware/upload');
 const { errorHandler } = require('./utils/error/errorHandler');
 const { authenticateUser } = require('./middleware/auth/auth');
+const { securityMiddleware } = require('./middleware/security/security'); // Import security middleware
 
 // Create Express app
 const app = express();
@@ -89,6 +91,15 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Rate limiting
 app.use(limiter);
+
+// Rate limiting
+app.use(limiter);
+
+// Apply security middleware
+securityMiddleware.setup(app);
+
+// Swagger API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Basic health check route
 app.get('/', (req, res) => {

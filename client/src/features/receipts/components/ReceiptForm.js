@@ -2,7 +2,7 @@ import { Store, Calendar, DollarSign, Tag, Plus, Trash, Save } from 'lucide-reac
 import React, { useState, useEffect } from 'react';
 
 import { Input } from '../../..//shared/components/forms/Input';
-import { Button } from '../../../shared/components/forms/Button';
+import Button from '../../../shared/components/ui/Button';
 import { Dropdown } from '../../../shared/components/forms/Dropdown';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { Modal } from '../../../shared/components/ui/Modal';

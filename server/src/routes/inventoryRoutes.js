@@ -1,133 +1,36 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateUser } = require('../middleware/auth/auth');
 const inventoryController = require('../controllers/inventoryController');
-const { validate } = require('../middleware/validation/validation');
+const { authenticate } = require('../middleware/auth/auth'); // Assuming auth middleware location
 
-// Apply authentication to all routes
-router.use(authenticateUser);
+// Apply authentication middleware to all inventory routes
+router.use(authenticate);
 
-// Inventory Item Management Routes (/api/inventory)
-router.post('/',
-  validate({
-    body: {
-      name: { type: 'string', required: true },
-      category: { type: 'string', required: true },
-      unitPrice: { type: 'number', required: true },
-      currentStock: { type: 'number', required: true },
-      minStockLevel: { type: 'number', optional: true },
-      reorderPoint: { type: 'number', optional: true }
-    }
-  }),
-  inventoryController.createProduct // Corresponds to POST /api/inventory
-);
+// GET /api/inventory - List all inventory items for a user
+router.get('/', inventoryController.listInventory);
 
-router.get('/',
-  validate({
-    query: {
-      category: { type: 'string', optional: true },
-      status: { type: 'string', optional: true },
-      stockLevel: { type: 'string', optional: true },
-      search: { type: 'string', optional: true },
-      sortBy: { type: 'string', optional: true },
-      sortOrder: { type: 'string', optional: true },
-      limit: { type: 'number', required: true },
-      startAfter: { type: 'string', optional: true }
-    }
-  }),
-  inventoryController.getProducts // Corresponds to GET /api/inventory
-);
+// GET /api/inventory/:id - Get a specific inventory item
+router.get('/:id', inventoryController.getInventoryItem);
 
-router.get('/:id',
-  validate({
-    params: {
-      id: { type: 'string', required: true }
-    }
-  }),
-  inventoryController.getProductById // Corresponds to GET /api/inventory/:id
-);
+// POST /api/inventory - Create a new inventory item
+router.post('/', inventoryController.createInventoryItem);
 
-router.put('/:id',
-  validate({
-    params: {
-      id: { type: 'string', required: true }
-    },
-    body: {
-      name: { type: 'string', optional: true },
-      category: { type: 'string', optional: true },
-      unitPrice: { type: 'number', optional: true },
-      minStockLevel: { type: 'number', optional: true },
-      reorderPoint: { type: 'number', optional: true },
-      status: { type: 'string', optional: true }
-    }
-  }),
-  inventoryController.updateProduct // Corresponds to PUT /api/inventory/:id
-);
+// PUT /api/inventory/:id - Update an inventory item
+router.put('/:id', inventoryController.updateInventoryItem);
 
-router.delete('/:id',
-  validate({
-    params: {
-      id: { type: 'string', required: true }
-    }
-  }),
-  inventoryController.deleteProduct // Corresponds to DELETE /api/inventory/:id
-);
+// DELETE /api/inventory/:id - Delete an inventory item
+router.delete('/:id', inventoryController.deleteInventoryItem);
 
-// Stock Management Routes (/api/inventory)
-router.put('/:id/stock', // Changed from POST to PUT
-  validate({
-    params: {
-      id: { type: 'string', required: true }
-    },
-    body: {
-      quantity: { type: 'number', required: true },
-      type: { type: 'string', required: true, enum: ['add', 'subtract', 'set'] },
-      reason: { type: 'string', required: true }
-    }
-  }),
-  inventoryController.updateStock // Corresponds to PUT /api/inventory/:id/stock
-);
+// PUT /api/inventory/:id/stock - Update stock levels
+router.put('/:id/stock', inventoryController.updateStock);
 
-router.post('/movements',
-  validate({
-    body: {
-      productId: { type: 'string', required: true },
-      quantity: { type: 'number', required: true },
-      type: { type: 'string', required: true, enum: ['add', 'subtract', 'set'] },
-      reason: { type: 'string', required: true },
-      timestamp: { type: 'date', optional: true }
-    }
-  }),
-  inventoryController.createStockMovement // Corresponds to POST /api/inventory/movements
-);
+// GET /api/inventory/movements - Get stock movement history
+router.get('/movements', inventoryController.getStockMovements);
 
+// POST /api/inventory/movements - Create a stock movement record
+router.post('/movements', inventoryController.createStockMovement);
 
-router.get('/movements',
-  validate({
-    query: {
-      startDate: { type: 'date', optional: true },
-      endDate: { type: 'date', optional: true },
-      type: { type: 'string', optional: true }
-    }
-  }),
-  inventoryController.getStockMovements // Corresponds to GET /api/inventory/movements
-);
-
-// Alert Management Routes (/api/inventory)
-router.get('/low-stock',
-  inventoryController.getLowStockAlerts // Corresponds to GET /api/inventory/low-stock
-);
-
-// The following routes were in the original file but are not explicitly requested in Prompt 1.
-// I will keep them for now but note that they might need review based on client needs.
-// router.get('/alerts', inventoryController.getAlerts);
-// router.post('/alerts/:id/resolve', inventoryController.resolveAlert);
-// router.get('/status', inventoryController.getInventoryStatus);
-// router.get('/reports/low-stock', inventoryController.getLowStockReport); // Redundant with /low-stock?
-// router.get('/reports/stock-value', inventoryController.getStockValueReport);
-// router.get('/reports/movements', inventoryController.getMovementsReport);
-// router.post('/batch/update-stock', inventoryController.batchUpdateStock);
-// router.post('/import', inventoryController.importProducts);
-
+// GET /api/inventory/low-stock - Get low stock alerts
+router.get('/low-stock', inventoryController.getLowStockAlerts);
 
 module.exports = router;

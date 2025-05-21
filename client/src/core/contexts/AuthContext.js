@@ -1,22 +1,11 @@
-import React, { createContext, useState, useContext, useEffect } from 'react'; //correct
-
-import { auth } from '../config/firebase'; //correct
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
-  sendPasswordResetEmail,
-  onAuthStateChanged,
-  updateProfile
-} from 'firebase/auth';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { auth } from '../config/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export const AuthContext = createContext({
   user: null,
-  loading: true,
-  login: async () => {},
-  register: async () => {},
-  logout: async () => {},
-  resetPassword: async () => {}
+  setUser: () => {},
+  loading: true
 });
 
 export const AuthProvider = ({ children }) => {
@@ -34,57 +23,15 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  // Login function
-  const login = async (email, password) => {
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      return result.user;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  };
-
-  // Register function
-  const register = async (email, password, displayName) => {
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      // Set display name (could be extended to update profile)
-      await updateProfile(result.user, { displayName });
-      return result.user;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  };
-
-  // Logout function
-  const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  };
-
-  // Password reset function
-  const resetPassword = async (email) => {
-    try {
-      await sendPasswordResetEmail(auth, email);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  };
-
-  // Create the context value
+  // Create the context value - just the state management, logic is in useAuth.js
   const value = {
     user,
-    loading,
-    login,
-    register,
-    logout,
-    resetPassword
+    setUser,
+    loading
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// Basic hook for compatibility
 export const useAuth = () => useContext(AuthContext);

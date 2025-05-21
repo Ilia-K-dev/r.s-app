@@ -1,15 +1,15 @@
-import { Store, Calendar, DollarSign, Tag, Plus, Trash, Receipt, Save } from 'lucide-react'; //correct
-import React, { useState, useEffect } from 'react'; //correct
+import { Store, Calendar, DollarSign, Tag, Plus, Trash, Receipt, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 
-import { Input } from '../../..//shared/components/forms/Input'; //correct
-import { Button } from '../../../shared/components/forms/Button'; //correct
-import { Dropdown } from '../../../shared/components/forms/Dropdown'; //correct
-import { Alert } from '../../../shared/components/ui/Alert'; //correct
-import { Card } from '../../../shared/components/ui/Card'; //correct
-import { DateRangePicker } from '../../../shared/components/ui/DateRangePicker'; //correct
-import { parseCurrencyInput, formatCurrency } from '../../../shared/utils/currency'; //correct
-import { useCategories } from '../../categories/hooks/useCategories'; //correct
-import { validateReceipt } from '../utils/validation'; //correct
+import { Input } from '../../../shared/components/forms/Input';
+import { Button } from '../../../shared/components/ui/Button';
+import { Dropdown } from '../../../shared/components/forms/Dropdown';
+import { Alert } from '../../../shared/components/ui/Alert';
+import { Card } from '../../../shared/components/ui/Card';
+import { DateRangePicker } from '../../../shared/components/ui/DateRangePicker';
+import { parseCurrencyInput, formatCurrency } from '../../../shared/utils/currency';
+import { useCategories } from '../../categories/hooks/useCategories';
+import { validateReceipt } from '../utils/validation';
 
 const ReceiptEdit = ({ receipt, onSave, onCancel, loading = false, error = null }) => {
   const { categories, loading: categoriesLoading } = useCategories();

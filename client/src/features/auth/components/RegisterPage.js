@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '../../../shared/components/forms/Input';
-import { Button } from '../../../shared/components/forms/Button';
+import { Button } from '../../../shared/components/ui/Button';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { useAuth } from '../hooks/useAuth';
 import { User, Mail, Lock } from 'lucide-react';

@@ -1,6 +1,6 @@
-import AutoSizer from '@reach/auto-id';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { FixedSizeList as VirtualizedList } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer'; // Correct import for AutoSizer
 
 /**
  * @typedef {object} PerformanceOptimizedListProps
@@ -9,6 +9,13 @@ import { FixedSizeList as VirtualizedList } from 'react-window';
  * @property {number} [itemHeight=50] - The fixed height of each item in the list.
  * @property {number} [overscanCount=5] - The number of items to render above and below the visible area.
  */
+
+/**
+ * Simple function to generate unique IDs without external dependencies
+ */
+const generateUniqueId = (prefix = 'list') => {
+  return `${prefix}-${Math.random().toString(36).substring(2, 9)}`;
+};
 
 /**
  * @desc A performance-optimized list component that uses virtualization to efficiently render large lists.
@@ -23,6 +30,8 @@ const PerformanceOptimizedList = ({
   itemHeight = 50,
   overscanCount = 5,
 }) => {
+  // Generate a unique ID for this list instance
+  const listId = React.useMemo(() => generateUniqueId('virtualized-list'), []);
 
   /**
    * @desc A memoized component function used by react-window to render individual rows.
@@ -40,12 +49,22 @@ const PerformanceOptimizedList = ({
     [data, renderItem] // Dependencies for useCallback
   );
 
+  // Handle empty data array
+  if (data.length === 0) {
+    return (
+      <div className="flex justify-center items-center p-4 text-gray-500">
+        No items to display
+      </div>
+    );
+  }
+
   return (
-    <div className="performance-optimized-list">
+    <div className="performance-optimized-list" style={{ height: '100%', width: '100%' }}>
       {/* AutoSizer makes the list fill its parent container */}
       <AutoSizer>
         {({ height, width }) => (
           <VirtualizedList
+            id={listId}
             height={height} // Height of the list container
             itemCount={data.length} // Total number of items in the list
             itemSize={itemHeight} // Height of each individual item

@@ -1,8 +1,8 @@
-# Receipt Scanner Application
+# Receipt Scanner Application - Testing
 
 ## Project Description
 
-The Receipt Scanner Application is a comprehensive tool designed to streamline the process of managing receipts, tracking inventory based on purchases, and providing financial analytics. It features document scanning with OCR, data organization, inventory management, reporting, user authentication, and data security.
+The Receipt Scanner Application is a comprehensive tool designed to streamline the process of managing receipts, tracking inventory based on purchases, and providing financial analytics. It features document scanning with OCR, data organization, inventory management, reporting, user authentication, and data security. It also incorporates a robust feature flag system to enable safe and gradual rollout of new features, particularly during the migration to direct Firebase integration.
 
 ## Technologies Used
 
@@ -63,6 +63,30 @@ The Receipt Scanner Application is a comprehensive tool designed to streamline t
     - Navigate to the project root (`app.v3`) and initialize emulators: `firebase init emulators` (select Authentication, Firestore, Storage, and Functions)
     - Start the emulators: `firebase emulators:start`
 
+## Frontend Development
+
+### Important: Do Not Attempt Local Builds
+
+Due to environment restrictions, we use GitHub Actions + Firebase Preview Channels for all frontend development.
+
+**DO NOT** attempt to run or build the frontend locally with commands like:
+- ❌ `npm start`
+- ❌ `npm run build`
+- ❌ `npm run dev`
+- ❌ `expo start`
+- ❌ `expo build:web`
+
+These commands will not work in our restricted environment and will waste time troubleshooting.
+
+### How To Test Frontend Changes
+
+1. Push your changes to a branch
+2. Create a pull request
+3. GitHub Actions will automatically build and deploy
+4. Use the preview URL (posted in PR comments) to test
+
+This approach completely bypasses any local environment restrictions.
+
 ## Project Structure
 
 ```
@@ -95,6 +119,19 @@ The Receipt Scanner Application is a comprehensive tool designed to streamline t
 ├── README.md            # Project overview and setup
 └── CONTRIBUTING.md      # Contribution guidelines
 ```
+
+## Security Rule Testing
+
+Comprehensive automated tests are in place to verify the correctness of Firebase Firestore and Storage security rules. These tests ensure data protection and proper access control.
+
+To run the automated security tests, navigate to the `server/` directory and execute the following command:
+
+```bash
+cd server
+npm run test:security:automated
+```
+
+Ensure the Firebase emulators (Authentication, Firestore, Storage) are running before executing the tests.
 
 ## Deployment
 

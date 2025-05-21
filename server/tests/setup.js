@@ -1,15 +1,8 @@
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+// File: server/tests/setup.js
+// Description: Jest setup file to polyfill fetch for the test environment.
 
-jest.mock('@google-cloud/vision');
-jest.mock('firebase/storage');
+import fetch from 'node-fetch';
 
-global.console = {
-  ...console,
-  // Comment out below to see console logs during tests
-  log: jest.fn(),
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-};
+beforeAll(async () => {
+  globalThis.fetch = fetch;
+});

@@ -1,0 +1,561 @@
+Comprehensive Receipt Scanner Application Work Plan
+Phase 1: Foundation Stabilization & Setup (Week 1)
+Day 1: Environment Configuration
+Security Rules & Environment Setup
+
+ Deploy updated storage rules with proper validation for inventory images:
+bashcd /path/to/project
+firebase deploy --only storage
+
+ Set up environment files:
+
+ Copy templates to actual env files and fill in values
+ Configure Firebase configuration values
+ Set up server environment variables (Google Cloud credentials, Firebase project ID)
+
+
+ Install required dependencies (dotenv for both client and server)
+ Test environment variable loading:
+bashcd client
+echo "console.log(process.env)" > test-env.js
+node test-env.js
+# Verify all required env vars are present
+
+
+Project Preparation & Backup
+
+ Create project backup:
+bash# Full backup
+zip -r receipt-scanner-backup-$(date +%Y%m%d).zip /path/to/project
+
+# Git backup
+git checkout -b pre-modernization-backup
+git add .
+git commit -m "Backup before modernization"
+git push origin pre-modernization-backup
+
+ Set up staging environment:
+bash# Create staging project
+firebase projects:create receipt-scanner-staging
+firebase use receipt-scanner-staging
+firebase init hosting
+
+ Configure Firebase emulators for local development
+
+Day 2: Component Consolidation & Testing
+Button Component Consolidation
+
+ Test consolidated Button component:
+
+ Run the application and check all pages with Button components
+ Verify all buttons render correctly and click events work
+ Check for console errors related to Button imports
+ Test accessibility features (tab navigation, screen reader support)
+
+
+
+Axios Instance Consolidation
+
+ Test API configuration after Axios consolidation:
+
+ Start client application
+ Test all API endpoints
+ Check network tab for correct baseURL
+ Verify no duplicate requests are being made
+
+
+
+Day 3: Performance Optimization & API Documentation
+Performance Quick Wins
+
+ Test route splitting implementation:
+
+ Launch app in development mode
+ Check network tab for code splitting
+ Verify loading states appear correctly during route transitions
+ Measure load time improvement
+
+
+
+API Documentation
+
+ Start the server with Swagger documentation:
+bashcd server
+npm start
+
+ Open browser and navigate to: http://localhost:5001/api-docs
+ Verify all API endpoints are documented
+ Test several endpoints directly from the Swagger UI
+
+Day 4: Testing Infrastructure & Firestore Indexes
+Testing Setup
+
+ Configure Jest for client testing
+ Set up test environment with jsdom
+ Configure test coverage thresholds
+ Create initial test setup files
+
+Firestore Index Setup
+
+ Update and deploy Firestore indexes for Hebrew support:
+bashfirebase deploy --only firestore:indexes
+
+ Test query performance with the new indexes
+ Verify Hebrew merchant search functionality
+
+Day 5: Security Enhancements
+Security Middleware & Testing
+
+ Implement and test rate limiting for API endpoints
+ Configure Helmet for HTTP security headers
+ Add input sanitization (mongo-sanitize, xss-clean)
+ Run security tests for Firebase rules
+ Document security measures in relevant documentation
+
+Phase 2: Architecture Modernization (Week 2)
+Day 1: OCR System Setup
+Dual OCR Implementation
+
+ Install OCR dependencies:
+bashcd server
+npm install tesseract.js @google-cloud/vision
+
+ Install Hebrew language pack for Tesseract:
+bash# Download Hebrew language pack for Tesseract
+wget https://github.com/tesseract-ocr/tessdata/raw/master/heb.traineddata
+mkdir -p node_modules/tesseract.js/lang-data/4.0.0
+mv heb.traineddata node_modules/tesseract.js/lang-data/4.0.0/
+
+ Test extraction with different image types
+ Implement confidence scoring for extracted text
+
+Day 2: Processing Service Refactoring
+DocumentProcessingService Refactor
+
+ Create BaseService abstract class
+ Implement core service functionality (error handling, logging)
+ Break down large methods into smaller, focused functions
+ Test the refactored service with various document types
+
+Processing Orchestrator Creation
+
+ Create DocumentProcessingOrchestrator class
+ Implement orchestration of processing pipeline
+ Integrate image optimization, text extraction, and classification
+ Test the complete processing flow
+
+Day 3: Receipt Processing Implementation
+Create ReceiptProcessingService
+
+ Implement receipt-specific processing logic
+ Create ReceiptDataExtractor class
+ Add data extraction and validation logic
+ Test integration with DocumentProcessingService
+
+Test Receipt Processing
+
+ Run integration tests for the receipt processing service:
+bashcd server
+npm test -- --grep "ReceiptProcessingService"
+
+ Test with various receipt types
+ Verify extraction accuracy
+
+Day 4: Dependency Optimization
+Update Package Dependencies
+
+ Audit client package.json for unused dependencies
+ Remove redundant packages:
+bashcd client
+npm uninstall @heroicons/react react-chartjs-2 chart.js react-native-chart-kit
+npm install recharts framer-motion
+npm audit fix
+
+ Update imports across the application
+ Test application functionality after dependency changes
+
+Day 5: File Cleanup & Architecture Verification
+Missing Files Cleanup
+
+ Create missing-files-audit.md document
+ Identify and clean up references to non-existent files
+ Update import statements to remove missing references
+ Run tests to verify application functionality:
+bashcd server
+npm test
+# Verify all services work correctly
+# Check error logs for any issues
+
+
+Phase 3: UI/UX Transformation (Week 3)
+Day 1: Design System Setup
+Design System Foundation
+
+ Create design system foundation
+ Define color tokens, typography, and spacing
+ Install design system dependencies:
+bashcd client
+npm install @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-select class-variance-authority clsx tailwind-merge framer-motion
+npm install -D @tailwindcss/forms tailwindcss-rtl
+
+ Update Tailwind configuration:
+bash# Edit tailwind.config.js to include the new plugins
+nano tailwind.config.js
+
+
+Day 2: Modern Component Implementation
+Create Modern Components
+
+ Implement modern Button component with variants
+ Add loading state, icons, and accessibility features
+ Create TypeScript interfaces for props
+ Run tests for new design system components:
+bashcd client
+npm test -- --testPathPattern=design-system
+
+ Manually test all component variants
+
+Day 3: Dashboard Modernization & Hebrew Support
+Dashboard Enhancement
+
+ Create ModernDashboard component
+ Implement internationalization support
+ Add animations with framer-motion
+ Create responsive layout
+
+Hebrew Font Implementation
+
+ Add Hebrew font to application:
+html<!-- Add to public/index.html -->
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+ Update Tailwind configuration for Hebrew support
+ Test Hebrew font rendering
+
+Day 4: Chart Migration to Recharts
+Chart Conversion
+
+ Create chart migration script
+ Convert Chart.js components to Recharts
+ Update AnalyticsDashboard components
+ Standardize chart styling and configuration
+ Test modernized charts:
+bashcd client
+npm start
+# Navigate to analytics dashboard
+# Verify charts render correctly
+# Test RTL mode with charts
+# Check tooltips and labels
+
+
+Day 5: Accessibility Implementation
+Accessibility Enhancements
+
+ Create accessibility utilities
+ Implement screen reader announcements
+ Add ARIA attributes to components
+ Install accessibility testing tools:
+bashcd client
+npm install --save-dev @testing-library/jest-dom @axe-core/react
+
+ Run accessibility tests:
+bashnpm run test:a11y # (Create this script if needed)
+# Check for violations
+# Test keyboard navigation
+# Test screen reader compatibility
+
+
+Phase 4: Internationalization & State Management (Week 4)
+Day 1: Complete Hebrew Translation Implementation
+Translation Setup
+
+ Set up i18next with React integration:
+bashcd client
+npm install react-i18next i18next i18next-browser-languagedetector
+
+ Configure language detection
+ Create translation resources structure
+ Create English and Hebrew translation files for all features
+
+Day 2: Component Translation Integration
+Translation Integration
+
+ Identify components requiring translation
+ Add useTranslation hook to components
+ Replace hardcoded text with translation keys
+ Create translation namespaces for different features
+ Test translations in the UI:
+bashcd client
+npm start
+# Change language to Hebrew
+# Verify all strings are translated
+# Check RTL layout works correctly
+
+
+Day 3: RTL Support Implementation
+RTL Layout
+
+ Create useRTL custom hook
+ Implement document direction switching
+ Add language attribute setting
+ Test RTL layout and component alignment
+ Add RTL-specific styling as needed
+
+Day 4: Redux Toolkit Setup
+State Management Setup
+
+ Install state management dependencies:
+bashcd client
+npm install @reduxjs/toolkit react-redux redux-persist
+npm install lru-cache @tanstack/react-query
+npm install --save-dev @redux-devtools/extension
+
+ Create Redux store configuration
+ Set up RTK Query listeners
+ Create API service definitions (receiptApi, analyticsApi)
+ Implement auth and UI state slices
+
+Day 5: Migrate Hooks to RTK Query
+RTK Query Migration
+
+ Update useReceipts hook to use RTK Query
+ Implement query and mutation hooks
+ Add caching and invalidation logic
+ Test data fetching and state management:
+bashcd client
+npm start
+# Open Redux DevTools in browser
+# Verify store configuration
+# Test action dispatching
+# Check state updates
+
+
+Phase 5: Data Handling Enhancements (Week 5)
+Day 1: Performance Optimizations
+Caching Implementation
+
+ Create client-side caching utility
+ Implement LRU cache for API calls
+ Add cache invalidation strategies
+ Test caching implementation:
+bashcd client
+npm start
+# Monitor network requests
+# Make repeated requests to verify caching
+
+
+Day 2: Hebrew Data Formatters
+Data Formatting
+
+ Implement Hebrew currency formatter
+ Create Hebrew date formatter
+ Add number formatting for Hebrew
+ Update useFormatters hook
+ Test formatters with Hebrew content
+
+Day 3: OCR Hebrew Text Normalization
+Text Normalization
+
+ Create HebrewNormalizer utility
+ Implement vowel points removal
+ Add final letter normalization
+ Update TextExtractionService
+ Test Hebrew text extraction
+
+Day 4: Update Firestore Queries for Hebrew
+Hebrew Search Optimization
+
+ Update receipt search for Hebrew
+ Implement normalized text searching
+ Add language-aware query construction
+ Test Hebrew search functionality:
+bashcd server
+npm test -- --grep "Hebrew search"
+# Test with various Hebrew inputs
+# Test with final forms vs regular letters
+
+ Optimize query performance
+
+Day 5: Update Charts for RTL Support
+RTL Chart Adaptation
+
+ Modify chart components for RTL
+ Update axis orientation for RTL
+ Implement RTL-aware tooltips
+ Add Hebrew formatting to chart labels
+ Test charts in RTL mode
+
+Phase 6: User Experience Polish (Week 6)
+Day 1: Progress Indicators for Document Processing
+Processing Visualization
+
+ Create ReceiptUploadProgress component
+ Implement step visualization
+ Add animations and status indicators
+ Create error state handling
+ Test with different processing scenarios
+
+Day 2: Add Dark Mode Support
+Theme Implementation
+
+ Create ThemeContext and provider
+ Implement theme persistence
+ Add system preference detection
+ Update component styling for dark mode
+ Test theme switching
+
+Day 3: Add Offline Support
+Offline Functionality
+
+ Install IndexedDB dependencies:
+bashcd client
+npm install idb
+
+ Create offline synchronization manager
+ Implement IndexedDB storage
+ Add pending action tracking
+ Test offline-to-online transitions:
+bashcd client
+npm start
+# Disconnect internet
+# Perform operations while offline
+# Reconnect and verify sync
+
+
+Day 4: Add Color Customization
+Theme Customization
+
+ Install color picker:
+bashcd client
+npm install react-colorful
+
+ Create ColorCustomizer component
+ Implement theme color selection
+ Create theme persistence
+ Test theme customization:
+bashcd client
+npm start
+# Go to settings
+# Change primary color
+# Verify changes reflect across app
+# Test dark mode with custom colors
+
+
+Day 5: PWA Configuration
+Progressive Web App Setup
+
+ Create web app manifest
+ Define app icons and theme colors
+ Configure service worker
+ Test PWA configuration:
+bashcd client
+npm run build
+npx serve -s build
+# Install app to home screen
+# Test offline capability
+# Test notifications
+
+
+Phase 7: Monitoring & Deployment (Week 7)
+Day 1: Add Monitoring and Error Tracking
+Error Tracking Setup
+
+ Install Sentry for monitoring:
+bashcd client
+npm install @sentry/react @sentry/tracing web-vitals
+
+ Configure error boundaries
+ Implement web vitals tracking
+ Set up performance monitoring
+ Test error reporting:
+bashcd client
+npm start
+# Trigger test errors
+# Verify in Sentry dashboard
+
+
+Day 2: Final Testing & Validation
+Comprehensive Testing
+
+ Create validation script
+ Test security rules
+ Verify environment configuration
+ Validate API endpoints
+ Run pre-deployment tests:
+bashcd client
+npm test
+cd ../server
+npm test
+
+# Run security audit
+npm audit
+
+
+Day 3: Staging Deployment
+Deploy to Staging
+
+ Deploy to staging environment:
+bashfirebase use staging
+firebase deploy --only hosting
+
+ Test staging environment
+ Run penetration testing
+ Configure monitoring dashboards:
+bashfirebase run:shell
+# Set up log monitoring
+gcloud logging read "severity>=ERROR" --limit 50
+
+
+Day 4: Incremental Production Deployment
+Phased Deployment
+
+ Deploy rules first:
+bashfirebase deploy --only firestore:rules
+firebase deploy --only storage:rules
+
+ Deploy backend:
+bashfirebase deploy --only functions
+
+ Test API endpoints
+ Verify error logging
+
+Day 5: Full Production Deployment
+Final Deployment
+
+ Complete production deployment:
+bashfirebase use production
+# Final production build
+cd client
+NODE_ENV=production npm run build
+
+# Deploy entire application
+firebase deploy
+
+ Monitor deployment
+ Configure alerts:
+bash# Hebrew OCR monitoring
+firebase functions:log --filter "OCR accuracy" --hours 24
+
+ Analyze production performance:
+bash# Run analysis tools
+npm run analyze-performance
+firebase performance:reports
+
+
+Additional Considerations
+Documentation Maintenance Throughout
+
+ Update relevant markdown files in docs/ directory after each phase
+ Include standardized metadata headers in all documentation files
+ Document code changes and design decisions
+ Create work logs for each phase with detailed changes
+ Update checklists to reflect completion status
+
+Testing Requirements
+
+ Create clear testing instructions for each component/feature
+ Document expected behaviors and verification steps
+ Provide sample test cases and expected outcomes
+ Update testing documentation as features are implemented
+
+This comprehensive work plan combines the implementation tasks from the previous plans with the necessary testing and verification steps identified by the EDI. It addresses all the features in the original plan, organized in a logical progression, while ensuring that all necessary human verification tasks are clearly identified.

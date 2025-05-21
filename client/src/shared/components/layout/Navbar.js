@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../features/auth/hooks/useAuth';
 import { Bell, Settings, User } from 'lucide-react';
-import { Button } from '../forms/Button';
+import { Button } from '../ui/Button';
 
 /**
  * @desc The main application Navbar component.

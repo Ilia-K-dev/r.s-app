@@ -1,0 +1,13 @@
+{
+  "receipts": {
+    "title": "קבלות",
+    "upload_receipt": "העלה קבלה",
+    "process_receipt": "עבד קבלה",
+    "receipt_list": "רשימת קבלות",
+    "receipt_details": "פרטי קבלה",
+    "vendor": "ספק",
+    "date": "תאריך",
+    "total": "סה\"כ",
+    "items": "פריטים"
+  }
+}

@@ -28,15 +28,10 @@ export const SpendingTrendChart = ({ data }) => (
         <XAxis dataKey="month" stroke="#6B7280" fontSize={12} />
         <YAxis stroke="#6B7280" fontSize={12} tickFormatter={value => formatCurrency(value)} />
         <Tooltip
-          content={({ active, payload, label }) => {
-            if (!active || !payload) return null;
-            return (
-              <div className="bg-white p-3 shadow-lg border rounded-lg">
-                <p className="font-medium">{label}</p>
-                <p className="text-primary-600">{formatCurrency(payload[0].value)}</p>
-              </div>
-            );
-          }}
+          contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
+          labelStyle={{ fontWeight: 'bold' }}
+          itemStyle={{ color: '#333' }}
+          formatter={(value) => [formatCurrency(value), 'Amount']}
         />
         <Line
           type="monotone"
@@ -73,17 +68,10 @@ export const CategoryBreakdownChart = ({ data }) => {
             ))}
           </Pie>
           <Tooltip
-            content={({ active, payload }) => {
-              if (!active || !payload) return null;
-              const data = payload[0].payload;
-              return (
-                <div className="bg-white p-3 shadow-lg border rounded-lg">
-                  <p className="font-medium">{data.name}</p>
-                  <p>{formatCurrency(data.value)}</p>
-                  <p className="text-sm text-gray-500">{data.percentage.toFixed(1)}%</p>
-                </div>
-              );
-            }}
+            contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
+            labelStyle={{ fontWeight: 'bold' }}
+            itemStyle={{ color: '#333' }}
+            formatter={(value, name, props) => [formatCurrency(value), props.payload.name]}
           />
           <Legend />
         </PieChart>
@@ -105,17 +93,10 @@ export const VendorPerformanceChart = ({ data }) => (
           tickFormatter={value => `${(value * 100).toFixed(0)}%`}
         />
         <Tooltip
-          content={({ active, payload, label }) => {
-            if (!active || !payload) return null;
-            return (
-              <div className="bg-white p-3 shadow-lg border rounded-lg">
-                <p className="font-medium">{label}</p>
-                <p>Reliability: {(payload[0].value * 100).toFixed(1)}%</p>
-                <p>Quality: {(payload[1].value * 100).toFixed(1)}%</p>
-                <p>Price: {(payload[2].value * 100).toFixed(1)}%</p>
-              </div>
-            );
-          }}
+          contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
+          labelStyle={{ fontWeight: 'bold' }}
+          itemStyle={{ color: '#333' }}
+          formatter={(value, name) => [`${(value * 100).toFixed(1)}%`, name]}
         />
         <Legend />
         <Bar dataKey="reliability" fill="#0EA5E9" />
@@ -140,15 +121,10 @@ export const InventoryValueChart = ({ data }) => (
         />
         <YAxis stroke="#6B7280" fontSize={12} tickFormatter={value => formatCurrency(value)} />
         <Tooltip
-          content={({ active, payload, label }) => {
-            if (!active || !payload) return null;
-            return (
-              <div className="bg-white p-3 shadow-lg border rounded-lg">
-                <p className="font-medium">{formatDate(label, 'MMM dd, yyyy')}</p>
-                <p>Total Value: {formatCurrency(payload[0].value)}</p>
-              </div>
-            );
-          }}
+          contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
+          labelStyle={{ fontWeight: 'bold' }}
+          itemStyle={{ color: '#333' }}
+          formatter={(value) => [formatCurrency(value), 'Total Value']}
         />
         <Line
           type="monotone"
@@ -176,19 +152,10 @@ export const TurnoverRateChart = ({ data }) => (
         />
         <YAxis type="category" dataKey="name" stroke="#6B7280" fontSize={12} width={100} />
         <Tooltip
-          content={({ active, payload, label }) => {
-            if (!active || !payload) return null;
-            const rate = payload[0].value;
-            return (
-              <div className="bg-white p-3 shadow-lg border rounded-lg">
-                <p className="font-medium">{label}</p>
-                <p>Turnover Rate: {rate.toFixed(1)}x</p>
-                <p className="text-sm text-gray-500">
-                  {rate > 12 ? 'High' : rate > 6 ? 'Good' : 'Low'} turnover
-                </p>
-              </div>
-            );
-          }}
+          contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
+          labelStyle={{ fontWeight: 'bold' }}
+          itemStyle={{ color: '#333' }}
+          formatter={(value) => [`${value.toFixed(1)}x`, 'Turnover Rate']}
         />
         <Bar dataKey="rate" fill="#0EA5E9" radius={[0, 4, 4, 0]} />
       </BarChart>

@@ -1,16 +1,15 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 
-// Core Pages (like NotFound)
-import NotFoundPage from './core/pages/NotFoundPage'; // Correct
+// Core Pages
+import NotFoundPage from './core/pages/NotFoundPage';
 
-// Feature Pages - Updated Paths
-import { DashboardPage } from './features/analytics/pages/DashboardPage'; // Corrected Path
-import { ReceiptDetailPage } from './features/receipts/pages/ReceiptDetailPage'; // Assuming this is the main page for receipts now
-import { ReportsPage } from './features/analytics/pages/ReportsPage'; // Corrected Path
-import { SettingsPage } from './features/settings/pages/SettingsPage'; // Corrected Path
-// Note: Need a main page component for the '/receipts' path if ReceiptDetailPage is only for specific IDs.
-// Let's assume a ReceiptListPage exists for now, or adjust the route.
-// For now, let's point '/receipts' to ReceiptDetailPage - this might need adjustment later.
+// Feature Pages - Use default imports to match the export style
+const DashboardPage = lazy(() => import('./features/analytics/pages/DashboardPage'));
+const ReceiptListPage = lazy(() => import('./features/receipts/pages/ReceiptListPage'));
+const ReceiptDetailPage = lazy(() => import('./features/receipts/pages/ReceiptDetailPage'));
+const ReportsPage = lazy(() => import('./features/analytics/pages/ReportsPage'));
+const SettingsPage = lazy(() => import('./features/settings/pages/SettingsPage'));
 
 // Auth Components
 import AuthGuard from './features/auth/components/AuthGuard';
@@ -32,13 +31,49 @@ export const router = createBrowserRouter([
     errorElement: <NotFoundPage />,
     children: [
       // Main dashboard is the index route
-      { index: true, element: <DashboardPage /> }, 
-      // Assuming /receipts shows details for now, might need a list page later
-      { path: 'receipts', element: <ReceiptListPage /> }, // Use the new list page for /receipts
-      // Route for specific receipt details
-      { path: 'receipts/:receiptId', element: <ReceiptDetailPage /> }, 
-      { path: 'reports', element: <ReportsPage /> },
-      { path: 'settings', element: <SettingsPage /> },
+      {
+        index: true,
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <DashboardPage />
+          </Suspense>
+        ),
+      },
+      
+      // Receipt routes
+      {
+        path: 'receipts',
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <ReceiptListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'receipts/:receiptId',
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <ReceiptDetailPage />
+          </Suspense>
+        ),
+      },
+      
+      {
+        path: 'reports',
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <ReportsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'settings',
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <SettingsPage />
+          </Suspense>
+        ),
+      },
       // Add other feature routes here (e.g., inventory)
     ],
   },
@@ -46,8 +81,6 @@ export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
-  // Catch-all for unmatched routes (optional, depends on desired behavior)
-  // { path: '*', element: <NotFoundPage /> } 
 ]);
 
 export default router;

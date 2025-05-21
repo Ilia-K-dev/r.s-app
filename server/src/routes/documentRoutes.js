@@ -1,44 +1,26 @@
 const express = require('express');
-const documentController = require('../controllers/documentController');
-const { authenticateToken } = require('../middleware/auth/auth'); // Assuming auth middleware exists
-const upload = require('../../config/multer-config'); // Assuming multer is configured
-
 const router = express.Router();
+const documentController = require('../controllers/documentController');
+const { authenticate } = require('../middleware/auth/auth'); // Assuming auth middleware location
+const upload = require('../config/multer-config'); // Assuming multer configuration for file uploads
 
-// Route for uploading documents (receipts, etc.)
-// Applying authentication middleware and multer for single file upload
-router.post(
-  '/upload',
-  authenticateToken,
-  upload.single('document'), // 'document' should match the field name in FormData
-  documentController.uploadDocument
-);
+// Apply authentication middleware to document routes that require it
+// Note: Some routes like upload might have specific middleware order
+router.use(authenticate);
 
-// Add other document-related routes here if needed
+// POST /api/documents/upload - Document upload and processing
+// Use multer middleware for file upload before the controller
+router.post('/upload', upload.single('document'), documentController.uploadDocument);
 
-// Add route for receipt correction
-router.put(
-  '/correct/:id', // Using PUT for updates to a specific document
-  authenticateToken,
-  documentController.correctReceipt
-);
+// GET /api/documents/:id - Get a specific document/receipt
+router.get('/:id', documentController.getDocument);
 
-// Route for fetching documents (receipts, etc.) with filtering and pagination
-router.get(
-  '/',
-  authenticateToken,
-  validate({
-    query: {
-      limit: { type: 'number', required: true },
-      startAfter: { type: 'string', optional: true },
-      documentType: { type: 'string', optional: true, enum: ['receipt', 'other'] }, // Assuming documentType field
-      category: { type: 'string', optional: true }, // Assuming category field
-      merchant: { type: 'string', optional: true }, // Assuming merchant field
-      startDate: { type: 'date', optional: true }, // Assuming a date field like 'date' or 'receiptDate'
-      endDate: { type: 'date', optional: true }
-    }
-  }),
-  documentController.getDocuments // New controller function
-);
+// PUT /api/documents/:id/correct - Submit corrections for a receipt
+router.put('/:id/correct', documentController.submitCorrection);
+
+// Add other document-related routes as needed (e.g., list documents)
+// GET /api/documents - List documents for a user
+router.get('/', documentController.listDocuments);
+
 
 module.exports = router;

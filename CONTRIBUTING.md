@@ -1,72 +1,57 @@
-# Contributing to the Receipt Scanner Application
+# Contributing to Receipt Scanner
 
-Thank you for your interest in contributing to the Receipt Scanner Application! We welcome contributions from everyone. By participating in this project, you agree to abide by our code of conduct.
+## Frontend Development Workflow
 
-## How to Contribute
+### Cloud-Only Development Approach
 
-1.  **Fork the repository:** Start by forking the main repository to your GitHub account.
-2.  **Clone your forked repository:**
-    ```bash
-    git clone [your forked repository URL]
-    cd app.v3
-    ```
-3.  **Set up the development environment:** Follow the instructions in the [README.md](README.md) to set up Firebase and install dependencies.
-4.  **Create a new branch:** Create a new branch for your feature or bug fix. Use a descriptive name (e.g., `feature/add-inventory-sorting`, `fix/ocr-parsing-error`).
-    ```bash
-    git checkout -b your-branch-name
-    ```
-5.  **Make your changes:** Implement your feature or bug fix.
-    - Follow the established code style guidelines (see below).
-    - Add necessary documentation (code comments, updates to README, API docs, etc.).
-    - Add or update tests to cover your changes.
-6.  **Test your changes:**
-    - Run the application locally to verify functionality.
-    - Run all tests to ensure nothing is broken.
-    ```bash
-    # Example commands (refer to README for specifics)
-    cd server && npm test
-    cd client && npm test
-    ```
-7.  **Commit your changes:** Write clear and concise commit messages.
-    ```bash
-    git add .
-    git commit -m "feat: Add inventory sorting"
-    ```
-8.  **Push your changes to your forked repository:**
-    ```bash
-    git push origin your-branch-name
-    ```
-9.  **Create a Pull Request (PR):**
-    - Go to the original repository on GitHub.
-    - Click the "New pull request" button.
-    - Select your branch and the `develop` branch as the base.
-    - Fill out the pull request template, including a clear description of your changes, linked issues, and completing the checklists.
+We use a cloud-only development approach with GitHub Actions and Firebase Preview Channels. 
+**DO NOT attempt local builds** which will fail due to environment restrictions.
 
-## Code Style Guidelines
+### Development Process
 
-- We follow standard JavaScript/React/Node.js best practices.
-- Use consistent indentation (2 spaces).
-- Follow the existing naming conventions.
-- Write clear and readable code.
-- Use JSDoc comments for functions, classes, and components.
+1. Create a new branch for your task:
+   ```bash
+   git checkout -b task/your-task-name
+   ```
 
-## Pull Request Process
+2. Make your changes to files in the client/ directory
+3. Commit and push your changes:
+   ```bash
+   git add .
+   git commit -m "Task: Description of your changes"
+   git push origin task/your-task-name
+   ```
 
-- All pull requests should be opened against the `develop` branch.
-- Your PR will be reviewed by a maintainer.
-- Address any feedback or requested changes.
-- Once approved, your PR will be merged.
+4. Create a pull request on GitHub
+5. After the automatic deployment completes, use the preview URL to test your changes
 
-## Development Environment Setup
+   The URL will be posted in the PR comments
+   This URL contains a fully functional version of the app
 
-Refer to the "Installation Instructions" and "Development Setup" sections in the [README.md](README.md) for detailed instructions on setting up your development environment.
 
-## Security
+6. Continue to make changes as needed - each push updates the preview
+7. Once the preview is working correctly, the PR can be reviewed and merged
 
-- **Never** commit sensitive information such as API keys, passwords, or service account files. Use environment variables and `.gitignore` to prevent this.
-- Be mindful of potential security vulnerabilities when writing code.
-- The pull request template includes a security checklist to help ensure best practices are followed.
 
-## Licensing
+## Documentation Standards
+For each task you work on:
 
-By contributing to the Receipt Scanner Application, you agree that your contributions will be licensed under the project's [LICENSE](LICENSE) file.
+1. Document all file changes with header comments:
+   ```javascript
+   /**
+    * [Filename]
+    * Last Modified: [Date] [Time]
+    * Modified By: Cline
+    * 
+    * Purpose: [Brief description of what this file does]
+    * Changes Made: [Summary of changes implemented]
+    * Reasoning: [Why these changes were necessary]
+    */
+   ```
+
+2. Update implementation-tasks.md with:
+   - Files modified
+   - Changes implemented
+   - Testing performed
+   - Issues encountered and solutions
+   - Verification steps

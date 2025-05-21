@@ -2,7 +2,7 @@ import { Mail, ArrowLeft } from 'lucide-react'; //correct
 import React, { useState } from 'react'; //correct
 import { Link } from 'react-router-dom'; //correct
 
-import { Button } from '../../../shared/components/forms/Button'; //correct
+import { Button } from '../../../shared/components/ui/Button'; //correct
 import { Input } from '../../../shared/components/forms/Input'; //correct
 import { Alert } from '../../../shared/components/ui/Alert'; //correct
 import { useAuth } from '../../auth/hooks/useAuth'; //correct

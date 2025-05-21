@@ -3,7 +3,7 @@ import { Card } from '../../../shared/components/ui/Card';
 import { formatCurrency } from '../../../shared/utils/currency';
 import { formatDate } from '../../../shared/utils/date';
 import { Download, Printer } from 'lucide-react';
-import { Button } from '../../../shared/components/forms/Button';
+import { Button } from '../../../shared/components/ui/Button';
 
 export const ReceiptDetail = ({ 
   receipt,

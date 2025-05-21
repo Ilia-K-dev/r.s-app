@@ -4,12 +4,13 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
-} from 'firebase/auth'; //correct
-import { useContext, useState, useEffect } from 'react'; //correct
+  signInAnonymously,
+} from 'firebase/auth';
+import { useContext, useState } from 'react';
 
-import { auth } from '../../../core/config/firebase'; //correct
-import { useAuth as useAuthContext, AuthProvider, AuthContext } from '../../../core/contexts/AuthContext'; //correct
-import { useToast } from '../../../shared/hooks/useToast'; //correct'
+import { auth } from '../../../core/config/firebase';
+import { AuthContext } from '../../../core/contexts/AuthContext';
+import { useToast } from '../../../shared/hooks/useToast';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -22,6 +23,25 @@ export const useAuth = () => {
 
   const { user, setUser } = context;
 
+  // Anonymous login function
+  const loginAnonymously = async () => {
+    setLoading(true);
+    try {
+      const result = await signInAnonymously(auth);
+      setUser(result.user);
+      showToast('Signed in as guest', 'success');
+      return result.user;
+    } catch (error) {
+      let errorMessage = 'Failed to sign in anonymously';
+      console.error('Anonymous login error:', error);
+      showToast(errorMessage, 'error');
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Email/password login function
   const login = async (email, password) => {
     setLoading(true);
     try {
@@ -140,6 +160,7 @@ export const useAuth = () => {
     user,
     loading,
     login,
+    loginAnonymously,
     register,
     logout,
     resetPassword,

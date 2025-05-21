@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/ui/Card';
 import { ReceiptList } from '../../../features/receipts/components/ReceiptList';
-import { Button } from '../../../shared/components/forms/Button';
+import { Button } from '../../../shared/components/ui/Button';
 import { useReceipts } from '../../../features/receipts/hooks/useReceipts';
 import { SpendingChart } from '../../analytics/components/SpendingChart';
 import { formatCurrency } from '../../../shared/utils/currency';

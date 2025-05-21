@@ -23,6 +23,19 @@
     },
     "web": {
       "favicon": "./public/assets/images/favicon.png"
+    },
+    "extra": {
+      "firebase": {
+        "apiKey": "AIzaSyAWx_ZcWGx8XoCl-fWXoO8TPJi7hzDrWjQ",
+        "authDomain": "project-reciept-reader-id.firebaseapp.com",
+        "projectId": "project-reciept-reader-id",
+        "storageBucket": "project-reciept-reader-id.firebasestorage.app",
+        "messagingSenderId": "747418219423",
+        "appId": "1:747418219423:web:f77280788088223d55c3aa",
+        "measurementId": "YOUR_FIREBASE_MEASUREMENT_ID"
+      },
+      "apiUrl": "http://localhost:5000/api",
+      "sentryDsn": "G-C7KVGLBLG2"
     }
   }
 }

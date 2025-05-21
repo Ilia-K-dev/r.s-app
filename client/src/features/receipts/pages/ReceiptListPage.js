@@ -1,8 +1,9 @@
 import React from 'react';
-import useReceipts from '../hooks/useReceipts';
+// Modified useReceipts import as part of build error fix task on 2025-05-08
+import { useReceipts } from '../hooks/useReceipts';
 import ReceiptList from '../components/ReceiptList';
 import ReceiptFilters from '../components/ReceiptFilters';
-import Button from '../../../shared/components/forms/Button';
+import { Button } from '../../../shared/components/ui/Button';
 import Loading from '../../../shared/components/ui/Loading';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { useNavigate } from 'react-router-dom';

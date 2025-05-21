@@ -1,168 +1,688 @@
-const firebase = require('@firebase/testing');
-const fs = require('fs');
-
-/*
- * ============================================================
- *             Firebase Storage Security Rules Tests
- * ============================================================
- *
- * These tests validate the Firebase Storage security rules defined in
- * storage.rules using the Firebase Emulator Suite.
- *
- * To run these tests:
- * 1. Make sure you have the Firebase CLI installed (`npm install -g firebase-tools`).
- * 2. Start the Storage emulator: `firebase emulators:start --only storage`
- * 3. Run the tests: `npm test` or `npm run test:storage` (if configured in package.json)
- */
-
-const projectId = 'receipt-scanner-test'; // Use the same test project ID as Firestore tests
-const rules = fs.readFileSync('storage.rules', 'utf8');
+// File: server/tests/security/storage.test.js
+// Date: 2025-05-18
+// Description: Comprehensive Storage security rules tests verifying user authorization, file restrictions, and cross-service validations, using withSecurityRulesDisabled for data setup.
+// Reasoning: Ensures all Storage security rules are thoroughly tested to protect user files and allow legitimate operations, with reliable data setup.
 
 /**
- * Creates a new authenticated context for testing Storage rules.
- * @param {string} uid - The user ID.
- * @param {object} [auth] - Optional authentication claims.
- * @returns {firebase.storage.Storage} - An authenticated Storage instance.
+ * Issues in Storage Test File (server/tests/security/storage.test.js)
+ *
+ * 1. Similar issues to the Firestore test file
+ * 2. Additional complexities:
+ *    - Creating and uploading files
+ *    - Cross-service validation with Firestore
+ *    - Storage emulator connection details
+ *
+ * Fix approach would be similar to Firestore test file, but with additional
+ * considerations for Storage-specific testing.
  */
-const authedApp = (uid, auth) => {
-  return firebase.initializeTestApp({ projectId, auth: { uid, ...auth } }).storage();
-};
 
-/**
- * Creates a new unauthenticated context for testing Storage rules.
- * @returns {firebase.storage.Storage} - An unauthenticated Storage instance.
- */
-const unauthedApp = () => {
-  return firebase.initializeTestApp({ projectId }).storage();
-};
+// Increase timeout for Storage tests as file operations can take longer
+jest.setTimeout(120000); // 2 minutes
 
-// Before running tests, load the security rules
-beforeAll(async () => {
-  await firebase.loadStorageRules({ projectId, rules });
-});
+const {
+  setupTestEnv,
+  cleanupTestEnv,
+  assertFails,
+  assertSucceeds,
+  PROJECT_ID,
+  clearFirestore // Import clearFirestore for cross-service tests
+} = require('./helpers/setup');
+const {
+  getAuthenticatedStorage,
+  getUnauthenticatedStorage
+} = require('./helpers/auth');
+const {
+  createTestUser, // Import createTestUser for cross-service tests
+  createTestInventory // Import createTestInventory for cross-service tests
+} = require('./helpers/data'); // Import data creation helpers
 
-// Before each test, clear the storage data
-beforeEach(async () => {
-  // Note: Clearing Storage data via the emulator API is not directly supported
-  // You might need to manually clear the emulator's storage directory between test runs
-  // or rely on tests being independent. For this example, we assume independence.
-});
+describe('Storage Security Rules', () => {
+  let aliceId, bobId;
+  let aliceStorage, bobStorage, unauthenticatedStorage;
 
-// After all tests, clean up Firebase apps
-afterAll(async () => {
-  await Promise.all(firebase.apps().map(app => app.delete()));
-});
+  // Helper function to create a buffer of a specific size
+  const createBuffer = (sizeInBytes) => Buffer.alloc(sizeInBytes, 'x');
 
-describe('Receipt Scanner Storage Security Rules', () => {
+  beforeAll(async () => {
+    await setupTestEnv(PROJECT_ID);
+    aliceId = 'alice';
+    bobId = 'bob';
+    aliceStorage = await getAuthenticatedStorage(aliceId);
+    bobStorage = await getAuthenticatedStorage(bobId);
+    unauthenticatedStorage = await getUnauthenticatedStorage();
 
-  // Test data for a specific user
-  const aliceId = 'user_alice';
-  const bobId = 'user_bob';
-  const testFile = Buffer.from('This is a test file.'); // Sample file content
-  const largeFile = Buffer.alloc(2 * 1024 * 1024 + 1, 'a'); // File larger than 2MB (assuming a 2MB limit)
-
-  // Helper function to get a Storage reference for a specific user and path
-  const getFileRef = (storage, userId, filePath) => {
-    return storage.ref(`${filePath}`);
-  };
-
-
-  // ============================================================
-  //                   Authentication Tests
-  // ============================================================
-
-  test('should deny read access to unauthenticated users for user files', async () => {
-    const unauthedStorage = unauthedApp();
-    const filePath = `receipts/${aliceId}/test_receipt.jpg`;
-    await firebase.assertFails(getFileRef(unauthedStorage, aliceId, filePath).getDownloadURL());
+    // Create test users in Firestore for auth context, with rules disabled
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await adminDb.collection('users').doc(aliceId).set({ userId: aliceId, email: `${aliceId}@example.com`, createdAt: new Date() });
+      await adminDb.collection('users').doc(bobId).set({ userId: bobId, email: `${bobId}@example.com`, createdAt: new Date() });
+    });
   });
 
-  test('should deny write access to unauthenticated users for user files', async () => {
-    const unauthedStorage = unauthedApp();
-    const filePath = `receipts/${aliceId}/test_receipt.jpg`;
-    await firebase.assertFails(getFileRef(unauthedStorage, aliceId, filePath).put(testFile));
+  afterAll(async () => {
+    await cleanupTestEnv();
   });
 
-  // ============================================================
-  //                   Data Ownership Tests
-  // ============================================================
-
-  test('should allow authenticated users to read their own files', async () => {
-    const aliceStorage = authedApp(aliceId);
-    const bobStorage = authedApp(bobId);
-    const aliceFilePath = `receipts/${aliceId}/alice_receipt.jpg`;
-    const bobFilePath = `receipts/${bobId}/bob_receipt.jpg`;
-
-    // Upload files owned by Alice and Bob (assuming server write or initial setup)
-    // In a real scenario, you might need a server context to write initial files for testing read access
-    // For this test, we'll assume the files exist and test read permissions.
-    // await firebase.assertSucceeds(getFileRef(authedApp(aliceId), aliceId, aliceFilePath).put(testFile));
-    // await firebase.assertSucceeds(getFileRef(authedApp(bobId), bobId, bobFilePath).put(testFile));
-
-
-    // Alice should be able to read her own file
-    await firebase.assertSucceeds(getFileRef(aliceStorage, aliceId, aliceFilePath).getDownloadURL());
-
-    // Alice should NOT be able to read Bob's file
-    await firebase.assertFails(getFileRef(aliceStorage, bobId, bobFilePath).getDownloadURL());
+  beforeEach(async () => {
+    // Clear Firestore data between tests for cross-service validation tests
+    await clearFirestore();
+    // Re-create users after clearing Firestore, with rules disabled
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await adminDb.collection('users').doc(aliceId).set({ userId: aliceId, email: `${aliceId}@example.com`, createdAt: new Date() });
+      await adminDb.collection('users').doc(bobId).set({ userId: bobId, email: `${bobId}@example.com`, createdAt: new Date() });
+    });
+    // Note: Clearing Storage is not directly supported by the emulator API,
+    // so tests should be designed to not rely on a clean storage state or
+    // use unique file paths for each test.
   });
 
-  test('should allow authenticated users to write their own files', async () => {
-    const aliceStorage = authedApp(aliceId);
-    const bobStorage = authedApp(bobId);
-    const aliceFilePath = `receipts/${aliceId}/new_receipt.jpg`;
-    const bobFilePath = `receipts/${bobId}/new_receipt.jpg`;
+  // --- /profiles/{userId}/{fileName} Tests ---
+  describe('Storage path: /profiles/{userId}/{fileName}', () => {
+    const path = (userId, fileName) => `profiles/${userId}/${fileName}`;
+    const validImage = createBuffer(10 * 1024); // 10KB
+    const oversizedImage = createBuffer(2.1 * 1024 * 1024); // > 2MB
+    const invalidTypeFile = createBuffer(10 * 1024);
+    const validMetadata = { contentType: 'image/jpeg' };
+    const invalidMetadata = { contentType: 'application/pdf' };
 
-    // Alice should be able to write her own file
-    await firebase.assertSucceeds(getFileRef(aliceStorage, aliceId, aliceFilePath).put(testFile));
+    /**
+     * Tests read access for profile images.
+     */
+    describe('Read', () => {
+      it('authenticated users can read their own profile images', async () => {
+        const filePath = path(aliceId, 'my-profile-read.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertSucceeds(aliceStorage.ref(filePath).getDownloadURL());
+      });
 
-    // Alice should NOT be able to write Bob's file
-    await firebase.assertFails(getFileRef(aliceStorage, bobId, bobFilePath).put(testFile));
+      it('authenticated users cannot read other users profile images', async () => {
+        const filePath = path(bobId, 'bob-profile-read.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertFails(aliceStorage.ref(filePath).getDownloadURL());
+      });
+
+      it('unauthenticated users cannot read any profile image', async () => {
+        const filePath = path(aliceId, 'my-profile-unauth-read.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertFails(unauthenticatedStorage.ref(filePath).getDownloadURL());
+      });
+    });
+
+    /**
+     * Tests create/update access for profile images.
+     */
+    describe('Create/Update', () => {
+      it('authenticated users can upload valid profile images to their own path', async () => {
+        await assertSucceeds(aliceStorage.ref(path(aliceId, 'my-profile.jpg')).put(validImage, validMetadata));
+      });
+
+      it('authenticated users cannot upload profile images to another user\'s path', async () => {
+        await assertFails(aliceStorage.ref(path(bobId, 'my-profile.jpg')).put(validImage, validMetadata));
+      });
+
+      it('authenticated users cannot upload oversized profile images', async () => {
+        await assertFails(aliceStorage.ref(path(aliceId, 'large-profile.jpg')).put(oversizedImage, validMetadata));
+      });
+
+      it('authenticated users cannot upload profile images with invalid content types', async () => {
+        await assertFails(aliceStorage.ref(path(aliceId, 'invalid-profile.js')).put(invalidTypeFile, invalidMetadata));
+      });
+
+      it('unauthenticated users cannot upload any profile image', async () => {
+        await assertFails(unauthenticatedStorage.ref(path(aliceId, 'unauthenticated.jpg')).put(validImage, validMetadata));
+      });
+    });
+
+    /**
+     * Tests delete access for profile images.
+     */
+    describe('Delete', () => {
+      it('authenticated users can delete their own profile images', async () => {
+        const filePath = path(aliceId, 'to-delete.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertSucceeds(aliceStorage.ref(filePath).delete());
+      });
+
+      it('authenticated users cannot delete other users profile images', async () => {
+        const filePath = path(bobId, 'bob-to-delete.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(aliceStorage.ref(filePath).delete());
+      });
+
+      it('unauthenticated users cannot delete any profile image', async () => {
+        const filePath = path(aliceId, 'to-delete-unauth.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(unauthenticatedStorage.ref(filePath).delete());
+      });
+    });
   });
 
-  test('should allow authenticated users to delete their own files', async () => {
-    const aliceStorage = authedApp(aliceId);
-    const aliceFilePath = `receipts/${aliceId}/receipt_to_delete.jpg`;
+  // --- /documents/{userId}/{fileName} Tests ---
+  describe('Storage path: /documents/{userId}/{fileName}', () => {
+    const path = (userId, fileName) => `documents/${userId}/${fileName}`;
+    const validFile = createBuffer(1 * 1024 * 1024); // 1MB
+    const oversizedFile = createBuffer(10.1 * 1024 * 1024); // > 10MB
+    const validImageMetadata = { contentType: 'image/jpeg' };
+    const validPdfMetadata = { contentType: 'application/pdf' };
+    const invalidTypeMetadata = { contentType: 'text/plain' };
 
-    // Upload a file for Alice to delete
-    await firebase.assertSucceeds(getFileRef(authedApp(aliceId), aliceId, aliceFilePath).put(testFile));
+    /**
+     * Tests read access for documents.
+     */
+    describe('Read', () => {
+      it('authenticated users can read their own documents', async () => {
+        const filePath = path(aliceId, 'my-document-read.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validFile, validImageMetadata);
+        });
+        // Test read with rules enabled
+        await assertSucceeds(aliceStorage.ref(filePath).getDownloadURL());
+      });
 
-    // Alice should be able to delete her own file
-    await firebase.assertSucceeds(getFileRef(aliceStorage, aliceId, aliceFilePath).delete());
+      it('authenticated users cannot read other users documents', async () => {
+        const filePath = path(bobId, 'bob-document-read.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validFile, validImageMetadata);
+        });
+        // Test read with rules enabled
+        await assertFails(aliceStorage.ref(filePath).getDownloadURL());
+      });
+
+      it('unauthenticated users cannot read any document', async () => {
+        const filePath = path(aliceId, 'my-document-unauth-read.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validFile, validImageMetadata);
+        });
+        // Test read with rules enabled
+        await assertFails(unauthenticatedStorage.ref(filePath).getDownloadURL());
+      });
+    });
+
+    /**
+     * Tests create/update access for documents.
+     */
+    describe('Create/Update', () => {
+      it('authenticated users can upload valid documents (image) to their own path', async () => {
+        await assertSucceeds(aliceStorage.ref(path(aliceId, 'my-document.jpg')).put(validFile, validImageMetadata));
+      });
+
+      it('authenticated users can upload valid documents (pdf) to their own path', async () => {
+        await assertSucceeds(aliceStorage.ref(path(aliceId, 'my-document.pdf')).put(validFile, validPdfMetadata));
+      });
+
+      it('authenticated users cannot upload documents to another user\'s path', async () => {
+        await assertFails(aliceStorage.ref(path(bobId, 'my-document.jpg')).put(validFile, validImageMetadata));
+      });
+
+      it('authenticated users cannot upload oversized documents', async () => {
+        await assertFails(aliceStorage.ref(path(aliceId, 'large-document.pdf')).put(oversizedFile, validPdfMetadata));
+      });
+
+      it('authenticated users cannot upload documents with invalid content types', async () => {
+        await assertFails(aliceStorage.ref(path(aliceId, 'invalid-document.txt')).put(validFile, invalidTypeMetadata));
+      });
+
+      it('unauthenticated users cannot upload any document', async () => {
+        await assertFails(unauthenticatedStorage.ref(path(aliceId, 'unauthenticated.pdf')).put(validFile, validPdfMetadata));
+      });
+    });
+
+    /**
+     * Tests delete access for documents.
+     */
+    describe('Delete', () => {
+      it('authenticated users can delete their own documents', async () => {
+        const filePath = path(aliceId, 'to-delete-document.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validFile, validImageMetadata);
+        });
+        // Test delete with rules enabled
+        await assertSucceeds(aliceStorage.ref(filePath).delete());
+      });
+
+      it('authenticated users cannot delete other users documents', async () => {
+        const filePath = path(bobId, 'bob-to-delete-document.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validFile, validImageMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(aliceStorage.ref(filePath).delete());
+      });
+
+      it('unauthenticated users cannot delete any document', async () => {
+        const filePath = path(aliceId, 'to-delete-document-unauth.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validFile, validImageMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(unauthenticatedStorage.ref(filePath).delete());
+      });
+    });
   });
 
-  test('should deny authenticated users from deleting other users\' files', async () => {
-    const aliceStorage = authedApp(aliceId);
-    const bobFilePath = `receipts/${bobId}/bob_receipt_to_delete.jpg`;
+  // --- /receipts/{userId}/{fileName} Tests ---
+  describe('Storage path: /receipts/{userId}/{fileName}', () => {
+    const path = (userId, fileName) => `receipts/${userId}/${fileName}`;
+    const validImage = createBuffer(1 * 1024 * 1024); // 1MB
+    const oversizedImage = createBuffer(5.1 * 1024 * 1024); // > 5MB
+    const invalidTypeFile = createBuffer(10 * 1024);
+    const validMetadata = { contentType: 'image/jpeg' };
+    const invalidMetadata = { contentType: 'application/pdf' };
 
-    // Upload a file for Bob (Alice should not be able to delete it)
-    await firebase.assertSucceeds(getFileRef(authedApp(bobId), bobId, bobFilePath).put(testFile));
+    /**
+     * Tests read access for receipt images.
+     */
+    describe('Read', () => {
+      it('authenticated users can read their own receipt images', async () => {
+        const filePath = path(aliceId, 'my-receipt-read.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertSucceeds(aliceStorage.ref(filePath).getDownloadURL());
+      });
 
-    // Alice should NOT be able to delete Bob's file
-    await firebase.assertFails(getFileRef(aliceStorage, bobId, bobFilePath).delete());
+      it('authenticated users cannot read other users receipt images', async () => {
+        const filePath = path(bobId, 'bob-receipt-read.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertFails(aliceStorage.ref(filePath).getDownloadURL());
+      });
+
+      it('unauthenticated users cannot read any receipt image', async () => {
+        const filePath = path(aliceId, 'my-receipt-unauth-read.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertFails(unauthenticatedStorage.ref(filePath).getDownloadURL());
+      });
+    });
+
+    /**
+     * Tests create/update access for receipt images.
+     */
+    describe('Create/Update', () => {
+      it('authenticated users can upload valid receipt images to their own path', async () => {
+        await assertSucceeds(aliceStorage.ref(path(aliceId, 'my-receipt.jpg')).put(validImage, validMetadata));
+      });
+
+      it('authenticated users cannot upload receipt images to another user\'s path', async () => {
+        await assertFails(aliceStorage.ref(path(bobId, 'my-receipt.jpg')).put(validImage, validMetadata));
+      });
+
+      it('authenticated users cannot upload oversized receipt images', async () => {
+        await assertFails(aliceStorage.ref(path(aliceId, 'large-receipt.jpg')).put(oversizedImage, validMetadata));
+      });
+
+      it('authenticated users cannot upload receipt images with invalid content types', async () => {
+        await assertFails(aliceStorage.ref(path(aliceId, 'invalid-receipt.pdf')).put(invalidTypeFile, invalidMetadata));
+      });
+
+      it('unauthenticated users cannot upload any receipt image', async () => {
+        await assertFails(unauthenticatedStorage.ref(path(aliceId, 'unauthenticated.jpg')).put(validImage, validMetadata));
+      });
+    });
+
+    /**
+     * Tests delete access for receipt images.
+     */
+    describe('Delete', () => {
+      it('authenticated users can delete their own receipt images', async () => {
+        const filePath = path(aliceId, 'to-delete-receipt.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertSucceeds(aliceStorage.ref(filePath).delete());
+      });
+
+      it('authenticated users cannot delete other users receipt images', async () => {
+        const filePath = path(bobId, 'bob-to-delete-receipt.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(aliceStorage.ref(filePath).delete());
+      });
+
+      it('unauthenticated users cannot delete any receipt image', async () => {
+        const filePath = path(aliceId, 'to-delete-receipt-unauth.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(unauthenticatedStorage.ref(filePath).delete());
+      });
+    });
   });
 
+  // --- /inventory/{userId}/{productId}/images/{imageId} Tests ---
+  describe('Storage path: /inventory/{userId}/{productId}/images/{imageId}', () => {
+    const path = (userId, productId, imageId) => `inventory/${userId}/${productId}/images/${imageId}`;
+    const validImage = createBuffer(10 * 1024); // 10KB
+    const oversizedImage = createBuffer(5.1 * 1024 * 1024); // > 5MB
+    const invalidTypeFile = createBuffer(10 * 1024);
+    const validMetadata = { contentType: 'image/jpeg' };
+    const invalidMetadata = { contentType: 'application/pdf' };
+    let aliceProductId;
 
-  // ============================================================
-  //                   Validation Tests
-  // ============================================================
+    beforeEach(async () => {
+      // Create a product and inventory item in Firestore for cross-service validation, with rules disabled
+      aliceProductId = 'alice-product-for-storage';
+      const aliceInventoryId = 'alice-inventory-for-storage';
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const adminDb = context.firestore();
+        await adminDb.collection('products').doc(aliceProductId).set({ userId: aliceId, name: 'Alice Product for Storage', unitPrice: 10.00, createdAt: new Date() });
+        await adminDb.collection('inventory').doc(aliceInventoryId).set({ userId: aliceId, name: 'Alice Inventory for Storage', productId: aliceProductId, quantity: 10, createdAt: new Date(), updatedAt: new Date() });
+      });
+    });
 
-  test('should deny uploading files larger than the allowed size', async () => {
-    const aliceStorage = authedApp(aliceId);
-    const filePath = `receipts/${aliceId}/large_file.jpg`; // Assuming .jpg is allowed type
+    /**
+     * Tests read access for inventory item images.
+     */
+    describe('Read', () => {
+      it('authenticated users can read their own inventory item images', async () => {
+        const filePath = path(aliceId, aliceProductId, 'my-inventory-image-read.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertSucceeds(aliceStorage.ref(filePath).getDownloadURL());
+      });
 
-    // This test assumes a size limit is defined in storage.rules (e.g., allow write: if request.resource.size < 2 * 1024 * 1024;)
-    await firebase.assertFails(getFileRef(aliceStorage, aliceId, filePath).put(largeFile));
+      it('authenticated users cannot read other users inventory item images', async () => {
+        const bobProductId = 'bob-product-for-storage-read';
+        const bobInventoryId = 'bob-inventory-for-storage-read';
+        const filePath = path(bobId, bobProductId, 'bob-inventory-image-read.jpg');
+        // Create product and inventory for bob, with rules disabled
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminDb = context.firestore();
+          await adminDb.collection('products').doc(bobProductId).set({ userId: bobId, name: 'Bob Product for Storage Read', unitPrice: 20.00, createdAt: new Date() });
+          await adminDb.collection('inventory').doc(bobInventoryId).set({ userId: bobId, name: 'Bob Inventory for Storage Read', productId: bobProductId, quantity: 20, createdAt: new Date(), updatedAt: new Date() });
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertFails(aliceStorage.ref(filePath).getDownloadURL());
+      });
+
+      it('unauthenticated users cannot read any inventory item image', async () => {
+        const filePath = path(aliceId, aliceProductId, 'my-inventory-image-unauth-read.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertFails(unauthenticatedStorage.ref(filePath).getDownloadURL());
+      });
+    });
+
+    /**
+     * Tests create/update access for inventory item images.
+     */
+    describe('Create/Update', () => {
+      it('authenticated users can upload valid inventory item images to their own path referencing an owned inventory item', async () => {
+        await assertSucceeds(aliceStorage.ref(path(aliceId, aliceProductId, 'my-inventory-image.jpg')).put(validImage, validMetadata));
+      });
+
+      it('authenticated users cannot upload inventory item images to another user\'s path', async () => {
+        await assertFails(aliceStorage.ref(path(bobId, aliceProductId, 'my-inventory-image.jpg')).put(validImage, validMetadata));
+      });
+
+      it('authenticated users cannot upload inventory item images referencing a non-existent inventory item', async () => {
+        await assertFails(aliceStorage.ref(path(aliceId, 'non-existent-product', 'my-inventory-image.jpg')).put(validImage, validMetadata));
+      });
+
+      it('authenticated users cannot upload inventory item images referencing an inventory item owned by another user', async () => {
+        const bobProductId = 'bob-product-for-storage';
+        const bobInventoryId = 'bob-inventory-for-storage';
+        // Create product and inventory for bob, with rules disabled
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminDb = context.firestore();
+          await adminDb.collection('products').doc(bobProductId).set({ userId: bobId, name: 'Bob Product for Storage', unitPrice: 20.00, createdAt: new Date() });
+          await adminDb.collection('inventory').doc(bobInventoryId).set({ userId: bobId, name: 'Bob Inventory for Storage', productId: bobProductId, quantity: 20, createdAt: new Date(), updatedAt: new Date() });
+        });
+        await assertFails(aliceStorage.ref(path(aliceId, bobProductId, 'my-inventory-image.jpg')).put(validImage, validMetadata));
+      });
+
+      it('authenticated users cannot upload oversized inventory item images', async () => {
+        await assertFails(aliceStorage.ref(path(aliceId, aliceProductId, 'large-inventory-image.jpg')).put(oversizedImage, validMetadata));
+      });
+
+      it('authenticated users cannot upload inventory item images with invalid content types', async () => {
+        await assertFails(aliceStorage.ref(path(aliceId, aliceProductId, 'invalid-inventory-image.pdf')).put(invalidTypeFile, invalidMetadata));
+      });
+
+      it('unauthenticated users cannot upload any inventory item image', async () => {
+        await assertFails(unauthenticatedStorage.ref(path(aliceId, aliceProductId, 'unauthenticated.jpg')).put(validImage, validMetadata));
+      });
+    });
+
+    /**
+     * Tests delete access for inventory item images.
+     */
+    describe('Delete', () => {
+      it('authenticated users can delete their own inventory item images referencing an owned inventory item', async () => {
+        const filePath = path(aliceId, aliceProductId, 'to-delete-inventory-image.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertSucceeds(aliceStorage.ref(filePath).delete());
+      });
+
+      it('authenticated users cannot delete inventory item images from another user\'s path', async () => {
+        const bobProductId = 'bob-product-for-storage-delete';
+        const bobInventoryId = 'bob-inventory-for-storage-delete';
+        const filePath = path(bobId, bobProductId, 'bob-to-delete-inventory-image.jpg');
+        // Create product and inventory for bob, with rules disabled
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminDb = context.firestore();
+          await adminDb.collection('products').doc(bobProductId).set({ userId: bobId, name: 'Bob Product for Storage Delete', unitPrice: 20.00, createdAt: new Date() });
+          await adminDb.collection('inventory').doc(bobInventoryId).set({ userId: bobId, name: 'Bob Inventory for Storage Delete', productId: bobProductId, quantity: 20, createdAt: new Date(), updatedAt: new Date() });
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(aliceStorage.ref(filePath).delete());
+      });
+
+      it('authenticated users cannot delete inventory item images referencing a non-existent inventory item', async () => {
+        const filePath = path(aliceId, 'non-existent-product-delete', 'to-delete-inventory-image.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(aliceStorage.ref(filePath).delete());
+      });
+
+      it('authenticated users cannot delete inventory item images referencing an inventory item owned by another user', async () => {
+        const bobProductId = 'bob-product-for-storage-delete-cross';
+        const bobInventoryId = 'bob-inventory-for-storage-delete-cross';
+        const filePath = path(aliceId, bobProductId, 'to-delete-inventory-image.jpg'); // Alice trying to delete a file under Bob's product ID path
+        // Create product and inventory for bob, with rules disabled
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminDb = context.firestore();
+          await adminDb.collection('products').doc(bobProductId).set({ userId: bobId, name: 'Bob Product for Storage Delete Cross', unitPrice: 20.00, createdAt: new Date() });
+          await adminDb.collection('inventory').doc(bobInventoryId).set({ userId: bobId, name: 'Bob Inventory for Storage Delete Cross', productId: bobProductId, quantity: 20, createdAt: new Date(), updatedAt: new Date() });
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(aliceStorage.ref(filePath).delete());
+      });
+
+      it('unauthenticated users cannot delete any inventory item image', async () => {
+        const filePath = path(aliceId, aliceProductId, 'to-delete-inventory-image-unauth.jpg');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(validImage, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(unauthenticatedStorage.ref(filePath).delete());
+      });
+    });
   });
 
-  test('should deny uploading files with disallowed content types', async () => {
-    const aliceStorage = authedApp(aliceId);
-    const filePath = `receipts/${aliceId}/malicious_script.sh`; // Assuming .sh is disallowed
+  // --- /exports/{userId}/{fileName} Tests ---
+  describe('Storage path: /exports/{userId}/{fileName}', () => {
+    const path = (userId, fileName) => `exports/${userId}/${fileName}`;
+    const testFile = createBuffer(10 * 1024); // 10KB
+    const validMetadata = { contentType: 'text/csv' }; // Assuming exports are CSV
 
-    // This test assumes content type restrictions are defined (e.g., allow write: if request.resource.contentType.matches('image/.*');)
-    await firebase.assertFails(getFileRef(aliceStorage, aliceId, filePath).put(testFile, { contentType: 'application/x-sh' }));
+    /**
+     * Tests read access for exports.
+     */
+    describe('Read', () => {
+      it('authenticated users can read their own exports', async () => {
+        const filePath = path(aliceId, 'my-export-read.csv');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(testFile, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertSucceeds(aliceStorage.ref(filePath).getDownloadURL());
+      });
+
+      it('authenticated users cannot read other users exports', async () => {
+        const filePath = path(bobId, 'bob-export-read.csv');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(testFile, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertFails(aliceStorage.ref(filePath).getDownloadURL());
+      });
+
+      it('unauthenticated users cannot read any export', async () => {
+        const filePath = path(aliceId, 'my-export-unauth-read.csv');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(testFile, validMetadata);
+        });
+        // Test read with rules enabled
+        await assertFails(unauthenticatedStorage.ref(filePath).getDownloadURL());
+      });
+    });
+
+    /**
+     * Tests create/update access for exports (should be denied for clients).
+     */
+    describe('Create/Update', () => {
+      it('authenticated users cannot upload exports', async () => {
+        await assertFails(aliceStorage.ref(path(aliceId, 'my-export.csv')).put(testFile, validMetadata));
+      });
+
+      it('unauthenticated users cannot upload exports', async () => {
+        await assertFails(unauthenticatedStorage.ref(path(aliceId, 'unauthenticated-export.csv')).put(testFile, validMetadata));
+      });
+    });
+
+    /**
+     * Tests delete access for exports.
+     */
+    describe('Delete', () => {
+      it('authenticated users can delete their own exports', async () => {
+        const filePath = path(aliceId, 'to-delete-export.csv');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(testFile, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertSucceeds(aliceStorage.ref(filePath).delete());
+      });
+
+      it('authenticated users cannot delete other users exports', async () => {
+        const filePath = path(bobId, 'bob-to-delete-export.csv');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(testFile, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(aliceStorage.ref(filePath).delete());
+      });
+
+      it('unauthenticated users cannot delete any export', async () => {
+        const filePath = path(aliceId, 'to-delete-export-unauth.csv');
+        // Upload file with rules disabled for setup
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const adminStorage = context.storage();
+          await adminStorage.ref(filePath).put(testFile, validMetadata);
+        });
+        // Test delete with rules enabled
+        await assertFails(unauthenticatedStorage.ref(filePath).delete());
+      });
+    });
   });
-
-  // Add more specific tests for different paths and validation rules as defined in storage.rules
-
 });

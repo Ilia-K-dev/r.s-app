@@ -17,59 +17,83 @@ service firebase.storage {
     // Profile Images: Allow users to read/write their own profile images.
     // Path: /profiles/{userId}/{fileName}
     match /profiles/{userId}/{fileName} {
+      // Allow read access if the user is the owner.
       allow read: if isOwner(userId);
-      allow write: if isOwner(userId)
-                   // Validate file size (e.g., max 2MB)
-                   && request.resource.size < 2 * 1024 * 1024
-                   // Validate content type (allow common image types)
-                   && request.resource.contentType.matches('image/(jpeg|png|gif|webp)');
-      // Delete implicitly allowed under write conditions.
+
+      // Allow create and update access if the user is the owner,
+      // and the file meets size and type restrictions.
+      allow create, update: if isOwner(userId)
+                            && request.resource.size < 2 * 1024 * 1024  // 2MB limit
+                            && request.resource.contentType.matches('image/(jpeg|png|gif|webp)');
+
+      // Allow delete access if the user is the owner.
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // General Documents (including Receipts if not separated): Allow users to manage their own documents.
+    // Documents: Allow users to manage their own documents.
     // Path: /documents/{userId}/{fileName}
     match /documents/{userId}/{fileName} {
+      // Allow read access if the user is the owner.
       allow read: if isOwner(userId);
-      allow write: if isOwner(userId)
-                   // Validate file size (e.g., max 10MB)
-                   && request.resource.size < 10 * 1024 * 1024
-                   // Validate content type (allow common image types and PDF)
-                   && request.resource.contentType.matches('image/(jpeg|png|gif|webp)|application/pdf');
-      // Delete implicitly allowed under write conditions.
+
+      // Allow create access if the user is the owner,
+      // and the file meets size and type restrictions.
+      allow create: if isOwner(userId)
+                            && request.resource.size < 10 * 1024 * 1024  // 10MB limit
+                            && request.resource.contentType.matches('image/(jpeg|png|gif|webp)|application/pdf');
+
+      // Allow update access if the user is the owner,
+      // and the file meets size and type restrictions.
+      allow update: if isOwner(userId)
+                            && request.resource.size < 10 * 1024 * 1024  // 10MB limit
+                            && request.resource.contentType.matches('image/(jpeg|png|gif|webp)|application/pdf');
+
+      // Allow delete access if the user is the owner.
+      allow delete: if isOwner(userId);
     }
     
     // Specific Receipt Images (If keeping separate from documents): Allow users to manage their own receipt images.
-    // Path: /receipts/{userId}/{fileName} 
+    // Path: /receipts/{userId}/{fileName}
     // Consider merging into /documents/{userId}/{fileName} and using metadata for type.
     match /receipts/{userId}/{fileName} {
+      // Allow read access if the user is the owner.
       allow read: if isOwner(userId);
-      allow write: if isOwner(userId)
-                   // Validate file size (e.g., max 5MB) - potentially different from general docs
-                   && request.resource.size < 5 * 1024 * 1024 
-                   // Validate content type (allow common image types)
-                   && request.resource.contentType.matches('image/(jpeg|png|gif|webp)');
-       // Delete implicitly allowed under write conditions.
+
+      // Allow create and update access if the user is the owner,
+      // and the file meets size and type restrictions.
+      allow create, update: if isOwner(userId)
+                            && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+                            && request.resource.contentType.matches('image/(jpeg|png|gif|webp)');
+
+      // Allow delete access if the user is the owner.
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
     // Inventory Item Images: Allow users to manage images associated with their inventory items.
     // Path: /inventory/{userId}/{productId}/images/{imageId}
     match /inventory/{userId}/{productId}/images/{imageId} {
-       // Need to verify ownership based on the inventory item document in Firestore.
-       // This requires a function to read Firestore data.
-       // function isInventoryOwner(userId, productId) {
-       //   return exists(/databases/$(database)/documents/inventory/$(productId)) &&
-       //          get(/databases/$(database)/documents/inventory/$(productId)).data.userId == userId;
-       // }
-       // allow read, write: if isAuthenticated() && isInventoryOwner(userId, productId) // Requires Firestore read permission
-       
-       // Simplified rule (less secure, relies on path userId):
-       allow read: if isOwner(userId); 
-       allow write: if isOwner(userId)
-                    // Validate file size (e.g., max 3MB)
-                    && request.resource.size < 3 * 1024 * 1024
-                    // Validate content type (allow common image types)
-                    && request.resource.contentType.matches('image/(jpeg|png|gif|webp)');
-       // Delete implicitly allowed under write conditions.
+       // Allow read access if the user is the owner.
+       allow read: if isOwner(userId);
+
+       // Allow create and update access if the user is the owner,
+       // the file meets size and type restrictions, and the corresponding
+       // Firestore inventory document exists and is owned by the user.
+       allow create, update: if isOwner(userId)
+                             && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+                             && request.resource.contentType.matches('image/.*')
+                             // Cross-service validation: Ensure corresponding Firestore document exists and is owned
+                             && firestore.exists(/databases/(default)/documents/inventory/$(productId))
+                             && firestore.get(/databases/(default)/documents/inventory/$(productId)).data.userId == request.auth.uid;
+
+       // Fixed inventory path rules to correctly reference product ID in Firestore path
+       // Note: This fix couldn't be verified through automated testing due to environment issues
+       // See docs/known-issues.md for more details
+       // Allow delete access if the user is the owner and the corresponding
+       // Firestore inventory document exists and is owned by the user.
+       allow delete: if isOwner(userId)
+                     // Cross-service validation: Ensure corresponding Firestore document exists and is owned
+                     && firestore.exists('/databases/(default)/documents/inventory/' + productId)
+                     && firestore.get('/databases/(default)/documents/inventory/' + productId).data.userId == request.auth.uid;
     }
 
     // Data Exports: Allow users to read/write their own exported data files.

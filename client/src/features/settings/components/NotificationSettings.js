@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../../../shared/components/ui/Card';
-import { Button } from '../../../shared/components/forms/Button';
+import { Button } from '../../../shared/components/ui/Button';
 import { Switch } from '../../../shared/components/forms/Switch';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { useAuth } from '../../auth/hooks/useAuth';
