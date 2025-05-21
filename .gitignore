@@ -16,6 +16,9 @@
 # Testing
 /coverage
 
+# React build output
+client/build/
+
 # Production / Build artifacts
 /build
 /dist
