@@ -1,19 +1,11 @@
-import React, { useEffect, useState } from 'react'; // Added useEffect and useState
-import { RouterProvider } from 'react-router-dom';
-import { AuthProvider } from './core/contexts/AuthContext';
-import { ToastProvider } from './core/contexts/ToastContext';
-import router from './routes';
-import { ThemeProvider } from './contexts/ThemeContext'; // Import ThemeProvider
-import { I18nextProvider } from 'react-i18next'; // Import I18nextProvider
-import i18n from './locales'; // Import i18n configuration
-import { env } from './core/config/environment'; // Import env
-import { testApiConnection } from './shared/utils/apiConnectionTest'; // Import testApiConnection
-import { useToast } from './shared/hooks/useToast'; // Import useToast
-import DebugPanel from './components/debug/DebugPanel'; // Import DebugPanel
-
-// Import Firebase to ensure it's initialized once, but don't re-initialize
-import './core/config/firebase';
-import '../src/shared/styles/index.css';
+import React from 'react';//correct
+import { RouterProvider } from 'react-router-dom';//correct
+import { router } from './routes';//correct
+import { AuthProvider } from './core/contexts/AuthContext';//correct
+import { ToastProvider } from './core/contexts/ToastContext';//correct
+import { initializeApp } from 'firebase/app';//correct
+import { firebaseConfig } from './core/config/firebase';//correct
+import '../../client/src/shared/styles/index.css';
 
 const App = () => { // Changed to a functional component to use hooks
   const { showToast } = useToast(); // Use useToast hook
@@ -49,21 +41,11 @@ const App = () => { // Changed to a functional component to use hooks
   };
 
   return (
-    <ThemeProvider> {/* Wrap with ThemeProvider */}
-      <I18nextProvider i18n={i18n}> {/* Wrap with I18nextProvider */}
-        <AuthProvider>
-          <ToastProvider>
-            {!env.IS_PRODUCTION && ( // Conditional environment indicator
-              <div className="fixed top-0 right-0 bg-yellow-500 text-black px-2 py-1 text-xs font-bold z-50">
-                {process.env.NODE_ENV}
-              </div>
-            )}
-            {renderApiWarning()} {/* Render API warning */}
-            <RouterProvider router={router} />
-          </ToastProvider>
-        </AuthProvider>
-      </I18nextProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
+    </AuthProvider>
   );
 };
 
