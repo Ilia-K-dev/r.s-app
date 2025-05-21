@@ -5,7 +5,13 @@
 .env.development
 .env.production
 
-# Credentials and Secrets
+# Firebase Service Account and Credentials
+server/config/service-account.json
+serviceAccountKey.json
+firebase-adminsdk.json
+google-credentials.json
+
+# Other Credentials and Secrets
 *.key
 *.pem
 *.p12
@@ -15,8 +21,6 @@
 *.gpg
 *.secret
 *.credentials
-serviceAccountKey.json
-firebase-adminsdk.json
 
 # Dependency Directories
 node_modules/
@@ -31,19 +35,22 @@ out/
 client/build/
 client/dist/
 client/out/
+client/web-build/
 server/build/
 server/dist/
 server/out/
 functions/lib/
+functions/dist/
 
 # Logs and Temporary Files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.log
+*.log
 .tmp
 temp/
 tmp/
+firebase-debug.log
 
 # IDE and Editor Specific Files
 .vscode/
@@ -52,13 +59,18 @@ tmp/
 *.swo
 *.bak
 *~
-.DS_Store
-Thumbs.db
-
-# Firebase Specific Files
-firebase-debug.log
 
 # OS Specific Files
 .DS_Store
 ehthumbs.db
+Thumbs.db
 Icon?
+
+# Firebase Emulator Data
+.firebase/
+firebase-debug.log*
+ui-debug.log
+
+# Testing
+coverage/
+.nyc_output
