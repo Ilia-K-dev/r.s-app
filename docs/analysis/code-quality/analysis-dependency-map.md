@@ -47,7 +47,6 @@ This document outlines the dependencies and their relationships within the Recei
 *   `@babel/plugin-transform-object-rest-spread`: Babel plugin for transforming object rest spread.
 *   `@babel/plugin-transform-optional-catch-binding`: Babel plugin for transforming optional catch binding.
 *   `@babel/plugin-transform-optional-chaining`: Babel plugin for transforming optional chaining.
-*   `@expo/metro-runtime`: Metro runtime for Expo.
 *   `@headlessui/react`: Headless UI components for React.
 *   `@heroicons/react`: Heroicons for React.
 *   `@react-navigation/native`: React Navigation core library.
@@ -56,9 +55,6 @@ This document outlines the dependencies and their relationships within the Recei
 *   `axios`: Promise-based HTTP client.
 *   `chart.js`: Flexible JavaScript charting library.
 *   `date-fns`: Modern JavaScript date utility library.
-*   `expo`: Framework for universal React applications.
-*   `expo-image-picker`: Expo module for accessing device's image library and camera.
-*   `expo-status-bar`: Expo module for managing the status bar.
 *   `firebase`: Firebase JavaScript SDK.
 *   `lucide-react`: Lucide icons for React.
 *   `postcss`: Tool for transforming CSS with JavaScript.
@@ -89,15 +85,9 @@ This document outlines the dependencies and their relationships within the Recei
 *   `@babel/core`: Babel compiler core.
 *   `@babel/preset-env`: Babel preset for compiling modern JavaScript.
 *   `@babel/runtime`: Babel runtime.
-*   `@expo/webpack-config`: Webpack config for Expo.
 *   `@types/react`: TypeScript type definitions for React.
 *   `babel-loader`: Babel webpack loader.
 *   `babel-plugin-module-resolver`: Custom module resolver for Babel.
-*   `metro`: Metro bundler.
-*   `metro-core`: Metro core.
-*   `metro-react-native-babel-preset`: Babel preset for React Native.
-*   `metro-runtime`: Metro runtime.
-*   `metro-source-map`: Metro source map.
 *   `typescript`: TypeScript language.
 
 ## Server Dependencies (`server/package.json`)

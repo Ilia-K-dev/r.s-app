@@ -39,7 +39,6 @@ This guide provides comprehensive instructions for setting up the Receipt Scanne
 - npm 7.x or later
 - Git
 - Firebase CLI (`npm install -g firebase-tools`)
-- Expo CLI (`npm install -g expo-cli`)
 
 ## Repository Setup
 

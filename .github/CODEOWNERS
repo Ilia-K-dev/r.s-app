@@ -3,7 +3,7 @@
 # When someone opens a pull request that modifies code owned by someone, that person or team will be automatically requested for review.
 
 # Assign default owners to the entire repository
-* @your-github-username # Replace with your GitHub username or team handle
+* @Ilia-K-dev # Replace with your GitHub username or team handle
 
 # Example: Assign ownership of specific directories
 # /client/ @your-frontend-team

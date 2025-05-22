@@ -2,10 +2,14 @@
 
 ## Frontend Development Workflow
 
-### Cloud-Only Development Approach
+### Testing Without Local Builds
 
-We use a cloud-only development approach with GitHub Actions and Firebase Preview Channels. 
-**DO NOT attempt local builds** which will fail due to environment restrictions.
+We use Firebase Hosting Preview Channels to test frontend changes without requiring local builds.
+
+When you push changes to any branch:
+1. GitHub Actions automatically builds and deploys your frontend code
+2. A unique preview URL is generated where anyone can test the changes
+3. For pull requests, this URL appears in the PR comments
 
 ### Development Process
 
@@ -24,34 +28,39 @@ We use a cloud-only development approach with GitHub Actions and Firebase Previe
 
 4. Create a pull request on GitHub
 5. After the automatic deployment completes, use the preview URL to test your changes
-
-   The URL will be posted in the PR comments
-   This URL contains a fully functional version of the app
-
-
 6. Continue to make changes as needed - each push updates the preview
 7. Once the preview is working correctly, the PR can be reviewed and merged
 
 
-## Documentation Standards
-For each task you work on:
+### Step 4: Test the Setup
+1. Create a small test change to verify the workflow:
+   - Create a branch: `git checkout -b test/preview-deployment`
+   - Make a small visible change to `client/src/App.js` (add a version number or timestamp)
+   - Commit and push: `git add . && git commit -m "Test: Preview deployment" && git push origin test/preview-deployment`
+   - Create a PR on GitHub
+   - Verify the GitHub Action runs and creates a preview URL
+   - Test the preview URL to confirm it works
 
-1. Document all file changes with header comments:
-   ```javascript
-   /**
-    * [Filename]
-    * Last Modified: [Date] [Time]
-    * Modified By: Cline
-    * 
-    * Purpose: [Brief description of what this file does]
-    * Changes Made: [Summary of changes implemented]
-    * Reasoning: [Why these changes were necessary]
-    */
-   ```
+### Step 5: Document the Process in `implementation-tasks.md`
+1. Add a section to `implementation-tasks.md` documenting:
+   - The Firebase Preview setup completed
+   - How to use the preview URLs for testing
+   - Any issues encountered and how they were resolved
 
-2. Update implementation-tasks.md with:
-   - Files modified
-   - Changes implemented
-   - Testing performed
-   - Issues encountered and solutions
-   - Verification steps
+## Deliverables
+1. Working GitHub Actions workflow for Firebase Preview Channels
+2. Updated Firebase configuration files
+3. CONTRIBUTING.md guide explaining the workflow
+4. Successful test deployment with a working preview URL
+5. Documentation in implementation-tasks.md
+
+## Testing and Verification
+After pushing your changes, verify:
+1. The GitHub Action runs successfully
+2. A preview URL is generated and appears in the PR comments
+3. The preview URL loads the frontend correctly in a browser
+4. Any changes to the client code are reflected in the preview after pushing
+
+## Notes
+- The Firebase project (project-reciept-reader-id) should already be set up
+- You may need to coordinate with the repository admin to add the FIREBASE_SERVICE_ACCOUNT secret to GitHub

@@ -59,6 +59,7 @@ firebase-debug.log
 *.swo
 *.bak
 *~
+.expo/
 
 # OS Specific Files
 .DS_Store

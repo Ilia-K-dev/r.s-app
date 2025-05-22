@@ -32,13 +32,12 @@ jobs:
       - name: Install Dependencies
         run: |
           cd client
-          npm install --legacy-peer-deps
+          npm ci || npm install
       
       - name: Build Frontend
         run: |
           cd client
-          # Set CI=false to prevent warnings from failing the build
-          CI=false npm run build:web || CI=false npx expo export:web
+          CI=false npm run build
       
       - name: Deploy to Firebase Preview Channel
         uses: FirebaseExtended/action-hosting-deploy@v0

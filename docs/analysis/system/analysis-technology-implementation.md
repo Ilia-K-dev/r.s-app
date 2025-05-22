@@ -46,7 +46,6 @@ This document outlines the key technology implementations within the Receipt Sca
 **Client-Side (`client/package.json`):**
 
 *   **`react` / `react-native` / `react-dom`:** Core libraries for building the user interface (web and potentially native).
-*   **`expo`:** Framework and platform for universal React applications (build, deploy, tooling).
 *   **`firebase`:** Client-side SDK for interacting with Firebase services (Auth, Firestore, Storage).
 *   **`axios`:** Promise-based HTTP client for making API requests to the backend.
 *   **`@react-navigation/*`:** Libraries for handling navigation within the application (stack navigator).
@@ -56,7 +55,6 @@ This document outlines the key technology implementations within the Receipt Sca
 *   **`date-fns`:** Utility library for date manipulation.
 *   **`tesseract.js`:** Client-side OCR library (potentially for preview or basic processing).
 *   **`react-dropzone`:** Component for handling file drag-and-drop uploads.
-*   **`expo-image-picker`:** Expo module for accessing the device's image library or camera.
 
 **Server-Side (`server/package.json`):**
 

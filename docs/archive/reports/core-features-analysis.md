@@ -18,19 +18,18 @@ This document analyzes the implementation and status of the core features in the
 ## 1. Document Scanning and OCR
 
 *   **Capture & Processing:**
-    *   Documents (likely images of receipts) are captured on the client-side using components like `client/src/features/documents/components/FileUploader.js` (potentially leveraging `react-dropzone`) and possibly native device capabilities via `expo-image-picker` or `react-native-vision-camera` if native features are used.
+    *   Documents (likely images of receipts) are captured on the client-side using components like `client/src/features/documents/components/FileUploader.js` (potentially leveraging `react-dropzone`) and possibly native device capabilities via `react-native-vision-camera` if native features are used.
     *   Client-side hooks like `useDocumentScanner.js` likely manage the capture flow.
     *   Uploaded images are sent to the server (handled by `multer` middleware).
     *   Server-side pre-processing might occur using `sharp` (`server/src/services/preprocessing.js`) to optimize images before OCR.
 *   **OCR Technology:**
     *   The primary OCR engine appears to be **Google Cloud Vision API**, integrated via the `@google-cloud/vision` library on the server (`server/config/vision.js`, `server/src/services/document/documentProcessingService.js`, `server/src/services/document/visionService.js`).
-    *   **Tesseract.js** is included in the client dependencies, suggesting it might be used for optional client-side OCR previews (`client/src/features/documents/hooks/useOCR.js`) or as a fallback, but Google Vision is likely used for the main, more accurate processing on the backend.
 *   **Data Extraction & Structure:**
     *   The server-side `documentProcessingService.js` orchestrates the OCR process using Google Vision.
     *   Extracted text and potentially structured data (like line items, total, date) from the Vision API response are likely processed and mapped to the `Receipt` model (`server/src/models/Receipt.js`).
     *   The `receiptController.js` handles saving this structured data, probably to Firestore.
     *   Client displays previews using components like `DocumentPreview.js` and `ReceiptPreview.js`.
-*   **Status:** **Complete / In-Progress.** The core infrastructure using Google Cloud Vision on the backend seems established. Client-side integration and potential Tesseract usage might still be under refinement.
+*   **Status:** **Complete / In-Progress.** The core infrastructure using Google Cloud Vision on the backend seems established. Client-side integration might still be under refinement.
 
 ## 2. Receipt Management
 

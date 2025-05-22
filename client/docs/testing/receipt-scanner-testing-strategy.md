@@ -113,9 +113,9 @@ Update Jest configuration to handle module resolution issues:
 ```javascript
 // In jest.config.js
 module.exports = {
-  preset: 'jest-expo',
+  preset: 'jest-environment-jsdom',
   transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|expo(nent)?|@expo|@unimodules|react-navigation|@react-navigation|firebase)'
+    'node_modules/(?!(jest-)?react-native|@react-native|react-navigation|@react-navigation|firebase)'
   ],
   moduleNameMapper: {
     '^'(.*)$'': '<rootDir>/src/$1'

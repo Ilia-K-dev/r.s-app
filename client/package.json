@@ -5,12 +5,9 @@
   "main": "index.js",
   "scripts": {
     "verify-env": "node ../scripts/verify-env.js",
-    "start": "npm run verify-env && expo start",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
     "test": "jest",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
-    "build:web": "expo export:web",
     "a11y-test": "node ../scripts/a11y-test.js",
     "dev": "react-scripts start & firebase emulators:start --only hosting,functions,firestore"
   },
