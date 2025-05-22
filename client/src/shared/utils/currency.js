@@ -1,251 +1,106 @@
 /**
- * Comprehensive currency utilities for receipt scanning and inventory management
+ * @desc Formats a numeric value as a currency string.
+ * @param {number} value - The numeric value to format.
+ * @param {string} [currency='USD'] - The currency code (e.g., 'USD', 'EUR').
+ * @param {string} [locale='en-US'] - The locale to use for formatting.
+ * @returns {string} - The formatted currency string. Returns empty string for null/undefined input.
  */
-
-/**
- * Basic currency formatting with locale support
- */
-export const formatCurrency = (amount, currency = 'USD', locale = 'en-US') => {
-  if (typeof amount !== 'number') {
-    amount = parseFloat(amount) || 0;
+export const formatCurrency = (value, currency = 'USD', locale = 'en-US') => {
+  if (value === null || value === undefined) {
+    return '';
   }
 
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(amount);
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currency,
+    }).format(value);
+  } catch (error) {
+    console.error('Error formatting currency:', error);
+    // Fallback to fixed 2 decimal places if Intl.NumberFormat fails
+    return typeof value === 'number' ? value.toFixed(2) : String(value);
+  }
 };
 
 /**
- * Parse currency input, cleaning and validating the value
+ * @desc Parses a currency input string into a floating-point number.
+ * Attempts to remove currency symbols, commas, and other non-numeric characters except decimal point.
+ * @param {string} input - The currency input string.
+ * @param {string} [locale='en-US'] - The locale to use for parsing (currently not used in parsing logic, but kept for consistency).
+ * @returns {number|null} - The parsed numeric value, or null if parsing fails.
  */
-export const parseCurrencyInput = (value) => {
-  // Remove all non-digit characters except decimal point
-  const cleanValue = value.replace(/[^\d.]/g, '');
+export const parseCurrencyInput = (input, locale = 'en-US') => {
+  if (!input) return null;
 
-  // Ensure only one decimal point
-  const parts = cleanValue.split('.');
-  if (parts.length > 2) {
-    return parts[0] + '.' + parts[1];
+  try {
+    // Remove currency symbols, commas, and other non-numeric characters except decimal point and sign
+    // This regex is a basic attempt and might need refinement based on specific currency formats
+    const cleanedInput = input.replace(/[^0-9.-]/g, '');
+
+    // Handle multiple decimal points (keep only the first one)
+    const parts = cleanedInput.split('.');
+    let finalInput = parts[0];
+    if (parts.length > 1) {
+        finalInput += '.' + parts.slice(1).join('');
+    }
+
+    const parsedValue = parseFloat(finalInput);
+
+    return isNaN(parsedValue) ? null : parsedValue;
+  } catch (error) {
+    console.error('Error parsing currency input:', error);
+    return null;
+  }
+};
+
+/**
+ * @desc Converts an amount from one currency to another using provided exchange rates.
+ * @param {number} amount - The amount to convert.
+ * @param {string} fromCurrency - The currency code to convert from.
+ * @param {string} toCurrency - The currency code to convert to.
+ * @param {object} exchangeRates - An object containing exchange rates relative to a base currency (e.g., { USD: 1, EUR: 0.9, GBP: 0.8 }).
+ * @returns {number|null} - The converted amount, or null if conversion is not possible (missing rates).
+ */
+export const convertCurrency = (amount, fromCurrency, toCurrency, exchangeRates) => {
+  if (!exchangeRates || !exchangeRates[fromCurrency] || !exchangeRates[toCurrency]) {
+    console.error(`Exchange rates not available for conversion from ${fromCurrency} to ${toCurrency}`);
+    return null; // Or throw an error
   }
 
-  // Limit to 2 decimal places
-  if (parts.length === 2) {
-    return parts[0] + '.' + parts[1].slice(0, 2);
+  // Assuming exchangeRates are relative to a base currency (e.g., USD)
+  // amount_in_base = amount / rate_of_fromCurrency
+  // converted_amount = amount_in_base * rate_of_toCurrency
+  const amountInBaseCurrency = amount / exchangeRates[fromCurrency];
+  const convertedAmount = amountInBaseCurrency * exchangeRates[toCurrency];
+
+  return convertedAmount;
+};
+
+/**
+ * @desc Gets the currency symbol for a given currency code and locale.
+ * @param {string} [currency='USD'] - The currency code (e.g., 'USD', 'EUR').
+ * @param {string} [locale='en-US'] - The locale to use.
+ * @returns {string} - The currency symbol. Returns '$' as a fallback.
+ */
+export const getCurrencySymbol = (currency = 'USD', locale = 'en-US') => {
+  try {
+    const formatter = new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0, // Avoid fractional digits for symbol only
+      maximumFractionDigits: 0,
+    });
+    // Format a zero value and extract the symbol by removing digits and whitespace
+    return formatter.format(0).replace(/\d/g, '').trim();
+  } catch (error) {
+    console.error('Error getting currency symbol:', error);
+    return '$'; // Fallback
   }
-
-  return cleanValue;
 };
 
-/**
- * Calculate total from array of items
- */
-export const calculateTotal = (items = []) => {
-  return items.reduce((sum, item) => {
-    const amount = parseFloat(item.amount) || 0;
-    const quantity = parseFloat(item.quantity) || 1;
-    return sum + (amount * quantity);
-  }, 0);
-};
-
-/**
- * Calculate tax amount based on base amount and tax rate
- */
-export const calculateTax = (amount, taxRate = 0) => {
-  return amount * (taxRate / 100);
-};
-
-/**
- * Round number to specified decimal places
- */
-export const roundToDecimals = (number, decimals = 2) => {
-  const factor = Math.pow(10, decimals);
-  return Math.round((number + Number.EPSILON) * factor) / factor;
-};
-
-/**
- * Format unit price with proper currency and unit
- */
-export const formatUnitPrice = (price, unit, currency = 'USD') => {
-  return `${formatCurrency(price, currency)}/${unit}`;
-};
-
-/**
- * Calculate total price with quantity
- */
-export const calculateItemTotal = (price, quantity = 1, discountPercent = 0) => {
-  const baseTotal = price * quantity;
-  const discount = baseTotal * (discountPercent / 100);
-  return roundToDecimals(baseTotal - discount);
-};
-
-/**
- * Parse price string to number
- */
-export const parsePrice = (priceString) => {
-  const cleaned = priceString.replace(/[^\d.,]/g, '');
-  return parseFloat(cleaned.replace(',', '.')) || 0;
-};
-
-/**
- * Calculate discount amount
- */
-export const calculateDiscount = (amount, discountPercent) => {
-  return roundToDecimals(amount * (discountPercent / 100));
-};
-
-/**
- * Format currency for display in grid/table
- */
-export const formatGridCurrency = (amount, currency = 'USD') => {
-  return {
-    raw: amount,
-    formatted: formatCurrency(amount, currency),
-    currency
-  };
-};
-
-/**
- * Calculate subtotal before tax
- */
-export const calculateSubtotal = (items = []) => {
-  return items.reduce((sum, item) => {
-    const price = parseFloat(item.price) || 0;
-    const quantity = parseFloat(item.quantity) || 1;
-    const discount = parseFloat(item.discountPercent) || 0;
-    return sum + calculateItemTotal(price, quantity, discount);
-  }, 0);
-};
-
-/**
- * Calculate total with tax
- */
-export const calculateTotalWithTax = (subtotal, taxRate = 0) => {
-  const tax = calculateTax(subtotal, taxRate);
-  return roundToDecimals(subtotal + tax);
-};
-
-/**
- * Format percentage for display
- */
-export const formatPercentage = (value, decimals = 2) => {
-  return `${roundToDecimals(value, decimals)}%`;
-};
-
-/**
- * Calculate price per unit
- */
-export const calculatePricePerUnit = (price, quantity, unit = '') => {
-  if (quantity <= 0) return null;
-  const unitPrice = roundToDecimals(price / quantity);
-  return {
-    amount: unitPrice,
-    formatted: formatUnitPrice(unitPrice, unit)
-  };
-};
-
-/**
- * Format large currency amounts with K/M/B
- */
-export const formatLargeCurrency = (amount, currency = 'USD') => {
-  const absAmount = Math.abs(amount);
-  if (absAmount >= 1e9) {
-    return `${formatCurrency(amount / 1e9, currency)}B`;
-  }
-  if (absAmount >= 1e6) {
-    return `${formatCurrency(amount / 1e6, currency)}M`;
-  }
-  if (absAmount >= 1e3) {
-    return `${formatCurrency(amount / 1e3, currency)}K`;
-  }
-  return formatCurrency(amount, currency);
-};
-
-/**
- * Calculate running total
- */
-export const calculateRunningTotal = (transactions = []) => {
-  let total = 0;
-  return transactions.map(transaction => {
-    total += parseFloat(transaction.amount) || 0;
-    return {
-      ...transaction,
-      runningTotal: roundToDecimals(total)
-    };
-  });
-};
-
-/**
- * Format currency difference (for profit/loss)
- */
-export const formatCurrencyDifference = (amount, currency = 'USD') => {
-  const prefix = amount >= 0 ? '+' : '';
-  return `${prefix}${formatCurrency(amount, currency)}`;
-};
-
-/**
- * Calculate weighted average price
- */
-export const calculateWeightedAverage = (items = []) => {
-  const totalValue = items.reduce((sum, item) => {
-    return sum + (item.price * item.quantity);
-  }, 0);
-  
-  const totalQuantity = items.reduce((sum, item) => {
-    return sum + item.quantity;
-  }, 0);
-
-  if (totalQuantity === 0) return 0;
-  return roundToDecimals(totalValue / totalQuantity);
-};
-
-/**
- * Format money range
- */
-export const formatMoneyRange = (min, max, currency = 'USD') => {
-  if (min === max) {
-    return formatCurrency(min, currency);
-  }
-  return `${formatCurrency(min, currency)} - ${formatCurrency(max, currency)}`;
-};
-
-/**
- * Calculate cost basis
- */
-export const calculateCostBasis = (purchases = []) => {
-  return purchases.reduce((total, purchase) => {
-    const cost = parseFloat(purchase.price) || 0;
-    const quantity = parseFloat(purchase.quantity) || 0;
-    return total + (cost * quantity);
-  }, 0);
-};
-
-/**
- * Format currency for CSV export
- */
-export const formatCurrencyForExport = (amount, currency = 'USD') => {
-  return {
-    amount: roundToDecimals(amount),
-    formatted: formatCurrency(amount, currency),
-    currency,
-    raw: amount
-  };
-};
-
-/**
- * Calculate profit margin
- */
-export const calculateProfitMargin = (revenue, cost) => {
-  if (revenue === 0) return 0;
-  return roundToDecimals((revenue - cost) / revenue * 100);
-};
-
-/**
- * Calculate markup percentage
- */
-export const calculateMarkup = (sellingPrice, cost) => {
-  if (cost === 0) return 0;
-  return roundToDecimals((sellingPrice - cost) / cost * 100);
+export default {
+  formatCurrency,
+  parseCurrencyInput,
+  convertCurrency,
+  getCurrencySymbol,
 };

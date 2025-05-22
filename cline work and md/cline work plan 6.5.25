@@ -1,0 +1,353 @@
+EDI (Cline) Tasks
+Phase 1: Critical Security Implementation
+
+Security Middleware Implementation
+
+Create /server/src/middleware/security/security.js with:
+
+Rate limiting configuration
+CORS setup
+Content Security Policy settings
+Security headers middleware
+
+
+Create /server/src/utils/sanitize/inputSanitizer.js for:
+
+Input sanitization utilities
+XSS prevention
+Data validation helpers
+
+
+Update app.js to use new security middleware
+
+
+Firebase Security Rules Enhancement
+
+Update Firestore security rules (firestore.rules):
+
+Complete rules for all collections identified in technical-debt.md
+Enhance validation functions (isValidReceipt, isValidInventory, etc.)
+Fix any ownership validation issues
+
+
+Update Storage security rules (storage.rules):
+
+Fix inventory image path issue identified in security-vulnerabilities.md
+Implement cross-validation with Firestore for ownership
+Set appropriate file size and type restrictions
+
+
+
+
+Authentication Enhancement
+
+Implement token refresh mechanism in client API service
+Add authentication error handling improvements
+Implement session timeout handling
+
+
+
+Phase 2: Backend API Implementation
+
+Inventory API Completion
+
+Implement missing inventory endpoints (highest priority from technical-debt.md):
+
+GET /api/inventory with pagination and filtering
+GET /api/inventory/:id
+POST /api/inventory
+PUT /api/inventory/:id
+DELETE /api/inventory/:id
+PUT /api/inventory/:id/stock
+POST /api/inventory/movements
+GET /api/inventory/low-stock
+
+
+Implement server-side validation
+Add comprehensive error handling
+
+
+Export API Enhancement
+
+Complete export API endpoints:
+
+POST /api/exports
+GET /api/exports/:id
+
+
+Implement export to multiple formats (CSV, PDF, JSON)
+Add Hebrew character encoding support
+Implement storage of export files in Firebase Storage
+
+
+Analytics API Optimization
+
+Enhance analytics endpoints with server-side aggregation:
+
+GET /api/analytics/spending
+GET /api/analytics/inventory
+GET /api/analytics/budget
+
+
+Implement caching for expensive calculations
+Add support for date range filtering
+Optimize Firestore queries for performance
+
+
+
+Phase 3: Performance & UI Optimization
+
+Server-Side Pagination & Filtering
+
+Implement cursor-based pagination (as per performance-optimization.md):
+
+Update Firestore queries in all list endpoints
+Add standardized query parameters (limit, startAfter, filters)
+Return nextPageToken for client pagination
+
+
+
+
+Client-Side Caching
+
+Enhance client/src/shared/utils/cache.js
+Implement TTL-based caching for:
+
+Categories and settings data
+User preferences
+Static analytics data
+
+
+Add cache invalidation on data updates
+
+
+UI Component Consolidation
+
+Fix duplicate Button components issue (from ui-ux-consistency.md):
+
+Create unified Button component with variants
+Update all imports to use the consolidated component
+
+
+Standardize on a single charting library (recharts):
+
+Update all chart components to use recharts
+Ensure consistent styling and behavior
+
+
+
+
+React Component Optimization
+
+Apply React.memo to list and chart components
+Implement useCallback for event handlers in hooks
+Fix ModernSpendingChart component performance issues
+Apply virtualization for long lists
+
+
+
+Phase 4: Internationalization & RTL Support
+
+I18n Configuration Setup
+
+Set up i18next with language detection
+Create language context and switcher
+Implement translation loading and fallbacks
+Add language persistence in local storage
+
+
+Hebrew Translation Creation
+
+Create comprehensive Hebrew translation files:
+
+/client/src/locales/he/common.json
+/client/src/locales/he/dashboard.json
+/client/src/locales/he/auth.json
+/client/src/locales/he/receipts.json
+/client/src/locales/he/analytics.json
+/client/src/locales/he/inventory.json
+/client/src/locales/he/settings.json
+
+
+Ensure proper Hebrew typography and formatting
+
+
+RTL Layout Implementation
+
+Configure Tailwind for RTL support
+Implement RTL-aware component layouts
+Update chart components for RTL display
+Test and fix RTL layout issues in forms and tables
+
+
+Language Switcher Component
+
+Create /client/src/components/LanguageSwitcher.jsx:
+
+Toggle between English and Hebrew
+Update HTML dir attribute appropriately
+Apply language-specific styling
+
+
+Integrate into application navigation
+
+
+
+Phase 5: OCR & Document Processing Enhancement
+
+Dual OCR Engine Implementation
+
+Create OCR adapter architecture:
+
+Primary adapter for Google Cloud Vision
+Fallback adapter for Tesseract.js
+Configuration-based selection mechanism
+
+
+Enhance metadata extraction:
+
+Improve receipt date detection
+Better merchant name recognition
+More accurate total amount extraction
+
+
+Add support for Hebrew document processing
+
+
+Receipt Correction Improvement
+
+Enhance receipt correction endpoint:
+
+Implement diff tracking between original and corrected data
+Add audit trail for corrections
+Improve the correction UI feedback
+
+
+
+
+Receipt Item Extraction
+
+Implement line item extraction from receipts:
+
+Pattern recognition for item lines
+Quantity and price extraction
+Item categorization
+
+
+
+
+
+Phase 6: Error Handling & Offline Support
+
+Standardized Error Handling
+
+Enhance client error handling utility:
+
+Implement error categorization
+Add retry mechanism for transient errors
+Improve error display components
+
+
+Update server error handling:
+
+Enhance AppError with more error types
+Standardize error response format
+Improve logging for easier debugging
+
+
+
+
+Offline Support Implementation
+
+Add service worker configuration:
+
+Cache critical assets and API responses
+Implement offline queue for operations
+Add online/offline status indicator
+
+
+Create sync mechanism for offline operations:
+
+Queue pending changes while offline
+Automatically sync when connection restored
+Handle conflict resolution
+
+
+
+
+Error Monitoring Integration
+
+Implement Sentry integration:
+
+Configure error boundaries
+Add context information to errors
+Set up release tracking
+
+
+Create custom error reporting dashboard
+
+
+
+Phase 7: Documentation & Testing
+
+Documentation Updates
+
+Update critical architecture documentation:
+
+docs/developer/architecture/architecture-application-structure.md
+docs/developer/architecture/architecture-api-integration-map.md
+docs/developer/architecture/architecture-database-schema-analysis.md
+
+
+Update API specification:
+
+docs/developer/specifications/specification-api.md
+Add swagger documentation for new endpoints
+
+
+Update technical debt and maintenance docs:
+
+docs/maintenance/maintenance-technical-debt.md
+docs/maintenance/maintenance-changelog.md
+
+
+Update user guide for new features:
+
+docs/user/user-guide.md
+
+
+
+
+Testing Implementation
+
+Fix Jest configuration for JSX/TSX testing
+Create security rules test suite:
+
+Test ownership validation
+Test data validation
+Test path restrictions
+
+
+Implement API integration tests:
+
+Test new inventory endpoints
+Test document processing
+Test analytics and exports
+
+
+
+
+Automated Verification Script
+
+Create verification script to check:
+
+All required files exist
+File content matches requirements
+Imports and dependencies are correct
+RTL support is properly implemented
+
+
+
+
+
+This comprehensive work plan addresses all aspects of the Receipt Scanner application that need improvement, fixes, or additions based on the project documentation and our conversation. It clearly delineates responsibilities between human and EDI tasks while ensuring all critical areas are covered.RetryClaude can make mistakes. Please double-check responses.

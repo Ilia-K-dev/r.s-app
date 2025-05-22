@@ -1,0 +1,69 @@
+{
+  "firestore": {
+    "rules": {
+      "test_suite": [
+        {
+          "description": "Unauthenticated users cannot read inventory items",
+          "request": {
+            "auth": null,
+            "path": "/databases/(default)/documents/inventory/item1",
+            "method": "get"
+          },
+          "expectation": "denied"
+        },
+        {
+          "description": "Users can read their own inventory items",
+          "request": {
+            "auth": { "uid": "user1" },
+            "path": "/databases/(default)/documents/inventory/item1",
+            "method": "get"
+          },
+          "resource": {
+            "data": { "userId": "user1", "name": "Test Item", "quantity": 10 }
+          },
+          "expectation": "allowed"
+        },
+        {
+          "description": "Users cannot read other users' inventory items",
+          "request": {
+            "auth": { "uid": "user2" },
+            "path": "/databases/(default)/documents/inventory/item1",
+            "method": "get"
+          },
+          "resource": {
+            "data": { "userId": "user1", "name": "Test Item", "quantity": 10 }
+          },
+          "expectation": "denied"
+        },
+        {
+          "description": "Users can create inventory items with their own userId",
+          "request": {
+            "auth": { "uid": "user1" },
+            "path": "/databases/(default)/documents/inventory/item2",
+            "method": "create",
+            "data": {
+              "userId": "user1",
+              "name": "New Item",
+              "quantity": 5
+            }
+          },
+          "expectation": "allowed"
+        },
+        {
+          "description": "Users cannot create inventory items with negative quantity",
+          "request": {
+            "auth": { "uid": "user1" },
+            "path": "/databases/(default)/documents/inventory/item3",
+            "method": "create",
+            "data": {
+              "userId": "user1",
+              "name": "Invalid Item",
+              "quantity": -5
+            }
+          },
+          "expectation": "denied"
+        }
+      ]
+    }
+  }
+}

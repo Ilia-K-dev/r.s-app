@@ -1,5 +1,7 @@
-import { useState } from 'react';//correct
-import { processDocument } from '../services/documentProcessingService';//correct
+import { useState } from 'react';
+
+import { processDocument } from '../services/documentProcessingService'; //correct
+import { validateFile } from '../../../shared/utils/fileHelpers'; // Updated import
 
 export const useOCR = () => {
   const [loading, setLoading] = useState(false);
@@ -23,6 +25,6 @@ export const useOCR = () => {
   return {
     loading,
     error,
-    processReceipt
+    processReceipt,
   };
 };

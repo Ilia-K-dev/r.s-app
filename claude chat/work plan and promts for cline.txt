@@ -1,0 +1,285 @@
+Detailed EDI Work Plan for Receipt Scanner Application Deployment
+This detailed work plan is structured as a series of sequential prompts for the EDI assistant (Cline) to implement the Receipt Scanner application deployment. Each prompt contains comprehensive instructions, code examples, and validation steps.
+Prompt 1: Environment Configuration Setup
+Using the Firebase credentials and service account JSON file I've obtained, I need you to help me set up the environment configuration for the Receipt Scanner application. I already have:
+
+1. The Firebase project configuration (apiKey, authDomain, projectId, etc.)
+2. The Firebase Admin SDK service account JSON file
+3. The SendGrid API key for email notifications
+4. The Google Cloud Vision API is enabled for my project
+
+Please help me create:
+
+1. A `.env.production` file for the client with the proper structure using my Firebase credentials
+2. A `.env.production` file for the server that securely references the service account JSON and includes the SendGrid API key
+3. Update the Firebase configuration file in the codebase to ensure it's properly loading these environment variables
+4. Add proper validation to environment variable loading to catch missing or invalid values early
+
+Please show me the correct file structure and content (without actual key values) and explain where each file should be placed.
+Prompt 2: Security Rules Deployment
+Now I need to deploy the updated security rules for Firestore and Cloud Storage that were developed during our cleanup session. 
+
+The updated rules are in:
+- `firestore.rules` 
+- `storage.rules`
+
+Please:
+
+1. Analyze these rules files and confirm they include all required security functionality
+2. Show me the exact Firebase CLI commands needed to deploy these rules to my production project
+3. Create a testing script to verify the rules are working correctly, checking:
+   - User-specific data protection
+   - Proper validation of writes
+   - Protection against unauthorized access
+   - Immutability of audit records (stockMovements)
+4. Explain how to roll back the rules if any issues are detected
+
+I'll need detailed step-by-step instructions I can follow, including how to monitor the deployment for success.
+Prompt 3: Firestore Indexes and Initial Data Setup
+Now I need to set up the Firestore indexes and seed initial categories data. 
+
+Please:
+
+1. Create a `firestore.indexes.json` file with all the necessary indexes for:
+   - Receipt queries (by date, category, merchant, filtering)
+   - Inventory queries (stock levels, alerts)
+   - Analytics queries (spending by period, category)
+
+2. Create a script to seed the default categories for new users:
+   - Use the DEFAULT_CATEGORIES array from `client/src/features/categories/services/categories.js`
+   - The script should accept a user ID as an argument
+   - Include proper error handling and logging
+
+3. Provide commands to deploy the indexes and run the seeding script
+
+4. Create a simple test script to verify the indexes are working correctly by running some typical queries
+
+I already have the Firebase Admin SDK service account JSON file that the scripts will need to use for authentication.
+Prompt 4: Client-Side Build Configuration
+I need to set up the build configuration for the client-side application. 
+
+Please:
+
+1. Analyze the client-side code structure to:
+   - Verify React Router configuration is correct
+   - Confirm all necessary components are exported/imported correctly
+   - Check that environment variables are properly referenced
+
+2. Create a production-optimized build configuration:
+   - Update `client/package.json` with appropriate build scripts
+   - Configure code splitting for optimal performance
+   - Set up proper asset optimization (images, CSS)
+
+3. Create a build script that:
+   - Validates environment variables
+   - Cleans previous builds
+   - Runs the production build process
+   - Verifies the build output
+   - Prepares for deployment
+
+4. Show me how to test the production build locally before deployment
+
+The current structure is feature-based as described in `project-structure.md`, but there were some routing consistency issues identified in `routing-consistency-report.md` that should be addressed first.
+Prompt 5: Server API Implementation
+I need to implement the server-side API endpoints required by the refactored client services, particularly for:
+
+1. Inventory Management API:
+   - The client's `inventoryService.js` was refactored to use API calls instead of direct Firestore access
+   - We need to implement the corresponding backend endpoints
+
+2. Document Processing API:
+   - The client's `documentProcessingService.js` was refactored to use API calls
+   - The server needs endpoints for document upload, OCR processing, and saving
+
+Please:
+
+1. Create the necessary Express routes, controllers, and services for:
+   - `/api/inventory` (CRUD operations)
+   - `/api/inventory/:id/stock` (stock updates)
+   - `/api/inventory/movements` (stock movement tracking)
+   - `/api/documents/upload` (document upload and processing)
+
+2. Implement proper authentication middleware using Firebase Admin SDK
+
+3. Use the Google Cloud Vision API for OCR processing (service account is already configured)
+
+4. Implement error handling as defined in `error-handling-standards.md`
+
+5. Add proper logging for monitoring and debugging
+
+Use the Firebase Admin SDK service account JSON file I've provided for Firestore access.
+Prompt 6: Firebase Cloud Functions Setup
+I now need to set up Firebase Cloud Functions for the server-side components. 
+
+Please:
+
+1. Create the necessary Firebase Cloud Functions configuration:
+   - Set up the `functions/` directory structure
+   - Configure `package.json` with required dependencies
+   - Set up TypeScript configuration if needed
+
+2. Convert the Express API routes to Firebase Cloud Functions:
+   - Create a main HTTP function for API endpoints
+   - Create background functions for processing-intensive tasks
+   - Set up proper region configuration
+
+3. Configure environment variables within the functions:
+   - Set up the service account access
+   - Configure SendGrid API key
+   - Set other necessary variables
+
+4. Create deployment scripts for the functions:
+   - Add testing steps
+   - Include validation
+   - Add proper staging/production deployment targets
+
+5. Implement monitoring and error reporting within the functions
+
+I've already enabled the Blaze plan for Firebase which is required for Cloud Functions.
+Prompt 7: Firebase Hosting and Deployment
+Now I need to set up Firebase Hosting and create comprehensive deployment scripts. 
+
+Please:
+
+1. Configure Firebase Hosting for the client application:
+   - Create/update `firebase.json` with hosting configuration
+   - Set up caching rules for different file types
+   - Configure redirects for SPA routing
+   - Set up headers for security
+
+2. Create a comprehensive deployment script that:
+   - Builds the client application
+   - Validates the build
+   - Deploys to Firebase Hosting
+   - Deploys Cloud Functions
+   - Validates the deployment
+
+3. Add CI/CD configuration for GitHub Actions:
+   - Create `.github/workflows/deploy.yml` for automated deployment
+   - Set up testing before deployment
+   - Configure separate workflows for staging and production
+   - Add proper secret management for CI/CD
+
+4. Show me how to verify the deployment is successful and how to quickly roll back if issues are detected
+
+I would like to eventually set up a custom domain, so please include guidance on how to configure that as well.
+Prompt 8: Analytics and Monitoring Setup
+Now I need to set up analytics and monitoring for the application. 
+
+Please:
+
+1. Implement Sentry for error tracking:
+   - Add Sentry SDK to client and server
+   - Configure error boundaries in React
+   - Set up proper source maps for production builds
+   - Configure alert thresholds and notifications
+
+2. Set up Firebase Performance Monitoring:
+   - Add performance monitoring SDK to client
+   - Configure custom traces for critical operations
+   - Set up monitoring for API endpoints and functions
+
+3. Implement Firebase Analytics:
+   - Configure event tracking for key user actions
+   - Set up conversion tracking
+   - Create custom user properties for analysis
+
+4. Set up logging and alerting:
+   - Configure structured logging
+   - Set up log retention policies
+   - Create alerts for critical errors
+   - Configure uptime monitoring
+
+5. Create a dashboard for monitoring key metrics:
+   - Active users
+   - Error rates
+   - Performance metrics
+   - Processing times for OCR
+Prompt 9: Testing and Verification
+Now I need a comprehensive testing and verification plan to ensure the application is working correctly. 
+
+Please:
+
+1. Create end-to-end testing scripts to verify:
+   - User authentication flow
+   - Receipt upload and processing
+   - Inventory management
+   - Analytics and reporting
+   - Settings and preferences
+
+2. Implement load testing for critical endpoints:
+   - Document upload and processing
+   - Large inventory operations
+   - Analytics generation
+   - User authentication
+
+3. Create security testing procedures:
+   - Authentication bypass attempts
+   - Access control verification
+   - File upload security checks
+   - API input validation testing
+
+4. Set up automated testing with Jest and React Testing Library:
+   - Unit tests for key components
+   - Integration tests for critical flows
+   - API endpoint tests
+   - Mock service worker configurations
+
+5. Create a pre-launch checklist covering all critical functionality
+
+The testing should focus on the refactored areas, particularly the client-to-API interactions that replaced direct Firebase access.
+Prompt 10: User Documentation and Feedback Collection
+Finally, I need to set up user documentation and feedback collection mechanisms. 
+
+Please:
+
+1. Create user documentation covering:
+   - Getting started guide
+   - Receipt scanning best practices
+   - Inventory management workflow
+   - Reports and analytics usage
+   - Account settings and preferences
+   - Troubleshooting common issues
+
+2. Implement a feedback collection system:
+   - Create a feedback form component
+   - Set up storage for feedback submissions
+   - Create a feedback review dashboard for admins
+
+3. Configure a simple user onboarding process:
+   - Welcome screens
+   - Feature introduction
+   - Initial category setup
+   - Sample receipt processing
+
+4. Set up a system to collect usage analytics:
+   - Feature usage tracking
+   - Drop-off points
+   - Error encounters
+   - Performance issues
+
+5. Create a simple A/B testing framework for future feature improvements
+
+This should be integrated with the analytics system from the previous prompt to gain insights into user behavior and application performance.
+Implementation Notes for EDI
+
+Access Requirements: The EDI will need access to:
+
+The Firebase project configuration (apiKey, authDomain, etc.)
+The Firebase Admin SDK service account JSON file (for server-side operations)
+The SendGrid API key (for email notifications)
+The codebase structure and files
+
+
+Execution Order: The prompts should be executed in sequence as each builds upon the previous steps. However, steps 4 (Client Build) and 5 (Server API) could be worked on in parallel if needed.
+Security Considerations:
+
+Never commit actual API keys, service account files, or other credentials to version control
+Use environment variables and secret management for all sensitive values
+Implement proper authentication and authorization at all levels
+
+
+Testing Throughout: Each component should be tested before moving to the next step to ensure a solid foundation
+Documentation: The EDI should document all configuration decisions, deployment processes, and potential issues for future reference
+
+This comprehensive plan covers all aspects of deploying the Receipt Scanner application and can be adjusted as needed based on progress and any challenges encountered during implementation.

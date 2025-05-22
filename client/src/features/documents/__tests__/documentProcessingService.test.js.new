@@ -1,0 +1,296 @@
+// client/src/features/documents/__tests__/documentProcessingService.test.js.new
+
+import axios from 'axios'; // Import axios for API fallback tests
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { collection, addDoc, getDoc, doc } from 'firebase/firestore';
+import { auth } from '../../../core/config/firebase';
+import { documentProcessingService } from '../services/documentProcessingService';
+import { handleFirebaseError } from '../../../utils/errorHandler';
+import { isFeatureEnabled } from '../../../core/config/featureFlags';
+import * as ocrProcessor from '../utils/ocrProcessor'; // Import the actual module
+import * as documentClassifier from '../utils/documentClassifier'; // Import the actual module
+
+
+// Mock Firebase Storage functions
+jest.mock('firebase/storage', () => ({
+  ref: jest.fn(),
+  uploadBytes: jest.fn(),
+  getDownloadURL: jest.fn(),
+  deleteObject: jest.fn(),
+}));
+
+// Mock Firebase Firestore functions
+jest.mock('firebase/firestore', () => ({
+  collection: jest.fn(),
+  addDoc: jest.fn(),
+  getDoc: jest.fn(),
+  doc: jest.fn(),
+}));
+
+// Mock Firebase Auth current user
+jest.mock('../../../core/config/firebase', () => ({
+  db: {},
+  storage: {},
+  auth: {
+    currentUser: { uid: 'test-user-id' },
+  },
+}));
+
+// Mock the error handler
+jest.mock('../../../utils/errorHandler', () => ({
+  handleFirebaseError: jest.fn(error => { throw error; }),
+}));
+
+// Mock feature toggle
+jest.mock('../../../core/config/featureFlags', () => ({
+  isFeatureEnabled: jest.fn(),
+}));
+
+// Mock internal utilities
+jest.mock('../utils/ocrProcessor');
+jest.mock('../utils/documentClassifier');
+jest.mock('../utils/imageProcessing', () => ({ processImage: jest.fn() })); // Mock processImage
+
+
+// Mock axios for API fallback tests
+jest.mock('axios');
+
+
+describe('Document Processing Service Unit Tests', () => {
+  const mockUserId = 'test-user-id';
+  const mockFile = new File(['dummy content'], 'test.pdf', { type: 'application/pdf' });
+  const mockDocumentType = 'receipt';
+  const mockDocumentId = 'test-doc-id';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    isFeatureEnabled.mockReturnValue(true); // Default to Firebase enabled
+    auth.currentUser = { uid: mockUserId };
+    // Reset axios mock before each test
+    axios.post.mockReset();
+    axios.get.mockReset();
+  });
+
+  // --- uploadDocument Tests ---
+  describe('uploadDocument', () => {
+    it('should upload to Storage and add metadata to Firestore when feature is enabled', async () => {
+      const mockStorageRef = {};
+      const mockUploadTaskSnapshot = { ref: {} };
+      const mockDownloadURL = 'http://example.com/document.pdf';
+      const mockNewDocRef = { id: mockDocumentId };
+      const mockCreatedDocSnapshot = { id: mockDocumentId, data: () => ({ userId: mockUserId, fileName: mockFile.name, imageUrl: mockDownloadURL, documentType: mockDocumentType, status: 'uploaded' }) };
+
+
+      ref.mockReturnValue(mockStorageRef);
+      uploadBytes.mockResolvedValue(mockUploadTaskSnapshot);
+      getDownloadURL.mockResolvedValue(mockDownloadURL);
+      collection.mockReturnValue({});
+      addDoc.mockResolvedValue(mockNewDocRef);
+      getDoc.mockResolvedValue(mockCreatedDocSnapshot); // Mock getDoc to return created doc
+
+
+      const result = await documentProcessingService.uploadDocument(mockFile, mockDocumentType);
+
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(ref).toHaveBeenCalledWith(expect.any(Object), `documents/${mockUserId}/${mockFile.name}`);
+      expect(uploadBytes).toHaveBeenCalledWith(mockStorageRef, mockFile);
+      expect(getDownloadURL).toHaveBeenCalledWith(mockUploadTaskSnapshot.ref);
+      expect(collection).toHaveBeenCalledWith(expect.any(Object), 'documents');
+      expect(addDoc).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({
+        userId: mockUserId,
+        fileName: mockFile.name,
+        imageUrl: mockDownloadURL,
+        documentType: mockDocumentType,
+        status: 'uploaded',
+        uploadDate: expect.any(Date),
+      }));
+      expect(getDoc).toHaveBeenCalledWith(mockNewDocRef); // Verify getDoc is called to return the created doc
+      expect(result).toEqual({
+        id: mockDocumentId,
+        userId: mockUserId,
+        fileName: mockFile.name,
+        imageUrl: mockDownloadURL,
+        documentType: mockDocumentType,
+        status: 'uploaded',
+        uploadDate: expect.any(Date),
+      });
+      expect(handleFirebaseError).not.toHaveBeenCalled();
+      expect(axios.post).not.toHaveBeenCalled(); // Ensure API is not called
+    });
+
+    it('should fallback to API when Firebase upload fails and feature is enabled', async () => {
+      const mockError = new Error('Storage error');
+      ref.mockRejectedValue(mockError); // Simulate Storage error
+      axios.post.mockResolvedValue({ data: { imageUrl: 'api-url', id: 'api-id' } }); // Mock API success
+
+      const result = await documentProcessingService.uploadDocument(mockFile, mockDocumentType);
+
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(ref).toHaveBeenCalledWith(expect.any(Object), `documents/${mockUserId}/${mockFile.name}`);
+      expect(uploadBytes).not.toHaveBeenCalled(); // Ensure subsequent Firebase calls are not made
+      expect(getDownloadURL).not.toHaveBeenCalled();
+      expect(collection).not.toHaveBeenCalled();
+      expect(addDoc).not.toHaveBeenCalled();
+      expect(getDoc).not.toHaveBeenCalled();
+      expect(handleFirebaseError).toHaveBeenCalledWith(mockError, 'Upload Document Firebase');
+      expect(axios.post).toHaveBeenCalledWith(`${API_URL}/api/documents/upload`, expect.any(FormData), {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      expect(result).toEqual({ imageUrl: 'api-url', id: 'api-id' });
+    });
+
+    it('should call API directly when feature is disabled', async () => {
+      isFeatureEnabled.mockReturnValue(false);
+      axios.post.mockResolvedValue({ data: { imageUrl: 'api-url', id: 'api-id' } });
+
+      const result = await documentProcessingService.uploadDocument(mockFile, mockDocumentType);
+
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(ref).not.toHaveBeenCalled(); // Ensure Firebase is not called
+      expect(uploadBytes).not.toHaveBeenCalled();
+      expect(getDownloadURL).not.toHaveBeenCalled();
+      expect(collection).not.toHaveBeenCalled();
+      expect(addDoc).not.toHaveBeenCalled();
+      expect(getDoc).not.toHaveBeenCalled();
+      expect(handleFirebaseError).not.toHaveBeenCalled();
+      expect(axios.post).toHaveBeenCalledWith(`${API_URL}/api/documents/upload`, expect.any(FormData), {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      expect(result).toEqual({ imageUrl: 'api-url', id: 'api-id' });
+    });
+
+    it('should call handleFirebaseError if API fallback fails when feature is enabled', async () => {
+      const mockFirebaseError = new Error('Storage error');
+      const mockApiError = new Error('API upload error');
+      ref.mockRejectedValue(mockFirebaseError);
+      axios.post.mockRejectedValue(mockApiError);
+      handleFirebaseError.mockImplementation(error => { throw error; }); // Re-throw in test
+
+      await expect(documentProcessingService.uploadDocument(mockFile, mockDocumentType)).rejects.toThrow('API upload error');
+
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(ref).toHaveBeenCalled();
+      expect(axios.post).toHaveBeenCalledWith(`${API_URL}/api/documents/upload`, expect.any(FormData), {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      expect(handleFirebaseError).toHaveBeenCalledWith(mockApiError, 'Upload Document API'); // Ensure API error is handled
+    });
+
+    it('should call handleFirebaseError if API call fails when feature is disabled', async () => {
+      isFeatureEnabled.mockReturnValue(false);
+      const mockApiError = new Error('API upload error');
+      axios.post.mockRejectedValue(mockApiError);
+      handleFirebaseError.mockImplementation(error => { throw error; }); // Re-throw in test
+
+      await expect(documentProcessingService.uploadDocument(mockFile, mockDocumentType)).rejects.toThrow('API upload error');
+
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(axios.post).toHaveBeenCalledWith(`${API_URL}/api/documents/upload`, expect.any(FormData), {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      expect(handleFirebaseError).toHaveBeenCalledWith(mockApiError, 'Upload Document API');
+    });
+  });
+
+  // --- processDocument Tests (Placeholders) ---
+  describe('processDocument (Placeholder)', () => {
+    it('should return dummy data when feature is enabled (placeholder)', async () => {
+      const result = await documentProcessingService.processDocument(mockDocumentId);
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(result).toEqual({ documentId: mockDocumentId, processed: true, extractedText: 'Dummy client OCR text', classification: 'generic' });
+      expect(axios.get).not.toHaveBeenCalled(); // Ensure API is not called
+    });
+
+    it('should call API when feature is disabled (placeholder)', async () => {
+      isFeatureEnabled.mockReturnValue(false);
+      axios.get.mockResolvedValue({ data: { documentId: mockDocumentId, processed: true } }); // Mock API success
+
+      const result = await documentProcessingService.processDocument(mockDocumentId);
+
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(axios.get).toHaveBeenCalledWith(`${API_URL}/api/documents/process/${mockDocumentId}`);
+      expect(result).toEqual({ documentId: mockDocumentId, processed: true });
+    });
+
+    it('should call handleFirebaseError if API call fails when feature is disabled (placeholder)', async () => {
+      isFeatureEnabled.mockReturnValue(false);
+      const mockApiError = new Error('API process error');
+      axios.get.mockRejectedValue(mockApiError);
+      handleFirebaseError.mockImplementation(error => { throw error; }); // Re-throw in test
+
+      await expect(documentProcessingService.processDocument(mockDocumentId)).rejects.toThrow('API process error');
+
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(axios.get).toHaveBeenCalledWith(`${API_URL}/api/documents/process/${mockDocumentId}`);
+      expect(handleFirebaseError).toHaveBeenCalledWith(mockApiError, 'Error getting document processing'); // Assuming error handler context
+    });
+  });
+
+  // --- getDocumentText Tests (Placeholders) ---
+  describe('getDocumentText (Placeholder)', () => {
+    it('should return dummy data when feature is enabled (placeholder)', async () => {
+      const result = await documentProcessingService.getDocumentText(mockDocumentId);
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(result).toEqual({ text: 'Dummy client OCR text' });
+      expect(axios.get).not.toHaveBeenCalled(); // Ensure API is not called
+    });
+
+    it('should call API when feature is disabled (placeholder)', async () => {
+      isFeatureEnabled.mockReturnValue(false);
+      axios.get.mockResolvedValue({ data: { text: 'API extracted text' } }); // Mock API success
+
+      const result = await documentProcessingService.getDocumentText(mockDocumentId);
+
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(axios.get).toHaveBeenCalledWith(`${API_URL}/api/documents/${mockDocumentId}/text`);
+      expect(result).toEqual({ text: 'API extracted text' });
+    });
+
+    it('should call handleFirebaseError if API call fails when feature is disabled (placeholder)', async () => {
+      isFeatureEnabled.mockReturnValue(false);
+      const mockApiError = new Error('API text error');
+      axios.get.mockRejectedValue(mockApiError);
+      handleFirebaseError.mockImplementation(error => { throw error; }); // Re-throw in test
+
+      await expect(documentProcessingService.getDocumentText(mockDocumentId)).rejects.toThrow('API text error');
+
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(axios.get).toHaveBeenCalledWith(`${API_URL}/api/documents/${mockDocumentId}/text`);
+      expect(handleFirebaseError).toHaveBeenCalledWith(mockApiError, 'Error getting document text'); // Assuming error handler context
+    });
+  });
+
+  // --- classifyDocument Tests (Placeholders) ---
+  describe('classifyDocument (Placeholder)', () => {
+    it('should return dummy data when feature is enabled (placeholder)', async () => {
+      const result = await documentProcessingService.classifyDocument(mockDocumentId);
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(result).toEqual({ classification: 'generic', confidence: 0.5 });
+      expect(axios.get).not.toHaveBeenCalled(); // Ensure API is not called
+    });
+
+    it('should call API when feature is disabled (placeholder)', async () => {
+      isFeatureEnabled.mockReturnValue(false);
+      axios.get.mockResolvedValue({ data: { classification: 'receipt', confidence: 0.9 } }); // Mock API success
+
+      const result = await documentProcessingService.classifyDocument(mockDocumentId);
+
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(axios.get).toHaveBeenCalledWith(`${API_URL}/api/documents/${mockDocumentId}/classify`);
+      expect(result).toEqual({ classification: 'receipt', confidence: 0.9 });
+    });
+
+    it('should call handleFirebaseError if API call fails when feature is disabled (placeholder)', async () => {
+      isFeatureEnabled.mockReturnValue(false);
+      const mockApiError = new Error('API classify error');
+      axios.get.mockRejectedValue(mockApiError);
+      handleFirebaseError.mockImplementation(error => { throw error; }); // Re-throw in test
+
+      await expect(documentProcessingService.classifyDocument(mockDocumentId)).rejects.toThrow('API classify error');
+
+      expect(isFeatureEnabled).toHaveBeenCalledWith('firebaseDirectIntegration');
+      expect(axios.get).toHaveBeenCalledWith(`${API_URL}/api/documents/${mockDocumentId}/classify`);
+      expect(handleFirebaseError).toHaveBeenCalledWith(mockApiError, 'Error getting document classification'); // Assuming error handler context
+    });
+  });
+});

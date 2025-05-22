@@ -1,11 +1,26 @@
-import React from 'react';//correct
+import React from 'react';
 
-export const Input = ({ 
-  icon: Icon, 
-  error, 
-  label, 
-  className = '', 
-  ...props 
+/**
+ * @typedef {object} InputProps
+ * @property {React.ElementType} [icon] - An optional icon component to display inside the input.
+ * @property {string} [error] - An optional error message to display below the input.
+ * @property {string} [label] - An optional label for the input field.
+ * @property {string} [className=''] - Additional CSS classes to apply to the input element.
+ * @property {object} [props] - Additional standard HTML input attributes (e.g., type, name, value, onChange, placeholder, disabled, etc.).
+ */
+
+/**
+ * @desc A reusable Input UI component for form input fields.
+ * Supports optional icon, label, error display, and custom styling.
+ * @param {InputProps} props - The component props.
+ * @returns {JSX.Element} - The rendered Input component.
+ */
+export const Input = ({
+  icon: Icon,
+  error,
+  label,
+  className = '',
+  ...props
 }) => {
   return (
     <div className="w-full">
@@ -22,7 +37,7 @@ export const Input = ({
         )}
         <input
           className={`
-            input
+            w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-300 outline-none transition-all duration-200
             ${Icon ? 'pl-10' : ''}
             ${error ? 'border-red-500 focus:ring-red-500' : ''}
             ${className}
@@ -36,3 +51,5 @@ export const Input = ({
     </div>
   );
 };
+
+export default Input;

@@ -1,0 +1,3009 @@
+ Complete Receipt Scanner Modernization Work Plan
+For Cline (EDI AI) - Comprehensive Code Tasks
+Pre-Work Setup
+markdownCreate Master Project Tracker: `/analysis/modernization-tracker.md`
+
+# Receipt Scanner Modernization Master Tracker
+
+## Overall Progress Dashboard
+- [ ] Security Fixes (0%)
+- [ ] Architecture Refactoring (0%)
+- [ ] UI/UX Modernization (0%)
+- [ ] Hebrew Internationalization (0%)
+- [ ] Performance Optimization (0%)
+- [ ] Dual OCR Implementation (0%)
+
+## Critical Dependencies
+- [ ] All npm installs completed
+- [ ] Firebase deployments successful
+- [ ] Translation files created
+- [ ] RTL support configured
+Phase 1: Foundation Stabilization (Weeks 1-2)
+Task 1.1: Security Rule Updates
+javascriptCreate: /analysis/security-fixes-checklist.md
+
+## Security Fixes Checklist
+- [ ] Update storage.rules for inventory images
+- [ ] Update Firestore security rules
+- [ ] Remove hardcoded API keys
+- [ ] Fix environment variable loading
+- [ ] Create security audit report
+
+// File: storage.rules
+// SEARCH (lines 35-40):
+match /inventory/{userId}/{productId}/images/{imageId} {
+  allow write: if isOwner(userId);
+}
+
+// REPLACE WITH:
+match /inventory/{userId}/{productId}/images/{imageId} {
+  allow write: if request.auth != null 
+    && request.auth.uid == userId
+    && exists(/databases/$(database)/documents/inventory/$(inventoryId))
+    && get(/databases/$(database)/documents/inventory/$(inventoryId)).data.userId == userId
+    && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+    && request.resource.contentType.matches('image/.*');
+}
+
+// **PAUSE**: Ask human to run "firebase deploy --only storage"
+Task 1.2: Environment Configuration Cleanup
+javascript// Step 1: Audit all hardcoded values
+Create: /analysis/hardcoded-values-audit.md
+const hardcodedAudit = {
+  client: [
+    'firebase.js: apiKey, authDomain, projectId',
+    'api.config.js: baseURL default value',
+    'constants.js: API endpoints'
+  ],
+  server: [
+    'DocumentProcessingService.js: thresholds',
+    'firebase.js: serviceAccount path'
+  ]
+};
+
+// Step 2: Create .env templates
+Create: /client/.env.template
+Create: /server/.env.template
+
+// Step 3: Replace hardcoded values
+// File: client/src/core/config/firebase.js
+// SEARCH:
+const firebaseConfig = {
+  apiKey: "AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ123456",
+  authDomain: "receipt-scanner.firebaseapp.com",
+  projectId: "receipt-scanner",
+  storageBucket: "receipt-scanner.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef1234567890"
+};
+
+// REPLACE WITH:
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
+};
+
+// **PAUSE**: Ask human to run "npm install dotenv" in both client and server
+Task 1.3: Button Component Consolidation
+javascriptCreate: /analysis/ui-consolidation-plan.md
+
+## UI Component Consolidation Plan
+- [ ] Remove duplicate Button component
+- [ ] Update all imports
+- [ ] Standardize props and variants
+- [ ] Create component documentation
+
+// Step 1: Document all Button usages
+const buttonUsageAudit = {
+  formsButton: [
+    'client/src/features/auth/components/LoginPage.js:45',
+    'client/src/features/auth/components/RegisterPage.js:67',
+    'client/src/features/receipts/components/ReceiptForm.js:123'
+  ],
+  uiButton: [
+    'client/src/features/analytics/components/Dashboard.js:78',
+    'client/src/shared/components/layout/Navbar.js:34'
+  ]
+};
+
+// Step 2: Create migration script
+Create: /scripts/migrate-button-imports.js
+const migrateButtonImports = () => {
+  buttonUsageAudit.formsButton.forEach(file => {
+    // Replace import statement
+    replaceInFile(file, {
+      search: "import Button from '../../shared/components/forms/Button'",
+      replace: "import Button from '../../shared/components/ui/Button'"
+    });
+  });
+};
+
+// Step 3: Delete forms/Button.js
+deleteFile('client/src/shared/components/forms/Button.js');
+
+// **PAUSE**: Ask human to test "npm start" after changes
+Task 1.4: Performance Quick Wins
+javascript// Step 1: Implement React.lazy for route splitting
+// File: client/src/routes.js
+// SEARCH:
+import DashboardPage from './features/analytics/pages/DashboardPage';
+import ReportsPage from './features/analytics/pages/ReportsPage';
+import ReceiptListPage from './features/receipts/pages/ReceiptListPage';
+
+// REPLACE WITH:
+const DashboardPage = React.lazy(() => import('./features/analytics/pages/DashboardPage'));
+const ReportsPage = React.lazy(() => import('./features/analytics/pages/ReportsPage'));
+const ReceiptListPage = React.lazy(() => import('./features/receipts/pages/ReceiptListPage'));
+const AnalyticsDashboard = React.lazy(() => import('./features/analytics/components/dashboard/AnalyticsDashboard'));
+
+// Add Suspense wrapper
+<Suspense fallback={<Loading />}>
+  <Router>
+    <Routes>
+      <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/reports" element={<ReportsPage />} />
+      <Route path="/receipts" element={<ReceiptListPage />} />
+    </Routes>
+  </Router>
+</Suspense>
+
+// Step 2: Add pagination to hooks
+// File: client/src/features/receipts/hooks/useReceipts.js
+// Add pagination logic:
+export const useReceipts = (page = 1, limit = 20) => {
+  const [receipts, setReceipts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  
+  useEffect(() => {
+    const fetchReceipts = async () => {
+      try {
+        const receiptsQuery = query(
+          receiptsRef,
+          where('userId', '==', userId),
+          orderBy('createdAt', 'desc'),
+          limit(limit),
+          startAfter(lastDoc)
+        );
+        
+        const snapshot = await getDocs(receiptsQuery);
+        // ... pagination logic
+      } catch (error) {
+        // ... error handling
+      }
+    };
+    fetchReceipts();
+  }, [page, limit]);
+  
+  return { receipts, loading, hasMore, loadMore };
+};
+
+// **PAUSE**: Ask human to test performance improvements
+Phase 2: Architecture Modernization (Weeks 3-6)
+Task 2.1: DocumentProcessingService Refactor
+javascriptCreate: /analysis/service-refactoring-plan.md
+
+## Service Refactoring Architecture
+/server/src/services/
+  ├── core/
+  │   └── BaseService.js
+  ├── imageOptimization/
+  │   ├── ImageOptimizationService.js
+  │   └── ImageValidationService.js
+  ├── textExtraction/
+  │   ├── TextExtractionService.js
+  │   ├── GoogleVisionAdapter.js
+  │   └── TesseractAdapter.js
+  ├── documentClassification/
+  │   ├── DocumentClassificationService.js
+  │   └── MLModelService.js
+  ├── dataExtraction/
+  │   ├── ReceiptDataExtractor.js
+  │   └── InvoiceDataExtractor.js
+  └── orchestration/
+      └── DocumentProcessingOrchestrator.js
+
+// Step 1: Create Base Service
+Create: /server/src/services/core/BaseService.js
+class BaseService {
+  constructor() {
+    this.logger = require('../../utils/logger');
+  }
+  
+  async execute() {
+    throw new Error('Method must be implemented');
+  }
+  
+  handleError(error) {
+    this.logger.error(error);
+    throw new AppError(error.message, error.statusCode || 500);
+  }
+}
+
+// Step 2: Extract Image Optimization
+Create: /server/src/services/imageOptimization/ImageOptimizationService.js
+class ImageOptimizationService extends BaseService {
+  constructor() {
+    super();
+    this.sharp = require('sharp');
+  }
+  
+  async optimize(imageBuffer, options = {}) {
+    try {
+      // Extract _optimizeImage logic from DocumentProcessingService
+      const optimized = await this.sharp(imageBuffer)
+        .resize(options.maxWidth, options.maxHeight, {
+          fit: 'inside',
+          withoutEnlargement: true
+        })
+        .jpeg({ quality: 90 })
+        .toBuffer();
+        
+      return optimized;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+  
+  async enhance(imageBuffer) {
+    // Extract _enhanceImage logic
+  }
+}
+
+// Step 3: Extract Text Extraction
+Create: /server/src/services/textExtraction/TextExtractionService.js
+class TextExtractionService extends BaseService {
+  constructor() {
+    super();
+    this.visionAdapter = new GoogleVisionAdapter();
+    this.tesseractAdapter = new TesseractAdapter();
+  }
+  
+  async extractText(imageBuffer, config) {
+    const complexity = await this.assessComplexity(imageBuffer);
+    
+    if (complexity.score > 0.7) {
+      return await this.visionAdapter.extract(imageBuffer, config);
+    } else {
+      return await this.tesseractAdapter.extract(imageBuffer, config);
+    }
+  }
+  
+  async assessComplexity(imageBuffer) {
+    // Implement complexity scoring
+    return {
+      score: 0.5,
+      factors: { hasHandwriting: false, isScanned: true }
+    };
+  }
+}
+
+// **PAUSE**: Ask human to run "npm install tesseract.js" after creating adapters
+Task 2.2: Implement Dual OCR System
+javascriptCreate: /server/src/services/textExtraction/TesseractAdapter.js
+class TesseractAdapter {
+  constructor() {
+    this.tesseract = require('tesseract.js');
+  }
+  
+  async extract(imageBuffer, config = {}) {
+    const { language = 'eng', enableHeb = false } = config;
+    const langs = enableHeb ? ['eng', 'heb'] : [language];
+    
+    const result = await this.tesseract.recognize(
+      imageBuffer,
+      langs.join('+'),
+      {
+        logger: m => console.log(m),
+        preserve_interword_spaces: '1'
+      }
+    );
+    
+    return {
+      text: result.data.text,
+      confidence: result.data.confidence,
+      language: result.data.languages,
+      blocks: result.data.blocks
+    };
+  }
+}
+
+Create: /server/src/services/textExtraction/GoogleVisionAdapter.js
+class GoogleVisionAdapter {
+  constructor() {
+    this.vision = require('@google-cloud/vision');
+    this.client = new this.vision.ImageAnnotatorClient();
+  }
+  
+  async extract(imageBuffer, config = {}) {
+    const { language = 'en', enableHeb = false } = config;
+    const hints = enableHeb ? ['he', 'en'] : [language];
+    
+    const request = {
+      image: { content: imageBuffer.toString('base64') },
+      imageContext: { languageHints: hints }
+    };
+    
+    const [result] = await this.client.textDetection(request);
+    const detections = result.textAnnotations;
+    
+    return {
+      text: detections[0]?.description || '',
+      confidence: this._calculateConfidence(detections),
+      blocks: this._extractBlocks(detections)
+    };
+  }
+}
+
+// **PAUSE**: Ask human to run npm install for OCR dependencies
+Task 2.3: Create Processing Orchestrator
+javascriptCreate: /server/src/services/orchestration/DocumentProcessingOrchestrator.js
+class DocumentProcessingOrchestrator extends BaseService {
+  constructor() {
+    super();
+    this.imageOptimizer = new ImageOptimizationService();
+    this.textExtractor = new TextExtractionService();
+    this.classifier = new DocumentClassificationService();
+    this.dataExtractor = new DataExtractionService();
+  }
+  
+  async processDocument(documentId, userId) {
+    try {
+      // 1. Retrieve document
+      const document = await this.getDocument(documentId);
+      
+      // 2. Optimize image
+      const optimizedImage = await this.imageOptimizer.optimize(document.imageBuffer);
+      
+      // 3. Extract text with dual OCR
+      const textResult = await this.textExtractor.extractText(optimizedImage, {
+        language: document.language || 'en',
+        enableHeb: true
+      });
+      
+      // 4. Classify document
+      const classification = await this.classifier.classify(textResult);
+      
+      // 5. Extract data based on type
+      const extractedData = await this.dataExtractor.extract(
+        textResult,
+        classification.type
+      );
+      
+      // 6. Save results
+      await this.saveResults(documentId, {
+        text: textResult.text,
+        classification,
+        extractedData,
+        confidence: textResult.confidence
+      });
+      
+      return {
+        documentId,
+        status: 'processed',
+        classification,
+        extractedData
+      };
+      
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+}
+
+// Update controller to use orchestrator
+// File: server/src/controllers/documentController.js
+const processDocument = async (req, res) => {
+  try {
+    const orchestrator = new DocumentProcessingOrchestrator();
+    const result = await orchestrator.processDocument(
+      req.params.documentId,
+      req.user.uid
+    );
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+Task 2.4: Dependency Optimization
+javascriptCreate: /analysis/dependency-optimization-report.md
+
+## Dependencies to Remove/Replace
+const dependencyChanges = {
+  client: {
+    remove: [
+      '@heroicons/react',
+      'react-chartjs-2',
+      'chart.js',
+      'react-native-chart-kit'
+    ],
+    add: [
+      'recharts',  // Single charting library
+      'framer-motion' // For modern animations
+    ],
+    keep: [
+      'lucide-react' // Only icon library
+    ]
+  },
+  server: {
+    remove: [],
+    add: [
+      'tesseract.js',
+      'node-cache'  // For response caching
+    ]
+  }
+};
+
+// Step 1: Update package.json files
+// Remove unused dependencies
+updatePackageJson('client', {
+  remove: [
+    '@heroicons/react',
+    'react-chartjs-2',
+    'chart.js',
+    'react-native-chart-kit'
+  ],
+  add: [
+    'recharts',
+    'framer-motion'
+  ]
+});
+
+// **PAUSE**: Ask human to run npm uninstall and npm install commands
+Phase 3: UI/UX Transformation (Weeks 7-9)
+Task 3.1: Design System Setup
+javascriptCreate: /client/src/design-system/index.js
+
+// Design System Foundation
+export const designTokens = {
+  colors: {
+    primary: {
+      50: '#f0f9ff',
+      100: '#e0f2fe',
+      200: '#bae6fd',
+      300: '#7dd3fc',
+      400: '#38bdf8',
+      500: '#0ea5e9',
+      600: '#0284c7',
+      700: '#0369a1',
+      800: '#075985',
+      900: '#0c4a6e',
+    },
+    secondary: {
+      500: '#8b5cf6',
+      600: '#7c3aed',
+    },
+    success: {
+      500: '#10b981',
+      600: '#059669',
+    },
+    error: {
+      500: '#ef4444',
+      600: '#dc2626',
+    },
+    warning: {
+      500: '#f59e0b',
+      600: '#d97706',
+    },
+    // Modern gradients
+    gradients: {
+      primary: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+      secondary: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+      ocean: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      sunset: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
+    },
+    // Glass-morphism
+    glass: {
+      light: 'rgba(255, 255, 255, 0.7)',
+      dark: 'rgba(0, 0, 0, 0.7)',
+      medium: 'rgba(255, 255, 255, 0.5)',
+    }
+  },
+  typography: {
+    fontFamily: {
+      sans: ['Inter', 'system-ui', 'sans-serif'],
+      mono: ['Fira Code', 'monospace'],
+      hebrew: ['Heebo', 'Arial', 'sans-serif']
+    },
+    fontSize: {
+      xs: '0.75rem',
+      sm: '0.875rem',
+      base: '1rem',
+      lg: '1.125rem',
+      xl: '1.25rem',
+      '2xl': '1.5rem',
+      '3xl': '1.875rem',
+      '4xl': '2.25rem',
+    },
+    fontWeight: {
+      normal: 400,
+      medium: 500,
+      semibold: 600,
+      bold: 700,
+    },
+    lineHeight: {
+      tight: 1.25,
+      normal: 1.5,
+      relaxed: 1.75,
+    }
+  },
+  spacing: {
+    px: '1px',
+    0: '0',
+    1: '0.25rem',
+    2: '0.5rem',
+    3: '0.75rem',
+    4: '1rem',
+    5: '1.25rem',
+    6: '1.5rem',
+    8: '2rem',
+    10: '2.5rem',
+    12: '3rem',
+    16: '4rem',
+    20: '5rem',
+    24: '6rem',
+    32: '8rem',
+    40: '10rem',
+    48: '12rem',
+    56: '14rem',
+    64: '16rem',
+  },
+  borderRadius: {
+    none: '0',
+    sm: '0.125rem',
+    DEFAULT: '0.25rem',
+    md: '0.375rem',
+    lg: '0.5rem',
+    xl: '0.75rem',
+    '2xl': '1rem',
+    '3xl': '1.5rem',
+    full: '9999px',
+  },
+  shadows: {
+    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+    DEFAULT: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+    inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
+    // Colored shadows
+    colored: {
+      primary: '0 4px 14px 0 rgba(14, 165, 233, 0.39)',
+      success: '0 4px 14px 0 rgba(16, 185, 129, 0.39)',
+    }
+  },
+  transitions: {
+    fast: '150ms ease-in-out',
+    base: '300ms ease-in-out',
+    slow: '500ms ease-in-out',
+  },
+  animations: {
+    'slide-up': 'slideUp 0.3s ease-out',
+    'slide-down': 'slideDown 0.3s ease-out',
+    'fade-in': 'fadeIn 0.3s ease-out',
+    'scale-up': 'scaleUp 0.2s ease-out',
+  }
+};
+
+// Theme configuration
+export const themes = {
+  light: {
+    background: '#ffffff',
+    surface: '#f8fafc',
+    text: {
+      primary: '#1f2937',
+      secondary: '#6b7280',
+      muted: '#9ca3af',
+    },
+    border: '#e5e7eb',
+  },
+  dark: {
+    background: '#0f172a',
+    surface: '#1e293b',
+    text: {
+      primary: '#f8fafc',
+      secondary: '#cbd5e1',
+      muted: '#94a3b8',
+    },
+    border: '#334155',
+  }
+};
+
+// Component variants using CVA
+import { cva } from 'class-variance-authority';
+
+export const buttonVariants = cva(
+  "inline-flex items-center justify-center rounded-md font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-md hover:shadow-lg",
+        secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500",
+        outline: "border-2 border-current hover:bg-gray-100 focus:ring-gray-500",
+        ghost: "hover:bg-gray-100 hover:text-gray-900 focus:ring-gray-500",
+        gradient: "bg-gradient-to-r from-primary-500 to-purple-600 text-white hover:from-primary-600 hover:to-purple-700 shadow-lg hover:shadow-xl",
+        destructive: "bg-error-500 text-white hover:bg-error-600 focus:ring-error-500",
+        glass: "backdrop-blur-lg bg-white/10 border border-white/20 text-white hover:bg-white/20",
+      },
+      size: {
+        sm: "h-9 px-3 text-sm",
+        default: "h-10 py-2 px-4",
+        lg: "h-12 px-8 text-lg",
+        icon: "h-10 w-10",
+      },
+      rounded: {
+        default: "rounded-md",
+        full: "rounded-full",
+        lg: "rounded-lg",
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+      rounded: "default",
+    },
+  }
+);
+
+export const cardVariants = cva(
+  "rounded-lg shadow-md transition-all duration-300",
+  {
+    variants: {
+      variant: {
+        default: "bg-white border border-gray-200",
+        elevated: "bg-white shadow-lg hover:shadow-xl",
+        glass: "backdrop-blur-lg bg-white/80 border border-white/20",
+        gradient: "bg-gradient-to-br from-white to-gray-50",
+      },
+      padding: {
+        none: "",
+        sm: "p-4",
+        default: "p-6",
+        lg: "p-8",
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      padding: "default",
+    },
+  }
+);
+Task 3.2: Modern Component Implementation
+jsxCreate: /client/src/design-system/components/Button.jsx
+import React from 'react';
+import { cva } from 'class-variance-authority';
+import { Loader2 } from 'lucide-react';
+import { buttonVariants } from '../index';
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'default' | 'secondary' | 'outline' | 'ghost' | 'gradient' | 'destructive' | 'glass';
+  size?: 'sm' | 'default' | 'lg' | 'icon';
+  rounded?: 'default' | 'full' | 'lg';
+  isLoading?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  className?: string;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ 
+    className, 
+    variant, 
+    size, 
+    rounded,
+    isLoading, 
+    children,
+    leftIcon,
+    rightIcon,
+    disabled,
+    ...props 
+  }, ref) => {
+    return (
+      <button
+        className={buttonVariants({ variant, size, rounded, className })}
+        ref={ref}
+        disabled={disabled || isLoading}
+        {...props}
+      >
+        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {!isLoading && leftIcon && <span className="mr-2">{leftIcon}</span>}
+        {children}
+        {!isLoading && rightIcon && <span className="ml-2">{rightIcon}</span>}
+      </button>
+    );
+  }
+);
+
+Button.displayName = "Button";
+
+export default Button;
+
+Create: /client/src/design-system/components/Card.jsx
+import React from 'react';
+import { cardVariants } from '../index';
+
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'elevated' | 'glass' | 'gradient';
+  padding?: 'none' | 'sm' | 'default' | 'lg';
+  hover?: boolean;
+  className?: string;
+}
+
+const Card: React.FC<CardProps> = ({ 
+  variant = 'default', 
+  padding = 'default',
+  hover = false,
+  className,
+  children,
+  ...props 
+}) => {
+  return (
+    <div 
+      className={`${cardVariants({ variant, padding })} ${
+        hover ? 'hover:shadow-xl hover:-translate-y-1' : ''
+      } ${className || ''}`}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
+
+export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ 
+  className, 
+  children,
+  ...props 
+}) => (
+  <div className={`p-6 ${className || ''}`} {...props}>
+    {children}
+  </div>
+);
+
+export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ 
+  className, 
+  children,
+  ...props 
+}) => (
+  <div className={`p-6 pt-0 ${className || ''}`} {...props}>
+    {children}
+  </div>
+);
+
+export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ 
+  className, 
+  children,
+  ...props 
+}) => (
+  <div className={`p-6 pt-0 ${className || ''}`} {...props}>
+    {children}
+  </div>
+);
+
+export default Card;
+Task 3.3: Dashboard Modernization
+jsxCreate: /client/src/features/analytics/components/dashboard/ModernDashboard.jsx
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
+import { 
+  TrendingUp, 
+  Receipt, 
+  PieChart, 
+  DollarSign,
+  ArrowRight 
+} from 'lucide-react';
+import Card from '@/design-system/components/Card';
+import Button from '@/design-system/components/Button';
+import { designTokens } from '@/design-system';
+
+const ModernDashboard = () => {
+  const { t } = useTranslation('dashboard');
+  
+  const stats = [
+    {
+      title: t('stats.totalSpent'),
+      value: '₪12,750',
+      change: '+12%',
+      trend: 'up',
+      icon: DollarSign,
+      color: 'primary',
+      gradient: designTokens.colors.gradients.primary
+    },
+    {
+      title: t('stats.receiptsScanned'),
+      value: '243',
+      change: '+5%',
+      trend: 'up',
+      icon: Receipt,
+      color: 'secondary',
+      gradient: designTokens.colors.gradients.secondary
+    },
+    {
+      title: t('stats.categoriesUsed'),
+      value: '12',
+      change: '0%',
+      trend: 'neutral',
+      icon: PieChart,
+      color: 'success',
+      gradient: designTokens.colors.gradients.ocean
+    },
+    {
+      title: t('stats.savingsThisMonth'),
+      value: '₪850',
+      change: '+25%',
+      trend: 'up',
+      icon: TrendingUp,
+      color: 'warning',
+      gradient: designTokens.colors.gradients.sunset
+    }
+  ];
+  
+  return (
+    <div className="space-y-8">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, index) => (
+          <motion.div
+            key={stat.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <Card variant="glass" hover className="relative overflow-hidden">
+              <div 
+                className="absolute inset-0 opacity-10"
+                style={{ background: stat.gradient }}
+              />
+              <div className="relative p-6">
+                <div className="flex items-center
+               <div className="flex items-center justify-between">
+                 <div className="flex items-center gap-3">
+                   <div className="p-3 rounded-lg bg-white/10">
+                     <stat.icon className="w-6 h-6 text-white" />
+                   </div>
+                   <div>
+                     <p className="text-sm text-gray-500">{stat.title}</p>
+                     <h3 className="text-2xl font-bold">{stat.value}</h3>
+                   </div>
+                 </div>
+                 <div className={`text-sm font-medium ${
+                   stat.trend === 'up' ? 'text-green-500' :
+                   stat.trend === 'down' ? 'text-red-500' : 'text-gray-500'
+                 }`}>
+                   {stat.change}
+                 </div>
+               </div>
+             </div>
+           </Card>
+         </motion.div>
+       ))}
+     </div>
+     
+     {/* Charts Section */}
+     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+       <motion.div
+         initial={{ opacity: 0, x: -20 }}
+         animate={{ opacity: 1, x: 0 }}
+         transition={{ delay: 0.3 }}
+       >
+         <Card variant="glass">
+           <CardHeader>
+             <h2 className="text-xl font-semibold">{t('charts.spendingTrends')}</h2>
+           </CardHeader>
+           <CardContent>
+             <ModernSpendingChart />
+           </CardContent>
+         </Card>
+       </motion.div>
+       
+       <motion.div
+         initial={{ opacity: 0, x: 20 }}
+         animate={{ opacity: 1, x: 0 }}
+         transition={{ delay: 0.4 }}
+       >
+         <Card variant="glass">
+           <CardHeader>
+             <h2 className="text-xl font-semibold">{t('charts.categoryBreakdown')}</h2>
+           </CardHeader>
+           <CardContent>
+             <ModernCategoryChart />
+           </CardContent>
+         </Card>
+       </motion.div>
+     </div>
+     
+     {/* Quick Actions */}
+     <motion.div
+       initial={{ opacity: 0, y: 20 }}
+       animate={{ opacity: 1, y: 0 }}
+       transition={{ delay: 0.5 }}
+     >
+       <Card variant="gradient">
+         <CardContent className="p-8">
+           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+             <div>
+               <h2 className="text-2xl font-bold mb-2">{t('quickActions.title')}</h2>
+               <p className="text-gray-600">{t('quickActions.subtitle')}</p>
+             </div>
+             <div className="flex gap-4">
+               <Button variant="gradient" leftIcon={<Receipt />}>
+                 {t('quickActions.scanReceipt')}
+               </Button>
+               <Button variant="outline" rightIcon={<ArrowRight />}>
+                 {t('quickActions.viewReports')}
+               </Button>
+             </div>
+           </div>
+         </CardContent>
+       </Card>
+     </motion.div>
+   </div>
+ );
+};
+
+export default ModernDashboard;
+
+// Modern Chart Components
+Create: /client/src/features/analytics/components/charts/ModernSpendingChart.jsx
+import React from 'react';
+import { 
+ AreaChart, 
+ Area, 
+ XAxis, 
+ YAxis, 
+ Tooltip, 
+ ResponsiveContainer,
+ CartesianGrid 
+} from 'recharts';
+import { useTranslation } from 'react-i18next';
+import { designTokens } from '@/design-system';
+
+const ModernSpendingChart = () => {
+ const { t, i18n } = useTranslation();
+ const isRTL = i18n.language === 'he';
+ 
+ const data = [
+   { month: 'ינו', amount: 3000 },
+   { month: 'פבר', amount: 3800 },
+   { month: 'מרץ', amount: 3200 },
+   { month: 'אפר', amount: 4200 },
+   { month: 'מאי', amount: 3600 },
+   { month: 'יונ', amount: 4500 },
+ ];
+ 
+ return (
+   <div className="h-80">
+     <ResponsiveContainer width="100%" height="100%">
+       <AreaChart 
+         data={data}
+         margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+       >
+         <defs>
+           <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+             <stop offset="5%" stopColor={designTokens.colors.primary[500]} stopOpacity={0.3}/>
+             <stop offset="95%" stopColor={designTokens.colors.primary[500]} stopOpacity={0}/>
+           </linearGradient>
+           <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+             <stop offset="0%" stopColor={designTokens.colors.primary[500]} />
+             <stop offset="100%" stopColor={designTokens.colors.secondary[500]} />
+           </linearGradient>
+         </defs>
+         <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.3} />
+         <XAxis 
+           dataKey="month" 
+           axisLine={false}
+           tickLine={false}
+           dy={10}
+           reversed={isRTL}
+         />
+         <YAxis 
+           axisLine={false}
+           tickLine={false}
+           dx={-10}
+           tickFormatter={(value) => `₪${value}`}
+           reversed={isRTL}
+         />
+         <Tooltip 
+           contentStyle={{ 
+             backgroundColor: 'rgba(255, 255, 255, 0.95)',
+             border: '1px solid rgba(0, 0, 0, 0.1)',
+             borderRadius: '8px',
+             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+             padding: '12px'
+           }}
+           formatter={(value) => [`₪${value}`, t('charts.spendingTrends.yAxis')]}
+         />
+         <Area 
+           type="monotone" 
+           dataKey="amount" 
+           stroke="url(#lineGradient)" 
+           fill="url(#areaGradient)"
+           strokeWidth={3}
+           dot={{ r: 6, strokeWidth: 2 }}
+           activeDot={{ r: 8, strokeWidth: 2 }}
+         />
+       </AreaChart>
+     </ResponsiveContainer>
+   </div>
+ );
+};
+
+export default ModernSpendingChart;
+Task 3.4: Chart Migration to Recharts
+javascriptCreate: /scripts/migrate-charts.js
+
+// Chart Migration Script
+const chartMigration = {
+  analytics: {
+    'AnalyticsDashboard.js': [
+      {
+        from: 'react-chartjs-2/Bar',
+        to: 'recharts/BarChart'
+      },
+      {
+        from: 'react-chartjs-2/Line',
+        to: 'recharts/LineChart'
+      }
+    ],
+    'SpendingTrends.js': [
+      {
+        from: 'chart.js/Line',
+        to: 'recharts/AreaChart'
+      }
+    ],
+    'CategoryBreakdown.js': [
+      {
+        from: 'react-native-chart-kit/PieChart',
+        to: 'recharts/PieChart'
+      }
+    ]
+  }
+};
+
+// Convert chart.js/react-chartjs-2 to Recharts
+const migrateChart = (file, conversion) => {
+  // Example migration for Bar Chart
+  if (conversion.to === 'recharts/BarChart') {
+    // Replace imports
+    replaceInFile(file, {
+      search: "import { Bar } from 'react-chartjs-2';",
+      replace: "import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';"
+    });
+    
+    // Convert data format
+    replaceInFile(file, {
+      search: `const chartData = {
+        labels: ['Jan', 'Feb', 'Mar'],
+        datasets: [{
+          data: [300, 400, 500],
+          backgroundColor: '#0ea5e9'
+        }]
+      };`,
+      replace: `const chartData = [
+        { month: 'Jan', value: 300 },
+        { month: 'Feb', value: 400 },
+        { month: 'Mar', value: 500 }
+      ];`
+    });
+    
+    // Convert component usage
+    replaceInFile(file, {
+      search: `<Bar data={chartData} options={options} />`,
+      replace: `<ResponsiveContainer width="100%" height={300}>
+        <BarChart data={chartData}>
+          <XAxis dataKey="month" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="value" fill="#0ea5e9" />
+        </BarChart>
+      </ResponsiveContainer>`
+    });
+  }
+  
+  // Similar migrations for other chart types...
+};
+
+// Execute migration for all files
+executeChartMigration();
+Phase 4: Internationalization & State Management (Weeks 10-11)
+Task 4.1: Complete Hebrew Translation Implementation
+javascriptCreate: /client/src/locales/index.js
+
+import i18next from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
+
+// Import all translations
+import en from './en';
+import he from './he';
+
+const resources = {
+  en,
+  he
+};
+
+i18next
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: 'en',
+    debug: process.env.NODE_ENV === 'development',
+    interpolation: {
+      escapeValue: false,
+    },
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+      lookupLocalStorage: 'i18nextLng'
+    }
+  });
+
+export default i18next;
+
+// Update App.js for i18n support
+// File: client/src/App.js
+import { useTranslation } from 'react-i18next';
+import { I18nextProvider } from 'react-i18next';
+import i18n from './locales';
+
+const App = () => {
+  const { i18n } = useTranslation();
+  
+  useEffect(() => {
+    // Set HTML direction and language
+    document.documentElement.dir = i18n.language === 'he' ? 'rtl' : 'ltr';
+    document.documentElement.lang = i18n.language;
+    
+    // Update body class for RTL styling
+    document.body.classList.toggle('rtl', i18n.language === 'he');
+  }, [i18n.language]);
+  
+  return (
+    <I18nextProvider i18n={i18n}>
+      <div dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
+        {/* App content */}
+      </div>
+    </I18nextProvider>
+  );
+};
+
+// **PAUSE**: Ask human to run "npm install react-i18next i18next i18next-browser-languagedetector"
+Task 4.2: Component Translation Integration
+jsxCreate: /scripts/add-translations-to-components.js
+
+// Script to add useTranslation hook to all components
+const componentsToTranslate = [
+  'client/src/features/auth/components/',
+  'client/src/features/receipts/components/',
+  'client/src/features/analytics/components/',
+  'client/src/features/inventory/components/',
+  'client/src/features/settings/components/'
+];
+
+const updateComponentForTranslation = (filePath) => {
+  // Add import
+  addImport(filePath, "import { useTranslation } from 'react-i18next';");
+  
+  // Add hook
+  addHook(filePath, "const { t } = useTranslation('namespace');");
+  
+  // Replace hardcoded strings
+  const translations = findHardcodedStrings(filePath);
+  translations.forEach(({ text, line }) => {
+    replaceString(filePath, line, text, `{t('${getTranslationKey(text)}')}`);
+  });
+};
+
+// Example component transformation
+// Before:
+const LoginPage = () => {
+  return (
+    <div>
+      <h1>Login</h1>
+      <input placeholder="Email" />
+      <button>Submit</button>
+    </div>
+  );
+};
+
+// After:
+const LoginPage = () => {
+  const { t } = useTranslation('auth');
+  
+  return (
+    <div>
+      <h1>{t('login.title')}</h1>
+      <input placeholder={t('login.email')} />
+      <button>{t('login.submit')}</button>
+    </div>
+  );
+};
+Task 4.3: RTL Support Implementation
+javascriptCreate: /client/src/hooks/useRTL.js
+
+import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
+
+export const useRTL = () => {
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === 'he';
+  
+  useEffect(() => {
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    document.documentElement.lang = i18n.language;
+  }, [isRTL, i18n.language]);
+  
+  return { isRTL, toggleDirection: () => i18n.changeLanguage(isRTL ? 'en' : 'he') };
+};
+
+// Update Tailwind config for RTL
+// File: client/tailwind.config.js
+module.exports = {
+  content: ['./src/**/*.{js,jsx,ts,tsx}'],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      spacing: {
+        // RTL-safe spacing
+      },
+      // Add RTL variants
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+    plugin(function ({ addVariant }) {
+      addVariant('rtl', ['[dir="rtl"] &']);
+      addVariant('ltr', ['[dir="ltr"] &']);
+    }),
+  ],
+  // Enable RTL support
+  variants: {
+    extend: {
+      margin: ['rtl'],
+      padding: ['rtl'],
+      borderRadius: ['rtl'],
+      textAlign: ['rtl'],
+    },
+  },
+};
+
+// **PAUSE**: Ask human to run "npm install @tailwindcss/forms"
+Task 4.4: Redux Toolkit Setup
+javascriptCreate: /client/src/store/index.js
+
+import { configureStore } from '@reduxjs/toolkit';
+import { setupListeners } from '@reduxjs/toolkit/query';
+import { receiptApi } from './services/receiptApi';
+import { analyticsApi } from './services/analyticsApi';
+import authReducer from './slices/authSlice';
+import uiReducer from './slices/uiSlice';
+
+export const store = configureStore({
+  reducer: {
+    [receiptApi.reducerPath]: receiptApi.reducer,
+    [analyticsApi.reducerPath]: analyticsApi.reducer,
+    auth: authReducer,
+    ui: uiReducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware()
+      .concat(receiptApi.middleware)
+      .concat(analyticsApi.middleware),
+});
+
+setupListeners(store.dispatch);
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+
+Create: /client/src/store/services/receiptApi.js
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+
+export const receiptApi = createApi({
+  reducerPath: 'receiptApi',
+  baseQuery: fetchBaseQuery({ 
+    baseUrl: process.env.REACT_APP_API_URL,
+    prepareHeaders: (headers, { getState }) => {
+      const token = getState().auth.token;
+      if (token) {
+        headers.set('authorization', `Bearer ${token}`);
+      }
+      return headers;
+    },
+  }),
+  tagTypes: ['Receipt'],
+  endpoints: (builder) => ({
+    getReceipts: builder.query({
+      query: ({ page = 1, limit = 20 }) => `/receipts?page=${page}&limit=${limit}`,
+      providesTags: ['Receipt'],
+    }),
+    uploadReceipt: builder.mutation({
+      query: (file) => ({
+        url: '/receipts',
+        method: 'POST',
+        body: file,
+      }),
+      invalidatesTags: ['Receipt'],
+    }),
+    updateReceipt: builder.mutation({
+      query: ({ id, ...patch }) => ({
+        url: `/receipts/${id}`,
+        method: 'PUT',
+        body: patch,
+      }),
+      invalidatesTags: ['Receipt'],
+    }),
+    deleteReceipt: builder.mutation({
+      query: (id) => ({
+        url: `/receipts/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Receipt'],
+    }),
+  }),
+});
+
+export const {
+  useGetReceiptsQuery,
+  useUploadReceiptMutation,
+  useUpdateReceiptMutation,
+  useDeleteReceiptMutation,
+} = receiptApi;
+
+// **PAUSE**: Ask human to run "npm install @reduxjs/toolkit react-redux"
+Task 4.5: Migrate Hooks to RTK Query
+javascript// Update useReceipts hook to use RTK Query
+// File: client/src/features/receipts/hooks/useReceipts.js
+import { useGetReceiptsQuery, useUploadReceiptMutation } from '@/store/services/receiptApi';
+
+export const useReceipts = (page = 1, limit = 20) => {
+  const { data, isLoading, error } = useGetReceiptsQuery({ page, limit });
+  const [uploadReceipt, { isLoading: isUploading }] = useUploadReceiptMutation();
+  
+  return {
+    receipts: data?.receipts || [],
+    hasMore: data?.hasMore || false,
+    isLoading,
+    error,
+    uploadReceipt,
+    isUploading,
+  };
+};
+
+// Update components to use new hook
+// File: client/src/features/receipts/components/ReceiptList.js
+import { useReceipts } from '../hooks/useReceipts';
+
+const ReceiptList = () => {
+  const { receipts, isLoading, hasMore } = useReceipts();
+  
+  if (isLoading) return <Loading />;
+  
+  return (
+    <div className="space-y-4">
+      {receipts.map(receipt => (
+        <ReceiptCard key={receipt.id} receipt={receipt} />
+      ))}
+      {hasMore && <LoadMoreButton />}
+    </div>
+  );
+};
+Phase 5: Final Polish & Testing (Week 12)
+Task 5.1: Performance Optimizations
+javascriptCreate: /client/src/utils/performance/cache.js
+
+import LRU from 'lru-cache';
+
+// Client-side caching
+export const runtimeCache = new LRU({
+  max: 500,
+  maxAge: 1000 * 60 * 5 // 5 minutes
+});
+
+export const cachedApiCall = async (key, apiCall) => {
+  const cached = runtimeCache.get(key);
+  if (cached) return cached;
+  
+  const result = await apiCall();
+  runtimeCache.set(key, result);
+  return result;
+};
+
+// React Query caching setup
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      cacheTime: 1000 * 60 * 30, // 30 minutes
+      retry: 3,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// **PAUSE**: Ask human to run "npm install lru-cache @tanstack/react-query"
+Task 5.2: PWA Configuration
+javascriptCreate: /client/public/manifest.json
+{
+  "name": "Receipt Scanner",
+  "short_name": "Receipts",
+  "description": "Modern receipt management and analytics",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0ea5e9",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "orientation": "any",
+  "dir": "ltr"
+}
+
+Create: /client/src/service-worker.js
+// Service worker for PWA functionality
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open('receipt-scanner-v1').then((cache) => {
+      return cache.addAll([
+        '/',
+        '/index.html',
+        '/static/js/bundle.js',
+        '/static/css/main.css',
+        '/icons/icon-192.png',
+        '/icons/icon-512.png',
+      ]);
+    })
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
+});
+
+// Update index.html
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0ea5e9">
+<meta name="description" content="Modern receipt management and analytics">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+Task 5.3: Final Testing & Validation
+javascriptCreate: /scripts/final-validation.js
+
+// Comprehensive validation script
+const finalValidation = {
+  security: [
+    'validateFirebaseRules',
+    'checkEnvironmentVariables',
+    'validateAPIEndpoints'
+  ],
+  performance: [
+    'measureLoadTime',
+    'checkBundleSize',
+    'validateLazyLoading'
+  ],
+  i18n: [
+    'validateTranslations',
+    'testRTLSupport',
+    'checkLanguageSwitching'
+  ],
+  functionality: [
+    'testOCRDualSystem',
+    'validateDataFlow',
+    'checkResponsiveDesign'
+  ]
+};
+
+const runValidations = async () => {
+  const results = {};
+  
+  for (const [category, checks] of Object.entries(finalValidation)) {
+    results[category] = {};
+    for (const check of checks) {
+      results[category][check] = await executeCheck(check);
+    }
+  }
+  
+  generateValidationReport(results);
+};
+
+runValidations();
+
+// **PAUSE**: Ask human to run validation tests and review results
+
+Additional Tasks for Cline (EDI AI)
+Hebrew Translation Files Section
+Additional Task for Phase 4: Complete Hebrew Translation Files
+Task 4.4: Create Comprehensive Hebrew Translation Files
+javascript// Create translation directory structure:
+/client/src/locales/
+  ├── en/
+  │   ├── common.json
+  │   ├── dashboard.json
+  │   ├── auth.json
+  │   ├── receipts.json
+  │   ├── analytics.json
+  │   ├── inventory.json
+  │   └── settings.json
+  └── he/
+      ├── common.json
+      ├── dashboard.json
+      ├── auth.json
+      ├── receipts.json
+      ├── analytics.json
+      ├── inventory.json
+      └── settings.json
+Create Complete Hebrew Translation Files:
+/client/src/locales/he/common.json
+json{
+  "app": {
+    "name": "סורק קבלות",
+    "tagline": "נהל את הקבלות שלך בקלות"
+  },
+  "actions": {
+    "save": "שמור",
+    "cancel": "בטל",
+    "delete": "מחק",
+    "edit": "ערוך",
+    "submit": "שלח",
+    "upload": "העלה",
+    "download": "הורד",
+    "export": "ייצא",
+    "search": "חפש",
+    "clear": "נקה",
+    "apply": "החל",
+    "confirm": "אשר",
+    "back": "חזור",
+    "next": "הבא",
+    "previous": "הקודם",
+    "loading": "טוען...",
+    "retry": "נסה שוב"
+  },
+  "navigation": {
+    "dashboard": "לוח בקרה",
+    "receipts": "קבלות",
+    "inventory": "מלאי",
+    "analytics": "אנליטיקה",
+    "reports": "דוחות",
+    "settings": "הגדרות",
+    "profile": "פרופיל",
+    "logout": "התנתק"
+  },
+  "messages": {
+    "success": "הפעולה בוצעה בהצלחה",
+    "error": "אירעה שגיאה",
+    "loading": "טוען...",
+    "noData": "אין נתונים להצגה",
+    "emptyState": "לא נמצאו פריטים",
+    "confirmDelete": "האם אתה בטוח שברצונך למחוק?"
+  },
+  "validation": {
+    "required": "שדה חובה",
+    "invalidEmail": "כתובת דוא\"ל לא תקינה",
+    "invalidFormat": "פורמט לא תקין",
+    "minLength": "אורך מינימלי: {min} תווים",
+    "maxLength": "אורך מקסימלי: {max} תווים"
+  }
+}
+/client/src/locales/he/dashboard.json
+json{
+  "title": "סקירה כללית",
+  "greeting": "שלום, {name}",
+  "stats": {
+    "totalSpent": "סה\"כ הוצאות",
+    "receiptsScanned": "קבלות שנסרקו",
+    "categoriesUsed": "קטגוריות בשימוש",
+    "savingsThisMonth": "חיסכון החודש"
+  },
+  "charts": {
+    "spendingTrends": "מגמות הוצאות",
+    "categoryBreakdown": "פילוח לפי קטגוריה",
+    "monthlyComparison": "השוואה חודשית",
+    "topVendors": "ספקים מובילים"
+  },
+  "quickActions": {
+    "scanReceipt": "סרוק קבלה חדשה",
+    "addManually": "הוסף ידנית",
+    "viewReports": "צפה בדוחות",
+    "exportData": "ייצא נתונים"
+  },
+  "recentActivity": {
+    "title": "פעילות אחרונה",
+    "noActivity": "אין פעילות אחרונה",
+    "viewAll": "הצג הכל"
+  }
+}
+/client/src/locales/he/auth.json
+json{
+  "login": {
+    "title": "התחבר לחשבון",
+    "subtitle": "ברוך שובך",
+    "email": "כתובת דוא\"ל",
+    "password": "סיסמה",
+    "rememberMe": "זכור אותי",
+    "forgotPassword": "שכחת סיסמה?",
+    "submit": "התחבר",
+    "noAccount": "אין לך חשבון?",
+    "signUp": "הרשם",
+    "errors": {
+      "invalidCredentials": "שם משתמש או סיסמה שגויים",
+      "emailRequired": "נדרשת כתובת דוא\"ל",
+      "passwordRequired": "נדרשת סיסמה"
+    }
+  },
+  "register": {
+    "title": "צור חשבון חדש",
+    "subtitle": "התחל לנהל את הקבלות שלך",
+    "fullName": "שם מלא",
+    "email": "כתובת דוא\"ל",
+    "password": "סיסמה",
+    "confirmPassword": "אשר סיסמה",
+    "submit": "הרשם",
+    "hasAccount": "יש לך כבר חשבון?",
+    "login": "התחבר",
+    "errors": {
+      "passwordMismatch": "הסיסמאות אינן תואמות",
+      "emailExists": "כתובת דוא\"ל כבר קיימת",
+      "weakPassword": "הסיסמה חלשה מדי"
+    }
+  },
+  "forgotPassword": {
+    "title": "שחזר סיסמה",
+    "subtitle": "נשלח לך קישור לאיפוס הסיסמה",
+    "email": "כתובת דוא\"ל",
+    "submit": "שלח",
+    "backToLogin": "חזור להתחברות",
+    "success": "נשלח קישור לאיפוס הסיסמה לדוא\"ל שלך"
+  }
+}
+/client/src/locales/he/receipts.json
+json{
+  "title": "קבלות",
+  "uploadNew": "העלה קבלה חדשה",
+  "scanNew": "סרוק קבלה חדשה",
+  "filters": {
+    "dateRange": "טווח תאריכים",
+    "category": "קטגוריה",
+    "vendor": "ספק",
+    "amount": "סכום",
+    "searchPlaceholder": "חפש קבלות..."
+  },
+  "list": {
+    "date": "תאריך",
+    "vendor": "ספק",
+    "amount": "סכום",
+    "category": "קטגוריה",
+    "status": "סטטוס",
+    "actions": "פעולות"
+  },
+  "status": {
+    "pending": "ממתין לעיבוד",
+    "processed": "מעובד",
+    "failed": "נכשל",
+    "manual": "ידני"
+  },
+  "details": {
+    "merchant": "שם העסק",
+    "date": "תאריך",
+    "time": "שעה",
+    "total": "סה\"כ",
+    "tax": "מע\"מ",
+    "items": "פריטים",
+    "notes": "הערות",
+    "tags": "תגיות"
+  },
+  "upload": {
+    "dropzoneText": "גרור קבלה או לחץ כדי להעלות",
+    "supportedFormats": "פורמטים נתמכים: JPG, PNG, PDF",
+    "maxSize": "גודל מקסימלי: 5MB",
+    "processing": "מעבד קבלה...",
+    "success": "הקבלה הועלתה בהצלחה",
+    "error": "שגיאה בהעלאת הקבלה"
+  },
+  "edit": {
+    "title": "ערוך קבלה",
+    "fields": {
+      "merchant": "שם העסק",
+      "date": "תאריך",
+      "amount": "סכום",
+      "category": "קטגוריה",
+      "notes": "הערות"
+    },
+    "save": "שמור שינויים",
+    "delete": "מחק קבלה",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק קבלה זו?"
+  }
+}
+/client/src/locales/he/analytics.json
+json{
+  "title": "ניתוח נתונים",
+  "overview": {
+    "totalSpending": "סה\"כ הוצאות",
+    "averageReceipt": "ממוצע לקבלה",
+    "topCategory": "קטגוריה מובילה",
+    "monthlySavings": "חיסכון חודשי"
+  },
+  "charts": {
+    "spendingTrends": {
+      "title": "מגמות הוצאות",
+      "xAxis": "תאריך",
+      "yAxis": "סכום (₪)",
+      "tooltip": "הוצאות: ₪{amount}"
+    },
+    "categoryBreakdown": {
+      "title": "פילוח לפי קטגוריה",
+      "noData": "אין נתונים לתצוגה"
+    },
+    "vendors": {
+      "title": "ספקים מובילים",
+      "byAmount": "לפי סכום",
+      "byFrequency": "לפי תדירות"
+    },
+    "comparison": {
+      "title": "השוואה חודשית",
+      "currentMonth": "החודש הנוכחי",
+      "previousMonth": "החודש הקודם",
+      "yearOverYear": "שנה מול שנה"
+    }
+  },
+  "filters": {
+    "dateRange": "טווח תאריכים",
+    "categories": "קטגוריות",
+    "vendors": "ספקים",
+    "customRange": "טווח מותאם אישית"
+  },
+  "reports": {
+    "generate": "צור דוח",
+    "export": "ייצא לExcel",
+    "schedule": "קבע דוח תקופתי",
+    "templates": {
+      "monthly": "דוח חודשי",
+      "quarterly": "דוח רבעוני",
+      "annual": "דוח שנתי",
+      "custom": "דוח מותאם"
+    }
+  },
+  "insights": {
+    "title": "תובנות",
+    "spendingPatterns": "דפוסי הוצאה",
+    "savingOpportunities": "הזדמנויות חיסכון",
+    "budgetRecommendations": "המלצות תקציב",
+    "unusualActivity": "פעילות חריגה"
+  },
+  "budget": {
+    "title": "תקציב",
+    "current": "תקציב נוכחי",
+    "spent": "הוצאות",
+    "remaining": "יתרה",
+    "byCategory": "תקציב לפי קטגוריה",
+    "alerts": "התראות תקציב",
+    "setLimits": "קבע מגבלות"
+  }
+}
+/client/src/locales/he/inventory.json
+json{
+  "title": "ניהול מלאי",
+  "overview": {
+    "totalItems": "סה\"כ פריטים",
+    "lowStock": "מלאי נמוך",
+    "outOfStock": "נגמר מהמלאי",
+    "recentlyAdded": "נוספו לאחרונה"
+  },
+  "list": {
+    "headers": {
+      "product": "מוצר",
+      "sku": "מק\"ט",
+      "quantity": "כמות",
+      "price": "מחיר",
+      "status": "סטטוס",
+      "lastUpdated": "עודכן לאחרונה",
+      "actions": "פעולות"
+    },
+    "status": {
+      "inStock": "במלאי",
+      "lowStock": "מלאי נמוך",
+      "outOfStock": "אזל"
+    }
+  },
+  "product": {
+    "add": "הוסף מוצר",
+    "edit": "ערוך מוצר",
+    "details": {
+      "name": "שם המוצר",
+      "sku": "מק\"ט",
+      "description": "תיאור",
+      "category": "קטגוריה",
+      "price": "מחיר",
+      "quantity": "כמות",
+      "minStock": "מלאי מינימלי",
+      "supplier": "ספק",
+      "notes": "הערות"
+    },
+    "images": {
+      "upload": "העלה תמונה",
+      "remove": "הסר תמונה",
+      "main": "תמונה ראשית"
+    }
+  },
+  "stockMovement": {
+    "title": "תנועות מלאי",
+    "add": "הוסף תנועה",
+    "types": {
+      "purchase": "קנייה",
+      "sale": "מכירה",
+      "adjustment": "התאמה",
+      "transfer": "העברה",
+      "return": "החזרה"
+    },
+    "fields": {
+      "date": "תאריך",
+      "type": "סוג תנועה",
+      "quantity": "כמות",
+      "reason": "סיבה",
+      "reference": "מספר הפניה"
+    }
+  },
+  "alerts": {
+    "title": "התראות מלאי",
+    "lowStock": {
+      "title": "מלאי נמוך",
+      "message": "{product} - נותרו {quantity} יחידות בלבד"
+    },
+    "outOfStock": {
+      "title": "נגמר מהמלאי",
+      "message": "{product} אזל מהמלאי"
+    },
+    "settings": {
+      "enableAlerts": "הפעל התראות",
+      "lowStockThreshold": "סף מלאי נמוך",
+      "emailNotifications": "התראות דוא\"ל",
+      "appNotifications": "התראות באפליקציה"
+    }
+  },
+  "search": {
+    "placeholder": "חפש מוצרים...",
+    "filters": {
+      "category": "קטגוריה",
+      "status": "סטטוס",
+      "priceRange": "טווח מחירים",
+      "lastUpdated": "עודכן לאחרונה"
+    }
+  }
+}
+/client/src/locales/he/settings.json
+json{
+  "title": "הגדרות",
+  "sections": {
+    "profile": "פרופיל",
+    "preferences": "העדפות",
+    "notifications": "התראות",
+    "security": "אבטחה",
+    "export": "ייצא נתונים",
+    "support": "תמיכה"
+  },
+  "profile": {
+    "title": "פרופיל משתמש",
+    "fullName": "שם מלא",
+    "email": "דוא\"ל",
+    "phone": "טלפון",
+    "company": "חברה",
+    "currency": "מטבע",
+    "timezone": "אזור זמן",
+    "language": "שפה",
+    "updateProfile": "עדכן פרופיל",
+    "changePassword": "שנה סיסמה"
+  },
+  "preferences": {
+    "theme": {
+      "title": "ערכת נושא",
+      "light": "בהיר",
+      "dark": "כהה",
+      "system": "כמו המערכת"
+    },
+    "dateFormat": {
+      "title": "פורמט תאריך",
+      "ddmmyyyy": "יום/חודש/שנה",
+      "mmddyyyy": "חודש/יום/שנה",
+      "yyyymmdd": "שנה/חודש/יום"
+    },
+    "currency": {
+      "title": "הגדרות מטבע",
+      "symbol": "סמל מטבע",
+      "position": "מיקום סמל",
+      "decimals": "מספר עשרוניים"
+    },
+    "receipts": {
+      "autoCategory": "קטגוריה אוטומטית",
+      "autoTaxCalculation": "חישוב מע\"מ אוטומטי",
+      "saveOriginal": "שמור תמונה מקורית",
+      "ocrLanguage": "שפת OCR"
+    }
+  },
+  "notifications": {
+    "email": {
+      "title": "התראות דוא\"ל",
+      "lowStock": "מלאי נמוך",
+      "weeklyReport": "דוח שבועי",
+      "budgetAlerts": "התראות תקציב",
+      "systemUpdates": "עדכוני מערכת"
+    },
+    "push": {
+      "title": "התראות דחיפה",
+      "enabled": "הפעל התראות דחיפה",
+      "soundEnabled": "הפעל צלילים",
+      "frequency": "תדירות התראות"
+    }
+  },
+  "security": {
+    "password": {
+      "current": "סיסמה נוכחית",
+      "new": "סיסמה חדשה",
+      "confirm": "אשר סיסמה",
+      "requirements": "דרישות סיסמה",
+      "strength": "חוזק סיסמה"
+    },
+    "twoFactor": {
+      "title": "אימות דו-שלבי",
+      "enable": "הפעל 2FA",
+      "disable": "בטל 2FA",
+      "backupCodes": "קודי גיבוי"
+    },
+    "sessions": {
+      "title": "מכשירים פעילים",
+      "lastActive": "פעיל לאחרונה",
+      "signOut": "התנתק",
+      "signOutAll": "התנתק מכל המכשירים"
+    }
+  },
+  "export": {
+    "title": "ייצא נתונים",
+    "formats": {
+      "csv": "CSV",
+      "excel": "Excel",
+      "pdf": "PDF",
+      "json": "JSON"
+    },
+    "dataTypes": {
+      "receipts": "קבלות",
+      "analytics": "אנליטיקה",
+      "inventory": "מלאי",
+      "all": "כל הנתונים"
+    },
+    "dateRange": "טווח תאריכים",
+    "export": "ייצא",
+    "status": "סטטוס",
+    "download": "הורד"
+  },
+  "support": {
+    "help": "מרכז עזרה",
+    "faq": "שאלות נפוצות",
+    "contact": "צור קשר",
+    "documentation": "תיעוד",
+    "feedback": "משב רוחות",
+    "version": "גרסה"
+  }
+}
+Update i18n Configuration to Load All Translation Files:
+javascript// client/src/i18n/index.js
+import i18next from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
+
+// Import all translations
+import enCommon from '../locales/en/common.json';
+import enDashboard from '../locales/en/dashboard.json';
+import enAuth from '../locales/en/auth.json';
+import enReceipts from '../locales/en/receipts.json';
+import enAnalytics from '../locales/en/analytics.json';
+import enInventory from '../locales/en/inventory.json';
+import enSettings from '../locales/en/settings.json';
+
+import heCommon from '../locales/he/common.json';
+import heDashboard from '../locales/he/dashboard.json';
+import heAuth from '../locales/he/auth.json';
+import heReceipts from '../locales/he/receipts.json';
+import heAnalytics from '../locales/he/analytics.json';
+import heInventory from '../locales/he/inventory.json';
+import heSettings from '../locales/he/settings.json';
+
+const resources = {
+  en: {
+    common: enCommon,
+    dashboard: enDashboard,
+    auth: enAuth,
+    receipts: enReceipts,
+    analytics: enAnalytics,
+    inventory: enInventory,
+    settings: enSettings
+  },
+  he: {
+    common: heCommon,
+    dashboard: heDashboard,
+    auth: heAuth,
+    receipts: heReceipts,
+    analytics: heAnalytics,
+    inventory: heInventory,
+    settings: heSettings
+  }
+};
+
+i18next
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: 'en',
+    debug: process.env.NODE_ENV === 'development',
+    interpolation: {
+      escapeValue: false,
+    },
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+      lookupLocalStorage: 'i18nextLng'
+    }
+  });
+
+export default i18next;
+Create Language Switcher Component:
+jsx// client/src/components/LanguageSwitcher.jsx
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Globe } from 'lucide-react';
+
+const LanguageSwitcher = () => {
+  const { i18n } = useTranslation();
+  const currentLanguage = i18n.language;
+
+  const toggleLanguage = () => {
+    const newLang = currentLanguage === 'he' ? 'en' : 'he';
+    i18n.changeLanguage(newLang);
+    document.documentElement.dir = newLang === 'he' ? 'rtl' : 'ltr';
+  };
+
+  return (
+    <button
+      onClick={toggleLanguage}
+      className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100"
+    >
+      <Globe className="w-5 h-5" />
+      <span className="font-medium">
+        {currentLanguage === 'he' ? 'English' : 'עברית'}
+      </span>
+    </button>
+  );
+};
+
+export default LanguageSwitcher;
+
+Additional Missing Tasks for Cline (EDI AI)
+Task 5.6: Create Data Formatters for Hebrew
+javascriptCreate: /client/src/utils/formatters/hebrew.js
+export const formatHebrewCurrency = (amount) => {
+  return new Intl.NumberFormat('he-IL', {
+    style: 'currency',
+    currency: 'ILS',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
+export const formatHebrewDate = (date) => {
+  return new Intl.DateTimeFormat('he-IL', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  }).format(new Date(date));
+};
+
+export const formatHebrewNumber = (number) => {
+  return new Intl.NumberFormat('he-IL').format(number);
+};
+
+// Update useFormatters hook
+// File: client/src/utils/formatters.js
+import { formatHebrewCurrency, formatHebrewDate } from './hebrew';
+
+export const useFormatters = () => {
+  const { i18n } = useTranslation();
+  
+  return {
+    formatCurrency: (amount) => {
+      if (i18n.language === 'he') {
+        return formatHebrewCurrency(amount);
+      }
+      return formatEnglishCurrency(amount);
+    },
+    formatDate: (date) => {
+      if (i18n.language === 'he') {
+        return formatHebrewDate(date);
+      }
+      return formatEnglishDate(date);
+    }
+  };
+};
+Task 5.7: Update Charts for RTL Support
+javascript// Modify all chart components for RTL support
+// File: client/src/features/analytics/components/charts/ModernSpendingChart.jsx
+const ModernSpendingChart = () => {
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === 'he';
+  
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <AreaChart 
+        data={data}
+        margin={{ 
+          top: 10, 
+          right: isRTL ? 0 : 30, 
+          left: isRTL ? 30 : 0, 
+          bottom: 0 
+        }}
+      >
+        <XAxis 
+          dataKey="month" 
+          reversed={isRTL}
+          orientation={isRTL ? 'right' : 'left'}
+        />
+        <YAxis 
+          reversed={isRTL}
+          orientation={isRTL ? 'right' : 'left'}
+          tickFormatter={formatHebrewCurrency}
+        />
+        <Tooltip 
+          position={{ x: isRTL ? 'left' : 'right' }}
+          formatter={(value) => [formatHebrewCurrency(value), 'סכום']}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+};
+Task 5.8: Add OCR Hebrew Text Normalization
+javascriptCreate: /server/src/utils/text/hebrewNormalizer.js
+class HebrewNormalizer {
+  static normalizeHebrewText(text) {
+    // Remove niqqud (vowel points)
+    text = text.replace(/[\u0591-\u05C7]/g, '');
+    
+    // Normalize final letters
+    const finalLetters = {
+      'ך': 'כ',
+      'ם': 'מ',
+      'ן': 'נ',
+      'ף': 'פ',
+      'ץ': 'צ'
+    };
+    
+    text = text.replace(/[ךםןףץ]/g, char => finalLetters[char]);
+    
+    // Remove extra spaces
+    text = text.replace(/\s+/g, ' ').trim();
+    
+    return text;
+  }
+  
+  static detectHebrewText(text) {
+    const hebrewRegex = /[\u0590-\u05FF\uFB1D-\uFB4F]/;
+    return hebrewRegex.test(text);
+  }
+}
+
+// Update TextExtractionService to use normalizer
+// File: server/src/services/textExtraction/TextExtractionService.js
+async extractText(imageBuffer, config) {
+  const result = await super.extractText(imageBuffer, config);
+  
+  if (HebrewNormalizer.detectHebrewText(result.text)) {
+    result.normalizedText = HebrewNormalizer.normalizeHebrewText(result.text);
+  }
+  
+  return result;
+}
+Task 5.9: Update Firestore Queries for Hebrew
+javascript// Update search functions for Hebrew
+// File: client/src/features/receipts/services/receiptSearch.js
+export const searchReceipts = async (searchTerm) => {
+  const { i18n } = useTranslation();
+  const isHebrew = i18n.language === 'he';
+  
+  // For Hebrew, search both normalized and original text
+  let queries = [];
+  
+  if (isHebrew) {
+    const hebrewSearchTerm = HebrewNormalizer.normalizeHebrewText(searchTerm);
+    queries = [
+      firestore()
+        .collection('receipts')
+        .where('merchantHe', '>=', hebrewSearchTerm)
+        .where('merchantHe', '<=', hebrewSearchTerm + '\uf8ff'),
+      firestore()
+        .collection('receipts')
+        .where('itemsHe', 'array-contains', hebrewSearchTerm)
+    ];
+  } else {
+    queries = [
+      firestore()
+        .collection('receipts')
+        .where('merchant', '>=', searchTerm)
+        .where('merchant', '<=', searchTerm + '\uf8ff')
+    ];
+  }
+  
+  const results = await Promise.all(queries.map(q => q.get()));
+  return results.flatMap(snapshot => snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+};
+Task 5.10: Add Progress Indicators for Document Processing
+javascriptCreate: /client/src/features/receipts/components/ReceiptUploadProgress.jsx
+import React from 'react';
+import { motion } from 'framer-motion';
+import { CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+
+const ReceiptUploadProgress = ({ status, progress, message }) => {
+  const stages = [
+    { key: 'uploading', label: 'מעלה קובץ', icon: Loader2 },
+    { key: 'processing', label: 'מעבד תמונה', icon: Loader2 },
+    { key: 'extracting', label: 'מזהה טקסט', icon: Loader2 },
+    { key: 'parsing', label: 'מפרק נתונים', icon: Loader2 },
+    { key: 'complete', label: 'הושלם', icon: CheckCircle },
+    { key: 'error', label: 'שגיאה', icon: AlertCircle }
+  ];
+  
+  const currentStage = stages.findIndex(s => s.key === status);
+  
+  return (
+    <div className="w-full p-6">
+      <div className="relative">
+        {/* Progress bar */}
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-primary-500"
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
+        
+        {/* Stage indicators */}
+        <div className="flex justify-between mt-4">
+          {stages.map((stage, index) => {
+            const Icon = stage.icon;
+            const isActive = index === currentStage;
+            const isCompleted = index < currentStage;
+            const isError = status === 'error' && index === currentStage;
+            
+            return (
+              <div 
+                key={stage.key}
+                className={`flex flex-col items-center ${
+                  isActive ? 'text-primary-500' : 
+                  isCompleted ? 'text-green-500' :
+                  isError ? 'text-red-500' : 'text-gray-400'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${
+                  isActive ? 'border-primary-500' :
+                  isCompleted ? 'border-green-500' :
+                  isError ? 'border-red-500' : 'border-gray-300'
+                }`}>
+                  <Icon className={`w-5 h-5 ${isActive ? 'animate-spin' : ''}`} />
+                </div>
+                <span className="mt-2 text-sm font-medium">{stage.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      
+      {message && (
+        <div className={`mt-4 text-center ${
+          status === 'error' ? 'text-red-500' : 'text-gray-600'
+        }`}>
+          {message}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ReceiptUploadProgress;
+Task 5.11: Add Offline Support
+javascriptCreate: /client/src/utils/offline/syncManager.js
+import { openDB } from 'idb';
+
+class OfflineSyncManager {
+  constructor() {
+    this.dbName = 'receiptScannerOffline';
+    this.version = 1;
+  }
+  
+  async initDB() {
+    this.db = await openDB(this.dbName, this.version, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains('receipts')) {
+          db.createObjectStore('receipts', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('pendingActions')) {
+          db.createObjectStore('pendingActions', { keyPath: 'id', autoIncrement: true });
+        }
+      },
+    });
+  }
+  
+  async saveOfflineReceipt(receipt) {
+    await this.db.put('receipts', { ...receipt, syncStatus: 'pending' });
+    await this.db.add('pendingActions', {
+      type: 'CREATE_RECEIPT',
+      data: receipt,
+      timestamp: Date.now(),
+    });
+  }
+  
+  async syncPendingActions() {
+    const actions = await this.db.getAll('pendingActions');
+    
+    for (const action of actions) {
+      try {
+        switch (action.type) {
+          case 'CREATE_RECEIPT':
+            await createReceipt(action.data);
+            break;
+          case 'UPDATE_RECEIPT':
+            await updateReceipt(action.data.id, action.data);
+            break;
+          case 'DELETE_RECEIPT':
+            await deleteReceipt(action.data.id);
+            break;
+        }
+        
+        await this.db.delete('pendingActions', action.id);
+      } catch (error) {
+        console.error('Sync failed for action:', action, error);
+      }
+    }
+  }
+}
+
+export const syncManager = new OfflineSyncManager();
+
+// **PAUSE**: Ask human to run "npm install idb"
+Task 5.12: Add Color Customization
+javascriptCreate: /client/src/features/settings/components/ColorCustomizer.jsx
+import React from 'react';
+import { HexColorPicker } from 'react-colorful';
+
+const ColorCustomizer = ({ theme, onThemeChange }) => {
+  const colorAreas = [
+    { key: 'primary', label: 'צבע ראשי', description: 'צבע לכפתורים ולקישורים' },
+    { key: 'secondary', label: 'צבע משני', description: 'צבע לאלמנטים משניים' },
+    { key: 'accent', label: 'צבע מבטא', description: 'צבע להדגשות' },
+    { key: 'background', label: 'רקע', description: 'צבע הרקע הראשי' },
+  ];
+  
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-semibold">התאמה אישית של צבעים</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {colorAreas.map(area => (
+          <div key={area.key} className="bg-white p-4 rounded-lg shadow">
+            <div className="flex items-center gap-4 mb-2">
+              <div 
+                className="w-8 h-8 rounded-full border-2 border-gray-200"
+                style={{ backgroundColor: theme[area.key] }}
+              />
+              <div>
+                <h4 className="font-medium">{area.label}</h4>
+                <p className="text-sm text-gray-500">{area.description}</p>
+              </div>
+            </div>
+            
+            <HexColorPicker
+              color={theme[area.key]}
+              onChange={(color) => onThemeChange(area.key, color)}
+            />
+          </div>
+        ))}
+      </div>
+      
+      <div className="pt-4 border-t">
+        <Button onClick={() => onThemeChange('reset')}>
+          אפס לברירת מחדל
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default ColorCustomizer;
+
+// **PAUSE**: Ask human to run "npm install react-colorful"
+
+
+This comprehensive translation setup ensures every part of your application can be displayed in Hebrew, providing a complete bilingual experience.
+Task 4.6: Create Complete Hebrew Translation Files
+markdownCreate all translation files as outlined in the Hebrew Translation section:
+- common.json
+- dashboard.json
+- auth.json
+- receipts.json
+- analytics.json
+- inventory.json
+- settings.json
+Task 1.5: Fix Client-Side Environment Variable Loading
+javascript// Fix client/index.js .env loading issues
+// File: client/src/index.js
+// SEARCH:
+// IMPORTANT: Replace with environment variables once .env issues are resolved
+
+// REPLACE WITH:
+import './core/config/environment'; // Create this file to handle env loading
+
+Create: /client/src/core/config/environment.js
+// Environment variable loader for client
+const loadEnvironment = () => {
+  if (process.env.NODE_ENV === 'development') {
+    require('dotenv').config({ path: '.env.development' });
+  } else if (process.env.NODE_ENV === 'production') {
+    require('dotenv').config({ path: '.env.production' });
+  }
+};
+
+loadEnvironment();
+
+// **PAUSE**: Ask human to verify .env files are loading correctly
+Task 1.6: Consolidate Axios Instances
+javascript// Fix duplicate Axios instances
+// File: client/src/core/config/api.config.js
+// Remove duplicate Axios instance (lines 15-25 approximately)
+// Keep only baseURL configuration
+
+// File: client/src/shared/services/api.js
+// Update to use single Axios instance from config
+import { API_CONFIG } from '../../core/config/api.config';
+
+const api = axios.create({
+  baseURL: API_CONFIG.baseURL
+});
+
+// Move all interceptors to this single instance
+api.interceptors.request.use(/* ... */);
+api.interceptors.response.use(/* ... */);
+Task 2.5: Clean Missing Files
+javascriptCreate: /analysis/missing-files-audit.md
+
+## Missing Files Cleanup
+- [ ] Remove references to server/src/middleware/errorHandler.js
+- [ ] Remove references to server/src/middleware/requestLogger.js
+- [ ] Remove references to missing service files
+- [ ] Update import statements
+
+// Clean up import statements for missing files
+const missingFiles = [
+  'server/src/middleware/errorHandler.js',
+  'server/src/middleware/requestLogger.js',
+  'server/src/services/category/categoryService.js',
+  'server/src/services/auth/authService.js'
+];
+
+// For each file that imports missing files, update imports
+missingFiles.forEach(missingFile => {
+  findFilesImporting(missingFile).forEach(file => {
+    // Remove import or replace with alternative
+    updateImport(file, missingFile);
+  });
+});
+Task 2.6: Create Missing critical files
+javascriptCreate: /server/src/services/receipts/ReceiptProcessingService.js
+class ReceiptProcessingService extends BaseService {
+  constructor() {
+    super();
+    this.textExtractor = new TextExtractionService();
+    this.dataExtractor = new ReceiptDataExtractor();
+  }
+  
+  async processReceipt(imageBuffer, userId) {
+    try {
+      // Extract text
+      const textResult = await this.textExtractor.extractText(imageBuffer);
+      
+      // Parse receipt data
+      const receiptData = await this.dataExtractor.extractReceiptData(textResult);
+      
+      // Save to database
+      await this.saveReceipt(userId, receiptData);
+      
+      return receiptData;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+}
+
+Create: /server/src/services/inventory/categoryService.js
+class CategoryService extends BaseService {
+  constructor() {
+    super();
+    this.db = require('../../../config/firebase').db;
+  }
+  
+  async getCategories(userId) {
+    const snapshot = await this.db
+      .collection('categories')
+      .where('userId', '==', userId)
+      .get();
+      
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  }
+  
+  async createCategory(userId, categoryData) {
+    const categoryRef = await this.db
+      .collection('categories')
+      .add({
+        ...categoryData,
+        userId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      
+    return { id: categoryRef.id, ...categoryData };
+  }
+}
+Task 1.7: Fix Firestore Indexes
+javascript// Update firestore.indexes.json for Hebrew support
+// File: firestore.indexes.json
+{
+  "indexes": [
+    {
+      "collectionGroup": "receipts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "receipts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "merchantHe", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "receipts",
+      "queryScope": "COLLECTION", 
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "merchantEn", "order": "ASCENDING" }
+      ]
+    }
+  ]
+}
+
+// **PAUSE**: Ask human to run "firebase deploy --only firestore:indexes"
+Task 5.4: Add Dark Mode Support
+javascriptCreate: /client/src/contexts/ThemeContext.js
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+const ThemeContext = createContext();
+
+export const ThemeProvider = ({ children }) => {
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return saved ? saved === 'dark' : prefersDark;
+  });
+  
+  useEffect(() => {
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', isDark);
+  }, [isDark]);
+  
+  return (
+    <ThemeContext.Provider value={{ isDark, setIsDark }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+export const useTheme = () => useContext(ThemeContext);
+
+// Update App.js to include theme provider
+<ThemeProvider>
+  <I18nextProvider i18n={i18n}>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </I18nextProvider>
+</ThemeProvider>
+Task 5.5: Add Monitoring and Error Tracking
+javascriptCreate: /client/src/utils/monitoring/sentry.js
+import * as Sentry from '@sentry/react';
+import { BrowserTracing } from '@sentry/tracing';
+
+export const initSentry = () => {
+  Sentry.init({
+    dsn: process.env.REACT_APP_SENTRY_DSN,
+    integrations: [new BrowserTracing()],
+    tracesSampleRate: 1.0,
+    environment: process.env.NODE_ENV,
+  });
+};
+
+Create: /client/src/utils/monitoring/webVitals.js
+import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+
+export const reportWebVitals = () => {
+  getCLS(console.log);
+  getFID(console.log);
+  getFCP(console.log);
+  getLCP(console.log);
+  getTTFB(console.log);
+};
+
+// **PAUSE**: Ask human to run "npm install @sentry/react @sentry/tracing web-vitals"
+
+Additional Tasks for Comprehensive Receipt Scanner Modernization
+Phase 1.8: API Documentation Generation
+javascriptCreate: /docs/api-documentation-setup.md
+
+## API Documentation Generation Setup
+- [ ] Install Swagger/OpenAPI dependencies
+- [ ] Create OpenAPI specification files
+- [ ] Generate interactive API documentation
+- [ ] Create Postman collection
+
+// Install Swagger dependencies
+cd server
+npm install swagger-jsdoc swagger-ui-express swagger-autogen
+
+// Create Swagger configuration
+Create: /server/src/config/swagger.js
+const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+
+const swaggerDefinition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'Receipt Scanner API',
+    version: '1.0.0',
+    description: 'API documentation for Receipt Scanner application',
+  },
+  servers: [
+    {
+      url: 'http://localhost:5000',
+      description: 'Development server',
+    },
+    {
+      url: 'https://api.receiptscannerapp.com',
+      description: 'Production server',
+    },
+  ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    },
+  },
+};
+
+const options = {
+  swaggerDefinition,
+  apis: ['./src/routes/*.js', './src/models/*.js'],
+};
+
+const swaggerSpec = swaggerJSDoc(options);
+
+module.exports = {
+  swaggerUi,
+  swaggerSpec,
+};
+
+// Update app.js to include Swagger
+// File: server/src/app.js
+const { swaggerUi, swaggerSpec } = require('./config/swagger');
+
+// Add before other routes
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// **PAUSE**: Ask human to navigate to http://localhost:5000/api-docs
+Phase 1.9: Testing Infrastructure Setup
+javascriptCreate: /analysis/testing-infrastructure-setup.md
+
+## Testing Infrastructure Setup
+- [ ] Unit test framework (Jest)
+- [ ] Integration test setup
+- [ ] E2E test framework (Cypress)
+- [ ] Test coverage reporting
+- [ ] Performance benchmarking
+
+// Install testing dependencies
+cd client
+npm install --save-dev jest @testing-library/react @testing-library/jest-dom jest-environment-jsdom
+npm install --save-dev cypress cypress-localstorage-commands @cypress/code-coverage
+
+cd ../server
+npm install --save-dev jest supertest
+
+// Create Jest config
+Create: /client/jest.config.js
+module.exports = {
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
+  },
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+};
+
+// Create unit test examples
+Create: /client/src/components/__tests__/Button.test.js
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import Button from '../Button';
+
+describe('Button Component', () => {
+  it('renders correctly', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByText('Click me')).toBeInTheDocument();
+  });
+  
+  it('handles click events', () => {
+    const handleClick = jest.fn();
+    render(<Button onClick={handleClick}>Click me</Button>);
+    
+    fireEvent.click(screen.getByText('Click me'));
+    expect(handleClick).toHaveBeenCalled();
+  });
+});
+
+// Create performance benchmark
+Create: /scripts/performance-benchmark.js
+const { chromium } = require('playwright');
+const lighthouse = require('lighthouse');
+
+async function runPerformanceTest() {
+  const browser = await chromium.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  
+  // Measure First Contentful Paint
+  await page.goto('http://localhost:3000');
+  const performanceMetrics = await page.evaluate(() => {
+    const perfEntries = performance.getEntries();
+    return {
+      fcp: perfEntries.find(e => e.name === 'first-contentful-paint')?.startTime,
+      lcp: perfEntries.find(e => e.entryType === 'largest-contentful-paint')?.startTime,
+    };
+  });
+  
+  console.log('Performance Metrics:', performanceMetrics);
+  await browser.close();
+}
+
+runPerformanceTest();
+
+// **PAUSE**: Ask human to run "npm test" to verify testing setup
+Phase 3.5: Accessibility Implementation
+javascriptCreate: /analysis/accessibility-implementation.md
+
+## Accessibility (a11y) Implementation
+- [ ] ARIA attributes for dynamic content
+- [ ] Keyboard navigation support
+- [ ] Screen reader testing
+- [ ] Color contrast checking
+- [ ] Focus management
+
+// Create accessibility utilities
+Create: /client/src/utils/a11y/index.js
+export const announceToScreenReader = (message) => {
+  const announcement = document.createElement('div');
+  announcement.setAttribute('aria-live', 'polite');
+  announcement.setAttribute('class', 'sr-only');
+  announcement.textContent = message;
+  
+  document.body.appendChild(announcement);
+  setTimeout(() => document.body.removeChild(announcement), 1000);
+};
+
+export const trapFocus = (element) => {
+  const focusableElements = element.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  );
+  
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+  
+  element.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    }
+  });
+};
+
+// Update Button component for accessibility
+// File: client/src/design-system/components/Button.jsx
+const Button = React.forwardRef(({ 
+  ariaLabel,
+  ariaDescribedBy,
+  disabled,
+  ...props 
+}, ref) => {
+  return (
+    <button
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
+      aria-disabled={disabled}
+      tabIndex={disabled ? -1 : 0}
+      {...buttonVariants({ variant, size, rounded, className })}
+      ref={ref}
+      {...props}
+    />
+  );
+});
+
+// Create screen reader tests
+Create: /scripts/a11y-test.js
+const { chromium } = require('playwright');
+
+async function testScreenReaderCompatibility() {
+  const browser = await chromium.launch();
+  const page = await context.newPage();
+  
+  // Inject aXe for accessibility testing
+  await page.addScriptTag({ path: './node_modules/axe-core/axe.min.js' });
+  
+  await page.goto('http://localhost:3000');
+  
+  const accessibilityResults = await page.evaluate(() => {
+    return new Promise((resolve) => {
+      axe.run((err, results) => {
+        if (err) throw err;
+        resolve(results);
+      });
+    });
+  });
+  
+  console.log('Accessibility Violations:', accessibilityResults.violations);
+  await browser.close();
+}
+
+// **PAUSE**: Ask human to run "npm run a11y-test"
+Phase 1.10: Security Enhancements
+javascriptCreate: /analysis/security-enhancements.md
+
+## Security Enhancements
+- [ ] Rate limiting implementation
+- [ ] CORS configuration
+- [ ] Content Security Policy (CSP)
+- [ ] Security headers
+- [ ] Input sanitization
+
+// Install security dependencies
+cd server
+npm install express-rate-limit helmet cors express-mongo-sanitize xss-clean
+
+// Create security middleware
+Create: /server/src/middleware/security/security.js
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.RATE_LIMIT || 100,
+  message: {
+    status: 429,
+    error: 'Too many requests, please try again later.',
+  },
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 50,
+  message: 'Too many uploads, please try again later.',
+});
+
+const securityMiddleware = {
+  setup: (app) => {
+    // Security headers
+    app.use(helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", 'https://apis.google.com'],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          imgSrc: ["'self'", 'data:', 'https://storage.googleapis.com'],
+          connectSrc: ["'self'", 'https://firebase.googleapis.com'],
+        },
+      },
+    }));
+    
+    // Rate limiting
+    app.use('/api/', limiter);
+    app.use('/api/receipts', uploadLimiter);
+    
+    // Data sanitization
+    app.use(mongoSanitize());
+    app.use(xss());
+  },
+};
+
+// Create input sanitization
+Create: /server/src/utils/sanitize/inputSanitizer.js
+const validator = require('validator');
+
+class InputSanitizer {
+  static sanitizeString(input) {
+    if (typeof input !== 'string') return input;
+    
+    return validator.escape(validator.trim(input));
+  }
+  
+  static sanitizeObject(obj) {
+    const sanitized = {};
+    
+    for (const [key, value] of Object.entries(obj)) {
+      if (typeof value === 'string') {
+        sanitized[key] = this.sanitizeString(value);
+      } else if (typeof value === 'object') {
+        sanitized[key] = this.sanitizeObject(value);
+      } else {
+        sanitized[key] = value;
+      }
+    }
+    
+    return sanitized;
+  }
+}
+
+// Update app.js with security middleware
+// File: server/src/app.js
+const { securityMiddleware } = require('./middleware/security/security');
+
+// Apply security middleware
+securityMiddleware.setup(app);
+
+// **PAUSE**: Ask human to test API with security headers enabled

@@ -1,80 +1,66 @@
-# Contributing to Receipt Scanner App
+# Contributing to Receipt Scanner
 
-Thank you for considering contributing to Receipt Scanner App! This document outlines the process for contributing to the project.
+## Frontend Development Workflow
 
-## Code of Conduct
+### Testing Without Local Builds
 
-In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to make participation in our project a harassment-free experience for everyone.
+We use Firebase Hosting Preview Channels to test frontend changes without requiring local builds.
 
-## How Can I Contribute?
+When you push changes to any branch:
+1. GitHub Actions automatically builds and deploys your frontend code
+2. A unique preview URL is generated where anyone can test the changes
+3. For pull requests, this URL appears in the PR comments
 
-### Reporting Bugs
+### Development Process
 
-- Before creating bug reports, please check the issue tracker as you might find that you don't need to create one.
-- When you are creating a bug report, please include as many details as possible:
-  - Use a clear and descriptive title
-  - Describe the exact steps to reproduce the problem
-  - Provide specific examples to demonstrate the steps
-  - Describe the behavior you observed and what you expected to see
-  - Include screenshots if possible
+1. Create a new branch for your task:
+   ```bash
+   git checkout -b task/your-task-name
+   ```
 
-### Suggesting Enhancements
+2. Make your changes to files in the client/ directory
+3. Commit and push your changes:
+   ```bash
+   git add .
+   git commit -m "Task: Description of your changes"
+   git push origin task/your-task-name
+   ```
 
-- Enhancement suggestions are tracked as GitHub issues.
-- Provide a clear and detailed explanation of the feature you want to see
-- Explain why this enhancement would be useful to most users
+4. Create a pull request on GitHub
+5. After the automatic deployment completes, use the preview URL to test your changes
+6. Continue to make changes as needed - each push updates the preview
+7. Once the preview is working correctly, the PR can be reviewed and merged
 
-### Pull Requests
 
-- Fill in the required template
-- Do not include issue numbers in the PR title
-- Follow the coding style used throughout the project
-- Include appropriate tests
-- Ensure all tests pass
-- Document new code based on the project's documentation standards
+### Step 4: Test the Setup
+1. Create a small test change to verify the workflow:
+   - Create a branch: `git checkout -b test/preview-deployment`
+   - Make a small visible change to `client/src/App.js` (add a version number or timestamp)
+   - Commit and push: `git add . && git commit -m "Test: Preview deployment" && git push origin test/preview-deployment`
+   - Create a PR on GitHub
+   - Verify the GitHub Action runs and creates a preview URL
+   - Test the preview URL to confirm it works
 
-## Development Process
+### Step 5: Document the Process in `implementation-tasks.md`
+1. Add a section to `implementation-tasks.md` documenting:
+   - The Firebase Preview setup completed
+   - How to use the preview URLs for testing
+   - Any issues encountered and how they were resolved
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## Deliverables
+1. Working GitHub Actions workflow for Firebase Preview Channels
+2. Updated Firebase configuration files
+3. CONTRIBUTING.md guide explaining the workflow
+4. Successful test deployment with a working preview URL
+5. Documentation in implementation-tasks.md
 
-## Styleguides
+## Testing and Verification
+After pushing your changes, verify:
+1. The GitHub Action runs successfully
+2. A preview URL is generated and appears in the PR comments
+3. The preview URL loads the frontend correctly in a browser
+4. Any changes to the client code are reflected in the preview after pushing
 
-### Git Commit Messages
-
-- Use the present tense ("Add feature" not "Added feature")
-- Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
-- Limit the first line to 72 characters or less
-- Reference issues and pull requests after the first line
-
-### JavaScript Styleguide
-
-- All JavaScript code must adhere to the [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript)
-- Use ES6 features where applicable
-- Prefer const over let. Only use let if rebinding is necessary
-- No var
-- Avoid using console.log in production code
-
-### React Styleguide
-
-- Use functional components with hooks instead of class components
-- Use destructuring for props
-- Use named exports for components
-
-## Additional Notes
-
-### Issue and Pull Request Labels
-
-This section lists the labels we use to help us track and manage issues and pull requests.
-
-* `bug` - Issues for bugs in the code
-* `enhancement` - Issues for new features or improvements
-* `documentation` - Issues related to documentation
-* `good first issue` - Good for newcomers
-* `help wanted` - Extra attention is needed
-* `invalid` - Issues that are invalid or non-reproducible
-* `question` - Issues that are a question
-* `wontfix` - Issues that will not be worked on
+## Notes
+- The Firebase project (project-reciept-reader-id) should already be set up
+- You may need to coordinate with the repository admin to add the FIREBASE_SERVICE_ACCOUNT secret to GitHub

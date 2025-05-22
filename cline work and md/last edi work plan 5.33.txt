@@ -1,0 +1,442 @@
+EDI (Cline) Work Plan: Receipt Scanner Application Enhancement
+Preparation Phase (Before Starting Implementation)
+
+Environment Setup
+
+Create a new development branch: git checkout -b enhancement-phase
+Review all existing code files to understand current implementation
+Review all markdown documentation files in /docs/ directory
+Confirm access to required repositories and dependencies
+Deliverable: Ready development environment and comprehensive understanding of the codebase
+
+
+
+Phase 1: Security & Infrastructure Enhancements (Week 1)
+Day 1-2: Firestore Security Rules Update
+
+Task: Complete Firestore security rules implementation
+
+Open firestore.rules file
+Review current implementation against security-fixes-checklist.md
+Identify missing validation functions and access controls
+Add functions for Hebrew text validation (ensure they handle special characters and final forms)
+Implement the following missing rules:
+// Add specific validation for Hebrew text
+function isValidHebrewString(str, minLen, maxLen) {
+  return str is string && str.size() >= minLen && str.size() <= maxLen && str.matches("^[\\u0590-\\u05FF\\s\\d.,;:!?-]+$");
+}
+
+// Add missing collection rules here...
+
+Test rules locally with Firebase Emulator
+Deliverable: Updated firestore.rules file ready for deployment
+
+
+
+Day 3-4: Server-side Security Implementation
+
+Task: Create security middleware
+
+Create file: /server/src/middleware/security/security.js
+Implement the following security features:
+
+Rate limiting configuration
+CORS configuration with proper origin checking
+Helmet security headers
+Content-Security-Policy configuration
+XSS protection
+
+
+Deliverable: Complete security middleware implementation
+
+
+Task: Create input sanitization utilities
+
+Create file: /server/src/utils/sanitize/inputSanitizer.js
+Implement functions for:
+
+General string sanitization
+HTML sanitization
+SQL injection prevention
+Special handling for Hebrew text (ensuring preservation of characters)
+File name sanitization
+
+
+Deliverable: Complete input sanitization utility
+
+
+
+Day 5: Accessibility Implementation Completion
+
+Task: Complete keyboard navigation support
+
+Review existing /client/src/utils/a11y/index.js
+Add keypress handler utilities for navigation
+Implement focus-trap functionality
+Deliverable: Updated accessibility utilities
+
+
+Task: Add ARIA attributes to components
+
+Review critical components and add missing ARIA attributes
+Focus on interactive elements like buttons, forms, and modals
+Deliverable: Components with proper accessibility attributes
+
+
+
+Phase 2: Frontend Modernization (Week 2)
+Day 1-2: Design System Implementation
+
+Task: Create design system foundation
+
+Create file: /client/src/design-system/index.js
+Implement theme configuration with:
+
+Color palette (including dark mode)
+Typography scale
+Spacing system
+Border radius definitions
+RTL support configurations
+
+
+Deliverable: Core design system implementation
+
+
+Task: Implement Button component
+
+Create file: /client/src/design-system/components/Button.jsx
+Implement features:
+
+Multiple variants (primary, secondary, outline, ghost, link)
+Size variations (sm, md, lg)
+Loading state
+Icon support (leading and trailing)
+Full ARIA support
+RTL awareness
+
+
+Deliverable: Reusable Button component
+
+
+Task: Implement Card component
+
+Create file: /client/src/design-system/components/Card.jsx
+Implement features:
+
+Header, body, footer sections
+Elevation variations
+Border options
+Responsive behavior
+
+
+Deliverable: Reusable Card component
+
+
+
+Day 3-4: Modern Chart Components
+
+Task: Create migration script
+
+Create file: /scripts/migrate-charts.js
+Implement functionality to:
+
+Identify old chart implementations
+Generate new chart component templates
+Document migration process
+
+
+Deliverable: Chart migration utility
+
+
+Task: Implement ModernSpendingChart
+
+Create file: /client/src/features/analytics/components/charts/ModernSpendingChart.jsx
+Implement features:
+
+Recharts-based implementation
+Responsive design
+RTL layout support
+Internationalized labels
+Accessible color scheme
+Keyboard navigation
+
+
+Deliverable: Modern spending chart component
+
+
+
+Day 5: React Component Testing
+
+Task: Create Jest configuration
+
+Create file: /client/jest.config.js
+Configure Jest with:
+
+React Testing Library support
+Mock implementations for Firebase
+Coverage reporting
+
+
+Deliverable: Jest configuration file
+
+
+Task: Implement Button component tests
+
+Create file: /client/src/components/__tests__/Button.test.js
+Test cases for:
+
+Rendering in all variants
+Click handling
+Disabled state
+Loading state
+Keyboard interaction
+RTL rendering
+
+
+Deliverable: Button component test suite
+
+
+
+Phase 3: State Management & Performance (Week 3)
+Day 1-2: Redux Implementation
+
+Task: Create Redux store
+
+Create file: /client/src/store/index.js
+Implement:
+
+Store configuration with Redux Toolkit
+DevTools integration
+Middleware setup (thunk, logger)
+Persistence configuration
+
+
+Deliverable: Redux store implementation
+
+
+Task: Implement Receipt API slice
+
+Create file: /client/src/store/services/receiptApi.js
+Implement RTK Query slice with:
+
+CRUD operations for receipts
+Caching configuration
+Optimistic updates
+Error handling
+Automatic re-fetching
+
+
+Deliverable: Receipt API slice implementation
+
+
+Task: Update hooks to use Redux
+
+Modify useReceipts.js to use Redux store
+Implement Redux selectors for receipt data
+Ensure backward compatibility with existing components
+Deliverable: Redux-integrated hooks
+
+
+
+Day 3-4: Performance Optimization
+
+Task: Implement caching mechanism
+
+Create file: /client/src/utils/performance/cache.js
+Implement:
+
+In-memory LRU cache
+Persistence options
+TTL configuration
+Cache invalidation strategies
+
+
+Deliverable: Caching utility implementation
+
+
+Task: Add lazy loading for routes
+
+Update client/src/routes.js with React.lazy
+Implement suspense boundaries
+Add loading fallbacks
+Deliverable: Lazy-loaded route configuration
+
+
+
+Day 5: Image Optimization
+
+Task: Implement image optimization utilities
+
+Create responsive image loading helpers
+Add lazy loading for images
+Implement blur-up technique for progressive loading
+Deliverable: Image optimization utilities
+
+
+
+Phase 4: Additional Features & Finalization (Week 4)
+Day 1-2: Offline Support Implementation
+
+Task: Create offline storage solution
+
+Create file: /client/src/utils/offline/syncManager.js
+Implement:
+
+IndexedDB storage wrapper
+Queue system for pending operations
+Conflict resolution strategies
+Network status detection
+
+
+Deliverable: Offline storage implementation
+
+
+Task: Add offline synchronization
+
+Implement background sync when online
+Add retry mechanisms
+Create UI indicators for offline status
+Deliverable: Complete offline synchronization system
+
+
+
+Day 3: Theme Implementation
+
+Task: Create theme context
+
+Create file: /client/src/contexts/ThemeContext.js
+Implement:
+
+Theme state management
+Light/dark mode switching
+Theme persistence
+System preference detection
+
+
+Deliverable: Theme context implementation
+
+
+Task: Add color customization
+
+Create file: /client/src/features/settings/components/ColorCustomizer.jsx
+Implement:
+
+Color picker component
+Theme preview
+Preset color schemes
+Accessibility checks for chosen colors
+
+
+Deliverable: Color customization component
+
+
+
+Day 4: Error Monitoring Integration
+
+Task: Implement Sentry integration
+
+Create file: /client/src/utils/monitoring/sentry.js
+Implement:
+
+Sentry initialization
+Error boundary component
+Custom error reporting
+User context tracking
+
+
+Deliverable: Sentry integration
+
+
+Task: Add performance monitoring
+
+Create file: /client/src/utils/monitoring/webVitals.js
+Implement Web Vitals tracking
+Add custom performance metrics
+Create reporting mechanism
+Deliverable: Performance monitoring implementation
+
+
+
+Day 5: PWA Configuration
+
+Task: Create PWA manifest
+
+Create file: /client/public/manifest.json
+Configure:
+
+App name and description
+Icons in various sizes
+Display mode
+Start URL
+Theme colors
+
+
+Deliverable: PWA manifest file
+
+
+Task: Implement service worker
+
+Create file: /client/src/service-worker.js
+Implement:
+
+Asset caching strategies
+Offline fallback page
+Background sync registration
+Push notification handling
+
+
+Deliverable: Service worker implementation
+
+
+
+Phase 5: Hebrew/RTL Support (Week 5)
+Day 1-2: Hebrew OCR Enhancement
+
+Task: Improve OCR for Hebrew text
+
+Update OCR preprocessing to handle right-to-left text
+Implement Hebrew character recognition improvements
+Add support for mixed language documents
+Create post-processing for Hebrew text correction
+Deliverable: Enhanced Hebrew OCR implementation
+
+
+Task: Add Hebrew text extraction utilities
+
+Create specialized extraction patterns for Hebrew receipts
+Implement common Israeli vendor recognition
+Add Israeli date format parsing
+Deliverable: Hebrew text extraction utilities
+
+
+
+Day 3-4: RTL Interface Implementation
+
+Task: Implement RTL layout switching
+
+Create RTL CSS utility
+Add direction context provider
+Update components for bidirectional support
+Fix alignment and spacing issues in RTL mode
+Deliverable: RTL layout system
+
+
+Task: Create bidirectional text utilities
+
+Implement handling for mixed LTR/RTL content
+Add text isolation utilities
+Create bidirectional input components
+Deliverable: Bidirectional text utilities
+
+
+
+Day 5: Final Documentation Update
+
+Task: Update all documentation
+
+Update API documentation
+Create RTL implementation guide
+Document new features and utilities
+Create developer onboarding guide
+Update user manual with new features
+Deliverable: Complete, updated documentation

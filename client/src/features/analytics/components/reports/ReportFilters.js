@@ -1,9 +1,10 @@
-import React from 'react';
-import { Dropdown } from '../common/Dropdown';
-import { Button } from '../common/Button';
-import { DateRangePicker } from '../common/DateRangePicker';
-import { useCategories } from '../../../categories/hooks/useCategories';
 import { FileBarChart, X } from 'lucide-react';
+import React from 'react';
+
+import { Button } from '../../../../shared/components/forms/Button';
+import { Dropdown } from '../../../../shared/components/forms/Dropdown';
+import { DateRangePicker } from '../../../../shared/components/ui/DateRangePicker';
+import { useCategories } from '../../../categories/hooks/useCategories';
 
 export const ReportFilters = ({ filters, onChange, onReset }) => {
   const { categories } = useCategories();
@@ -12,7 +13,7 @@ export const ReportFilters = ({ filters, onChange, onReset }) => {
     { value: 'spending', label: 'Spending Overview' },
     { value: 'categories', label: 'Category Analysis' },
     { value: 'trends', label: 'Monthly Trends' },
-    { value: 'budget', label: 'Budget Progress' }
+    { value: 'budget', label: 'Budget Progress' },
   ];
 
   return (
@@ -21,7 +22,7 @@ export const ReportFilters = ({ filters, onChange, onReset }) => {
         <Dropdown
           options={reportTypes}
           value={filters.reportType}
-          onChange={(value) => onChange({ ...filters, reportType: value })}
+          onChange={value => onChange({ ...filters, reportType: value })}
           placeholder="Select report type"
           icon={FileBarChart}
         />
@@ -29,21 +30,23 @@ export const ReportFilters = ({ filters, onChange, onReset }) => {
         <DateRangePicker
           startDate={filters.startDate}
           endDate={filters.endDate}
-          onChange={(dates) => onChange({
-            ...filters,
-            startDate: dates.startDate,
-            endDate: dates.endDate
-          })}
+          onChange={dates =>
+            onChange({
+              ...filters,
+              startDate: dates.startDate,
+              endDate: dates.endDate,
+            })
+          }
         />
 
         {filters.reportType === 'categories' && (
           <Dropdown
             options={categories.map(cat => ({
               value: cat.id,
-              label: cat.name
+              label: cat.name,
             }))}
             value={filters.category}
-            onChange={(value) => onChange({ ...filters, category: value })}
+            onChange={value => onChange({ ...filters, category: value })}
             placeholder="Select category"
           />
         )}
@@ -51,12 +54,7 @@ export const ReportFilters = ({ filters, onChange, onReset }) => {
 
       {Object.values(filters).some(Boolean) && (
         <div className="mt-4 flex justify-end">
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={X}
-            onClick={onReset}
-          >
+          <Button variant="secondary" size="sm" icon={X} onClick={onReset}>
             Reset Filters
           </Button>
         </div>

@@ -1,18 +1,11 @@
-// src/features/receipts/components/ReceiptUploader.js
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/forms/Button';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { useToast } from '../../../shared/hooks/useToast';
+import { useReceipts } from '../hooks/useReceipts';
 import { Camera, Upload, X, Image } from 'lucide-react';
-import { 
-  validateFile, 
-  createFilePreview, 
-  revokeFilePreview, 
-  formatFileSize 
-} from '../../../shared/utils/fileHelpers';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_TYPES = {
@@ -21,23 +14,32 @@ const ACCEPTED_TYPES = {
   'image/heic': ['.heic']
 };
 
-export const ReceiptUploader = ({ 
-  onUploadSuccess, 
-  loading = false,
-  allowCamera = true,
-  className = ''
-}) => {
+export const ReceiptUploader = ({ onSuccess, className = '' }) => {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { addReceipt } = useReceipts();
   const { showToast } = useToast();
 
+  // Handle dropped or selected files
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
     if (file) {
-      handleFileSelection(file);
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
+        showToast(`File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`, 'error');
+        return;
+      }
+
+      // Create preview
+      const previewUrl = URL.createObjectURL(file);
+      setFile(file);
+      setPreview(previewUrl);
+      setError(null);
     }
-  }, []);
+  }, [showToast]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -46,53 +48,49 @@ export const ReceiptUploader = ({
     multiple: false
   });
 
-  const handleFileSelection = async (selectedFile) => {
+  // Handle the upload process
+  const handleUpload = async () => {
+    if (!file) return;
+
     try {
-      // Validate file
-      const validation = validateFile(selectedFile, {
-        maxSize: MAX_FILE_SIZE,
-        acceptedTypes: Object.keys(ACCEPTED_TYPES)
-      });
-
-      if (!validation.isValid) {
-        throw new Error(validation.errors[0]);
-      }
-
-      // Create preview
-      const previewUrl = createFilePreview(selectedFile);
-      if (!previewUrl) {
-        throw new Error('Failed to create file preview');
-      }
-
-      setFile(selectedFile);
-      setPreview(previewUrl);
+      setLoading(true);
       setError(null);
 
-    } catch (err) {
-      setError(err.message);
-      showToast(err.message, 'error');
-    }
-  };
+      // Create a basic receipt object
+      const receiptData = {
+        date: new Date().toISOString().split('T')[0],
+        total: 0, // Will be updated by OCR
+        merchant: 'Unknown', // Will be updated by OCR
+        category: ''
+      };
 
-  const handleUpload = async () => {
-    if (!file || loading) return;
-
-    try {
-      const formData = new FormData();
-      formData.append('receipt', file);
-      await onUploadSuccess(formData);
+      // Upload to server for processing
+      const result = await addReceipt(receiptData, file);
       
+      // Show success message
       showToast('Receipt uploaded successfully', 'success');
+      
+      // Reset the component
       handleClear();
+      
+      // Notify parent component
+      if (onSuccess) {
+        onSuccess(result);
+      }
     } catch (err) {
       setError(err.message);
       showToast(err.message, 'error');
+      console.error('Error adding receipt:', err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Clear the selected file and preview
   const handleClear = () => {
     if (preview) {
-      revokeFilePreview(preview);
+      URL.revokeObjectURL(preview);
     }
     setFile(null);
     setPreview(null);
@@ -121,31 +119,8 @@ export const ReceiptUploader = ({
             {isDragActive ? 'Drop the receipt here...' : 'Drop a receipt or click to upload'}
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            Supported formats: JPG, PNG, HEIC (max {formatFileSize(MAX_FILE_SIZE)})
+            Supported formats: JPG, PNG, HEIC (max 5MB)
           </p>
-
-          {allowCamera && (
-            <div className="mt-4 flex justify-center gap-4">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Camera handling logic
-                }}
-                icon={Camera}
-                disabled={loading}
-              >
-                Take Photo
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={(e) => e.stopPropagation()}
-                icon={Upload}
-                disabled={loading}
-              >
-                Choose File
-              </Button>
-            </div>
-          )}
         </div>
       ) : (
         <div className="space-y-4">

@@ -1,0 +1,67 @@
+{
+  "firestore": {
+    "rules": {
+      "test_suite": [
+        {
+          "description": "Unauthenticated users cannot read documents",
+          "request": {
+            "auth": null,
+            "path": "/databases/(default)/documents/documents/doc1",
+            "method": "get"
+          },
+          "expectation": "denied"
+        },
+        {
+          "description": "Users can read their own documents",
+          "request": {
+            "auth": { "uid": "user1" },
+            "path": "/databases/(default)/documents/documents/doc1",
+            "method": "get"
+          },
+          "resource": {
+            "data": { "userId": "user1" }
+          },
+          "expectation": "allowed"
+        },
+        {
+          "description": "Users cannot read other users' documents",
+          "request": {
+            "auth": { "uid": "user2" },
+            "path": "/databases/(default)/documents/documents/doc1",
+            "method": "get"
+          },
+          "resource": {
+            "data": { "userId": "user1" }
+          },
+          "expectation": "denied"
+        },
+        {
+          "description": "Users can create documents with their own userId",
+          "request": {
+            "auth": { "uid": "user1" },
+            "path": "/databases/(default)/documents/documents/doc2",
+            "method": "create",
+            "data": {
+              "userId": "user1",
+              "title": "My Document"
+            }
+          },
+          "expectation": "allowed"
+        },
+        {
+          "description": "Users cannot create documents with other users' userId",
+          "request": {
+            "auth": { "uid": "user1" },
+            "path": "/databases/(default)/documents/documents/doc3",
+            "method": "create",
+            "data": {
+              "userId": "user2",
+              "title": "Invalid Document"
+            }
+          },
+          "expectation": "denied"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/*
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14' # Or the Node.js version you are using
+
+    - name: Install dependencies (Client)
+      run: cd client && npm install
+
+    - name: Install dependencies (Server)
+      run: cd server && npm install
+
+    - name: Install dependencies (Functions)
+      run: cd functions && npm install
+
+    # Add steps for running tests, linting, etc. here
+    # Example:
+    # - name: Run Server Tests
+    #   run: cd server && npm test
+    # - name: Run Client Tests
+    #   run: cd client && npm test
+    # - name: Run Linting
+    #   run: npm run lint

@@ -1,0 +1,316 @@
+
+
+Human Developer Work Plan
+Phase 1: Foundation Stabilization (Weeks 1-2)
+Week 1 - Day 1:
+
+After Cline updates storage.rules:
+
+bashcd /path/to/project
+firebase deploy --only storage
+
+After Cline creates .env.template files:
+
+bash# Copy templates to actual env files
+cp client/.env.template client/.env.development
+cp server/.env.template server/.env
+
+# Fill in actual values in both files
+nano client/.env.development
+nano server/.env
+
+Install dotenv packages:
+
+bashcd client && npm install dotenv
+cd ../server && npm install dotenv
+Week 1 - Day 3:
+4. After Button component consolidation:
+bashcd client
+npm start
+# Test all pages for Button component functionality
+# Check console for any import errors
+Week 2 - Day 1:
+5. After performance optimization:
+bashcd client
+npm start
+# Test route transitions for lazy loading
+# Check network tab for code splitting
+Phase 2: Architecture Modernization (Weeks 3-6)
+Week 3 - Day 1:
+
+After Cline creates dual OCR adapters:
+
+bashcd server
+npm install tesseract.js
+npm install @google-cloud/vision
+Week 3 - Day 3:
+2. Test new document processing:
+bashcd server
+npm test -- --grep "OCR"
+# Run integration tests for document processing
+Week 4 - Day 1:
+3. After dependency optimization:
+bashcd client
+npm uninstall @heroicons/react react-chartjs-2 chart.js react-native-chart-kit
+npm install recharts framer-motion
+npm audit fix
+Week 5 - Day 1:
+4. After architecture refactor:
+bashcd server
+npm test
+# Verify all services work correctly
+# Check error logs for any issues
+Phase 3: UI/UX Transformation (Weeks 7-9)
+Week 7 - Day 1:
+
+Install design system dependencies:
+
+bashcd client
+npm install @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-select class-variance-authority clsx tailwind-merge framer-motion
+npm install -D @tailwindcss/forms tailwindcss-rtl
+Week 8 - Day 1:
+2. Test modernized UI:
+bashcd client
+npm run build
+npm start
+# Test all pages in light/dark mode
+# Check responsive design on different devices
+Phase 4: State Management & Internationalization (Weeks 10-11)
+Week 10 - Day 1:
+
+Install state management:
+
+bashcd client
+npm install @reduxjs/toolkit react-redux
+npm install lru-cache @tanstack/react-query
+Week 11 - Day 1:
+2. Install i18n dependencies:
+bashcd client
+npm install react-i18next i18next i18next-browser-languagedetector
+Week 11 - Day 3:
+3. Test internationalization:
+bashcd client
+npm start
+# Test language switching
+# Verify RTL layout in Hebrew mode
+# Check all translated strings
+Phase 5: Final Polish & Testing (Week 12)
+Day 1:
+
+Final dependency install:
+
+bashcd client
+npm install @sentry/react # For error tracking
+npm install web-vitals # For performance monitoring
+Day 2:
+2. Run production build:
+bashcd client
+npm run build
+# Test production build locally
+serve -s build
+Day 3:
+3. Deploy to staging:
+bashfirebase deploy --only hosting:staging
+# Test staging environment
+Day 4:
+4. Final deployment:
+bash# Deploy all services
+firebase deploy --only hosting,functions,storage
+# Run post-deployment tests
+npm run test:e2e
+Day 5:
+5. Monitor and verify:
+bash# Check error logs
+firebase functions:log
+# Monitor performance
+npm run analyze-bundle
+Critical Checkpoints
+After Each Phase:
+
+Run comprehensive tests:
+
+bashnpm run test:all
+npm run test:e2e
+
+Check performance metrics:
+
+bashnpm run lighthouse
+npm run bundle-analyzer
+
+Verify functionality:
+
+bashnpm run test:integration
+npm run test:security
+
+Week 1 - Additional Setup (Before Starting Phase 1)
+Pre-Project Setup:
+
+Create project backup:
+
+bash# Full backup
+zip -r receipt-scanner-backup-$(date +%Y%m%d).zip /path/to/project
+
+# Git backup
+git checkout -b pre-modernization-backup
+git add .
+git commit -m "Backup before modernization"
+git push origin pre-modernization-backup
+
+Set up staging environment:
+
+bash# Create staging project
+firebase projects:create receipt-scanner-staging
+firebase use receipt-scanner-staging
+firebase init hosting
+
+Configure Firebase emulators:
+
+bashfirebase init emulators
+# Select Auth, Functions, Firestore, Storage
+Week 1 - Day 2 (After environment config)
+
+Test environment variable loading:
+
+bashcd client
+echo "console.log(process.env)" > test-env.js
+node test-env.js
+# Verify all required env vars are present
+
+Set up monitoring:
+
+bash# Create Sentry account and get DSN
+# Add to .env files:
+echo "REACT_APP_SENTRY_DSN=your-sentry-dsn" >> client/.env.development
+echo "SENTRY_DSN=your-sentry-dsn" >> server/.env
+Week 3 - Day 2 (After OCR setup)
+
+Install OCR dependencies with Hebrew support:
+
+bashcd server
+# Download Hebrew language pack for Tesseract
+wget https://github.com/tesseract-ocr/tessdata/raw/master/heb.traineddata
+mkdir -p node_modules/tesseract.js/lang-data/4.0.0
+mv heb.traineddata node_modules/tesseract.js/lang-data/4.0.0/
+Week 7 - Day 2 (After UI modernization)
+
+Test Hebrew fonts rendering:
+
+bash# Add Hebrew font CDN to index.html
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+# Test font rendering
+cd client
+npm start
+# Check dashboard in Hebrew mode
+Week 11 - Day 4 (After i18n setup)
+
+Test complete translation coverage:
+
+bash# Run translation coverage check
+cd client
+npx i18next-scanner --config i18next-scanner.config.js
+# Check for missing translations
+Week 12 - Day 1 (Final testing)
+
+End-to-end testing:
+
+bash# Install E2E testing tools
+npm install --save-dev cypress cypress-localstorage-commands
+
+# Create Hebrew language tests
+cd cypress/integration
+mkdir hebrew-tests
+# Create test files for RTL layout
+Week 12 - Day 4 (Pre-deployment)
+
+Final security audit:
+
+bash# Run security audit
+npm audit
+firebase hosting:channel:deploy staging
+# Run penetration testing
+npm run security:test
+Week 12 - Day 5 (Production deployment)
+
+Production deployment checklist:
+
+bash# Final production build
+cd client
+NODE_ENV=production npm run build
+
+# Deploy incrementally
+firebase deploy --only hosting
+firebase deploy --only functions
+firebase deploy --only firestore:rules
+firebase deploy --only storage:rules
+
+# Monitor deployment
+firebase hosting:channel:list
+Post-Deployment (Week 13)
+
+Post-launch monitoring:
+
+bash# Set up monitoring dashboards
+firebase run:shell
+# Check error rates
+gcloud logging read "severity>=ERROR" --limit 50
+
+# Performance monitoring
+npm run analyze-performance
+firebase performance:reports
+
+Week 1 - Day 4 (After Axios consolidation)
+bash# Test API configuration
+cd client
+npm start
+# Test all API endpoints
+# Check network tab for correct baseURL
+# Verify no duplicate requests
+Week 4 - Day 3 (After creating missing files)
+bash# Test new services
+cd server
+npm test -- --grep "ReceiptProcessingService"
+npm test -- --grep "CategoryService"
+# Check integration with existing code
+Week 8 - Day 3 (After RTL chart updates)
+bash# Test charts in RTL mode
+cd client
+npm start
+# Open analytics dashboard
+# Switch to Hebrew
+# Verify all charts display correctly
+# Check tooltips and labels
+Week 11 - Day 2 (After Hebrew normalization)
+bash# Test Hebrew search functionality
+cd server
+npm test -- --grep "Hebrew search"
+# Test with various Hebrew inputs
+# Test final letters vs regular letters
+Week 12 - Day 2 (After offline support)
+bash# Test offline functionality
+cd client
+npm start
+# Disconnect internet
+# Try uploading receipt
+# Reconnect and verify sync
+Week 12 - Day 3 (After color customization)
+bash# Test theme customization
+cd client
+npm start
+# Go to settings
+# Change primary color
+# Verify changes reflect across app
+# Export/import theme settings
+Post-Deployment - Week 13
+bash# Set up Hebrew content monitoring
+firebase use receipt-scanner-prod
+firebase functions:log --filter "severity>=ERROR AND text:hebrew"
+
+# Monitor OCR accuracy for Hebrew
+firebase functions:log --filter "OCR accuracy" --hours 24
+
+# Set up alerts for Hebrew processing
+gcloud alpha monitoring channels create \
+  --display-name "Hebrew OCR Alerts" \
+  --type email \
+  --channel-labels email_address=your-email@domain.com

@@ -1,10 +1,10 @@
-import React from 'react';//correct
-import { ProfileSettings } from '../../features/settings/components/ProfileSettings';//correct
-import { CategorySettings } from '../../features/settings/components/CategorySettings';//correct
-import { NotificationSettings } from '../../features/settings/components/NotificationSettings';//correct
+import React from 'react'; //correct
 
-export const SettingsPage = () => {
-  return (
+import { CategorySettings } from '../../features/settings/components/CategorySettings'; //correct
+import NotificationSettings from '../../features/settings/components/NotificationSettings'; //correct
+import { ProfileSettings } from '../../features/settings/components/ProfileSettings'; //correct
+
+export const SettingsPage = () => (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
 
@@ -15,4 +15,3 @@ export const SettingsPage = () => {
       </div>
     </div>
   );
-};

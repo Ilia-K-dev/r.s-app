@@ -1,0 +1,154 @@
+# Receipt Scanner Application: Architecture and Structure
+
+## High-Level Architecture
+
+The Receipt Scanner application follows a client-server architecture with Firebase as the primary backend-as-a-service:
+
+### Core Components
+
+1. **Frontend (Client)**
+   - React application with feature-based organization
+   - Styled with Tailwind CSS
+   - Core contexts for global state (Auth, Toast)
+   - Routing using React Router
+
+2. **Backend (Server)**
+   - Node.js/Express API
+   - Service-oriented architecture
+   - Middleware for authentication, validation, file uploads
+   - Controllers handling HTTP requests/responses
+   - Firebase Admin SDK integration
+
+3. **Firebase Services**
+   - Authentication (user management)
+   - Firestore (database)
+   - Storage (receipt images)
+   - Hosting (client application)
+   - Cloud Functions (serverless operations)
+
+4. **External APIs**
+   - Google Cloud Vision (OCR)
+   - SendGrid (optional, for email notifications)
+
+## Project Structure
+
+```
+project-root/
+├── client/             # Frontend React application
+│   ├── public/         # Static assets, index.html
+│   └── src/
+│       ├── core/       # Core configuration, contexts, types
+│       │   ├── config/   # API, constants, Firebase setup
+│       │   ├── contexts/ # Global context providers (Auth)
+│       │   └── types/    # TypeScript definitions
+│       ├── features/   # Feature modules
+│       │   ├── auth/     # Authentication components, hooks, services
+│       │   ├── receipts/ # Receipt management
+│       │   ├── inventory/ # Inventory management
+│       │   ├── analytics/ # Reports and visualizations
+│       │   ├── documents/ # Document scanning/processing
+│       │   └── settings/  # User preferences
+│       ├── shared/     # Reusable components and utilities
+│       │   ├── components/ # UI components, charts, layouts
+│       │   ├── hooks/    # Common hooks
+│       │   ├── services/ # Shared API services
+│       │   └── utils/    # Utility functions
+│       ├── App.js      # Root component, context providers
+│       ├── index.js    # Application entry point
+│       └── routes.js   # Application routes
+├── server/             # Backend Express API
+│   ├── config/         # Configuration files
+│   │   ├── firebase.js # Firebase Admin initialization
+│   │   ├── vision.js   # Google Cloud Vision setup
+│   │   └── multer-config.js # File upload configuration
+│   └── src/
+│       ├── app.js      # Express application setup
+│       ├── controllers/ # Request handlers
+│       ├── middleware/ # Request processing (auth, validation, upload)
+│       ├── models/     # Data models (User, Receipt, Product, etc.)
+│       ├── routes/     # API endpoint definitions
+│       ├── services/   # Business logic 
+│       │   ├── alert/     # Alert generation and management
+│       │   ├── analytics/ # Data analysis and reporting
+│       │   ├── auth/      # Authentication operations
+│       │   ├── document/  # Document processing and OCR
+│       │   ├── inventory/ # Stock management
+│       │   └── receipt/   # Receipt parsing and storage
+│       └── utils/      # Utility functions
+├── functions/          # Firebase Cloud Functions
+├── .firebaserc         # Firebase project configuration
+├── firebase.json       # Firebase service configuration
+├── firestore.rules     # Firestore security rules
+└── storage.rules       # Storage security rules
+```
+
+## Data Flow
+
+1. **Authentication Flow**
+   - Client authenticates with Firebase Auth (login/register)
+   - Firebase issues ID tokens to authenticated clients
+   - Tokens are verified by server middleware for protected API routes
+
+2. **Receipt Processing Flow**
+   - User uploads image (client/src/features/documents)
+   - Server processes image with middleware (server/src/middleware/upload.js)
+   - Document processing service optimizes image (server/src/services/preprocessing.js)
+   - Google Cloud Vision extracts text (OCR)
+   - Server parses text data into structured receipt format
+   - Data is stored in Firestore with image in Firebase Storage
+   - Client displays processed receipt
+
+3. **Inventory Management Flow**
+   - Receipts can trigger inventory updates (item recognition)
+   - Stock movements are tracked for auditing
+   - Alerts generated for low stock conditions
+   - Notifications sent based on user preferences
+
+4. **Analytics and Reporting Flow**
+   - Server aggregates data from Firestore collections
+   - Client requests specific reports via API
+   - Data is visualized with charts (recharts library)
+
+## Technical Details
+
+### Client
+
+- **State Management**: React Context API + custom hooks
+- **API Communication**: Axios for server API calls (though direct Firebase access is also used)
+- **UI Framework**: Tailwind CSS for styling
+- **Data Visualization**: Recharts for charts and graphs
+
+### Server
+
+- **API Framework**: Express.js
+- **Authentication**: Firebase Admin SDK for token verification
+- **Validation**: express-validator for request validation
+- **File Handling**: Multer for multipart form parsing, Sharp for image processing
+- **Logging**: Winston for structured logging
+
+### Database (Firestore)
+
+Key collections:
+- `users` - User profiles and preferences
+- `receipts` - Processed receipt data
+- `products` - Product definitions
+- `inventory` - Stock levels
+- `stockMovements` - Inventory change history
+- `categories` - Receipt/product categorization
+- `alerts` - System notifications
+
+## Critical Architecture Issues
+
+1. **Direct Client-to-Firebase Access**: Many client components bypass the server API and interact directly with Firestore/Storage, leading to:
+   - Security vulnerabilities (reliance solely on Firestore rules)
+   - Business logic duplication
+   - Inconsistent data validation
+   - Tight coupling between client and database structure
+
+2. **Incomplete Security Rules**: Some Firestore collections lack explicit security rules
+
+3. **Service Redundancy**: Overlapping responsibilities in server services, particularly:
+   - `InventoryManagementService` vs `stockTrackingService`
+   - `DocumentProcessingService` vs `ReceiptProcessingService` vs `visionService`
+
+4. **Model Logic Mixing**: Some business logic resides in models rather than services

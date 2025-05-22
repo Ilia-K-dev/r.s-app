@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';//correct
-import { SpendingBreakdown } from '../../../features/analytics/components/reports/SpendingBreakdown';//correct
-import { MonthlyTrends } from '../../../features/analytics/components/MonthlyTrends';//correct
-import { BudgetProgress } from '../../../features/analytics/components/BudgetProgress';//correct
-import { DateRangePicker } from '../../../shared/components/ui/DateRangePicker';//correct
-import { receiptApi } from '../../../features/receipts/services/receipts';//correct
+import React, { useState, useEffect } from 'react'; //correct
+
+import { BudgetProgress } from '../../../features/analytics/components/BudgetProgress'; //correct
+import { MonthlyTrends } from '../../../features/analytics/components/MonthlyTrends'; //correct
+import { SpendingBreakdown } from '../../../features/analytics/components/reports/SpendingBreakdown'; //correct
+import { receiptApi } from '../../../features/receipts/services/receipts'; //correct
+import { DateRangePicker } from '../../../shared/components/ui/DateRangePicker'; //correct
 
 export const SpendingReportPage = () => {
   const [dateRange, setDateRange] = useState({
     startDate: null,
-    endDate: null
+    endDate: null,
   });
   const [reportData, setReportData] = useState({
     categories: [],
     trends: [],
-    budgets: []
+    budgets: [],
   });
 
   useEffect(() => {

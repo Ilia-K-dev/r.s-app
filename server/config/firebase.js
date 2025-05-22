@@ -3,8 +3,9 @@ const path = require('path');
 const dotenv = require('dotenv');
 const fs = require('fs');
 
-// Load environment variables
-dotenv.config();
+// Load environment variables based on NODE_ENV
+const envFile = process.env.NODE_ENV === 'production' ? '/client/.env.production' : '../.env';
+dotenv.config({ path: path.resolve(__dirname, envFile) });
 
 // Enhanced detailed error logging function
 function logDetailedError(error) {
@@ -30,11 +31,21 @@ function initializeFirebaseAdmin() {
 
     try {
         // Validate required environment variables
+        // Define required environment variables for production
         const requiredVars = [
-            'FIREBASE_PROJECT_ID', 
-            'FIREBASE_CLIENT_EMAIL', 
+            'FIREBASE_PROJECT_ID',
+            'FIREBASE_CLIENT_EMAIL',
             'FIREBASE_PRIVATE_KEY',
-            'FIREBASE_STORAGE_BUCKET'
+            'FIREBASE_STORAGE_BUCKET',
+            'SENDGRID_API_KEY',
+            'SENDGRID_FROM_EMAIL',
+            'FRONTEND_URL',
+            'MAX_FILE_SIZE',
+            'ALLOWED_MIME_TYPES',
+            'MIN_IMAGE_WIDTH',
+            'MIN_IMAGE_HEIGHT',
+            'MAX_IMAGE_WIDTH',
+            'MAX_IMAGE_HEIGHT'
         ];
 
         // Check for missing variables

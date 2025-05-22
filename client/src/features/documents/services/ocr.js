@@ -1,12 +1,18 @@
-import { storage } from '../../../core/config/firebase';//correct
-import { formatCurrency } from '../../src/shared/utils/currency';//correct
-import { logger } from '../../../shared/utils/logger';//correct
+import { storage } from '../../../core/config/firebase'; //correct
+import { formatCurrency } from '../../../shared/utils/currency'; //correct
+import { logger } from '../../../shared/utils/logger'; //correct
 
-export const processReceiptImage = async (file) => {
+const uploadImage = async (file) => {
+  const storageRef = storage().ref(`receipts/${Date.now()}_${file.name}`);
+  await storageRef.put(file);
+  return await storageRef.getDownloadURL();
+};
+
+export const processReceiptImage = async file => {
   try {
     // First compress and optimize the image if needed
     const optimizedImage = await optimizeImage(file);
-    
+
     // Upload to storage and get URL
     const imageUrl = await uploadImage(optimizedImage);
 
@@ -31,7 +37,7 @@ export const processReceiptImage = async (file) => {
   }
 };
 
-const optimizeImage = async (file) => {
+const optimizeImage = async file => {
   try {
     // Return original file if it's already optimized
     if (file.size <= 1024 * 1024) return file;
@@ -45,27 +51,29 @@ const optimizeImage = async (file) => {
     return new Promise((resolve, reject) => {
       img.onload = () => {
         // Calculate new dimensions while maintaining aspect ratio
-        let { width, height } = calculateDimensions(img, 1920); // Max width 1920px
-        
+        const { width, height } = calculateDimensions(img, 1920); // Max width 1920px
+
         canvas.width = width;
         canvas.height = height;
-        
+
         // Draw and compress image
         ctx.drawImage(img, 0, 0, width, height);
-        
+
         // Convert to blob
         canvas.toBlob(
-          (blob) => {
-            resolve(new File([blob], file.name, {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            }));
+          blob => {
+            resolve(
+              new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              })
+            );
           },
           'image/jpeg',
           0.8 // Quality setting
         );
       };
-      
+
       img.onerror = reject;
       img.src = URL.createObjectURL(file);
     });
@@ -87,10 +95,10 @@ const calculateDimensions = (img, maxWidth) => {
   return { width, height };
 };
 
-const parseOCRResponse = (data) => {
+const parseOCRResponse = data => {
   try {
     const { text, confidence, blocks } = data;
-    
+
     // Initialize receipt data
     const receiptData = {
       merchant: '',
@@ -98,7 +106,7 @@ const parseOCRResponse = (data) => {
       total: 0,
       items: [],
       rawText: text,
-      confidence
+      confidence,
     };
 
     // Extract merchant name (usually in the first few lines)
@@ -133,20 +141,20 @@ const parseOCRResponse = (data) => {
 
     // Extract items
     const itemRegex = /([A-Za-z0-9\s&]+)\s+(?:[\d]+\s+)?[$€£]?(\d+[.,]\d{2})/;
-    let currentItems = [];
+    const currentItems = [];
     for (const line of lines) {
       const match = line.match(itemRegex);
       if (match && !line.toLowerCase().includes('total')) {
         currentItems.push({
           name: match[1].trim(),
-          price: parseFloat(match[2].replace(',', '.'))
+          price: parseFloat(match[2].replace(',', '.')),
         });
       }
     }
 
     // Filter out likely non-items (prices too high or low)
-    receiptData.items = currentItems.filter(item => 
-      item.price > 0 && item.price < receiptData.total * 1.5
+    receiptData.items = currentItems.filter(
+      item => item.price > 0 && item.price < receiptData.total * 1.5
     );
 
     return receiptData;
@@ -156,7 +164,7 @@ const parseOCRResponse = (data) => {
   }
 };
 
-export const validateOCRResult = (data) => {
+export const validateOCRResult = data => {
   const errors = [];
 
   if (!data.merchant) {
@@ -178,22 +186,22 @@ export const validateOCRResult = (data) => {
   return {
     isValid: errors.length === 0,
     errors,
-    confidence: data.confidence
+    confidence: data.confidence,
   };
 };
 
-export const extractTotalFromText = (text) => {
+export const extractTotalFromText = text => {
   try {
     const lines = text.split('\n');
     const totalRegex = /tot?al\s*:?\s*[$€£]?\s*(\d+[.,]\d{2})/i;
-    
+
     for (let i = lines.length - 1; i >= 0; i--) {
       const match = lines[i].match(totalRegex);
       if (match) {
         return parseFloat(match[1].replace(',', '.'));
       }
     }
-    
+
     return null;
   } catch (error) {
     logger.error('Error extracting total:', error);

@@ -1,0 +1,414 @@
+Human Developer Work Plan: Receipt Scanner Application Enhancement
+Phase 1: Foundation Setup (Week 1)
+Day 1: Environment Configuration
+
+Deploy updated storage rules:
+bashcd /path/to/project
+firebase deploy --only storage
+
+Set up environment files:
+bash# Copy templates to actual env files
+cp client/.env.template client/.env.development
+cp server/.env.template server/.env
+
+# Fill in actual values
+# Edit client/.env.development with your preferred editor
+nano client/.env.development
+# Add the following values:
+# REACT_APP_FIREBASE_API_KEY=your-api-key
+# REACT_APP_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+# REACT_APP_FIREBASE_PROJECT_ID=your-project-id
+# REACT_APP_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+# REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+# REACT_APP_FIREBASE_APP_ID=your-app-id
+# REACT_APP_API_URL=http://localhost:5001
+
+# Edit server/.env with your preferred editor
+nano server/.env
+# Add the following values:
+# GOOGLE_APPLICATION_CREDENTIALS=/path/to/serviceAccountKey.json
+# FIREBASE_PROJECT_ID=your-project-id
+# PORT=5001
+# NODE_ENV=development
+
+Install required dependencies:
+bashcd client && npm install dotenv
+cd ../server && npm install dotenv
+
+
+Day 2: Security Testing
+
+Test updated Firestore rules:
+bashfirebase emulators:start --only firestore
+cd server/tests/security
+npm test firestore.test.js
+
+Test server security middleware:
+bashcd server
+npm test -- --grep "Security"
+
+
+Day 3: Button Component Testing
+
+Test consolidated Button component:
+bashcd client
+npm start
+
+Check all pages with Button components and verify:
+
+All buttons render correctly
+Click events work as expected
+No console errors related to Button imports
+Accessibility features work (try tabbing to buttons)
+
+
+
+Day 4: Accessibility Testing
+
+Run accessibility tests:
+bashcd client
+npm run test:a11y
+
+Manual keyboard navigation test:
+
+Start application: npm start
+Test navigation using only keyboard (Tab, Enter, Space, Arrow keys)
+Verify that all interactive elements are focusable
+Check that focus trap works in modals
+
+
+
+Day 5: API Documentation Verification
+
+Start the server with Swagger documentation:
+bashcd server
+npm start
+
+Open browser and navigate to:
+http://localhost:5001/api-docs
+
+Verify that all API endpoints are documented
+Test several endpoints directly from the Swagger UI
+
+Phase 2: Frontend Enhancement (Week 2)
+Day 1: Design System Setup
+
+Install design system dependencies:
+bashcd client
+npm install @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-select class-variance-authority clsx tailwind-merge framer-motion
+npm install -D @tailwindcss/forms tailwindcss-rtl
+
+Update Tailwind configuration:
+bash# Edit tailwind.config.js to include the new plugins
+nano tailwind.config.js
+
+
+Day 2: Component Testing
+
+Run tests for new components:
+bashcd client
+npm test -- --testPathPattern=design-system
+
+Manually test new Button component:
+bashnpm start
+
+Check all button variants
+Test in different screen sizes
+Verify RTL support by changing language
+
+
+
+Day 3: Chart Component Testing
+
+Test chart migration:
+bashcd client
+npm run migrate-charts
+npm start
+
+Navigate to analytics dashboard and verify:
+
+Charts render correctly
+Data is displayed accurately
+Responsive behavior works
+RTL support functions properly
+
+
+
+Day 4: Frontend Performance Testing
+
+Run performance tests:
+bashcd client
+npm run analyze-bundle
+
+Check for performance issues:
+
+Look for large bundle sizes
+Identify unused dependencies
+Check for duplicate code
+
+
+
+Day 5: Component Documentation Review
+
+Review design system documentation
+Test component examples
+Provide feedback on component API documentation
+
+Phase 3: State Management Setup (Week 3)
+Day 1: Redux Installation
+
+Install Redux dependencies:
+bashcd client
+npm install @reduxjs/toolkit react-redux redux-persist
+
+Configure Redux DevTools:
+bashnpm install --save-dev @redux-devtools/extension
+
+
+Day 2: Redux Testing
+
+Test Redux store:
+bashcd client
+npm start
+
+Open Redux DevTools in browser and verify:
+
+Store is properly configured
+Actions are dispatched correctly
+State updates as expected
+
+
+
+Day 3: Performance Optimization Testing
+
+Install performance monitoring tools:
+bashcd client
+npm install web-vitals
+
+Test lazy loading:
+bashnpm start
+
+Open network tab in browser
+Navigate between routes
+Verify that chunks are loaded on demand
+
+
+
+Day 4: Caching Mechanism Testing
+
+Test cache implementation:
+bashcd client
+npm start
+
+Monitor network requests:
+
+Make initial request to fetch data
+Repeat the same request
+Verify that data comes from cache (no network request)
+
+
+
+Day 5: Image Optimization Testing
+
+Test image loading:
+bashcd client
+npm start
+
+Use throttling in browser to simulate slow connection
+Verify that images load progressively
+Check that lazy loading works for off-screen images
+
+Phase 4: Additional Features Testing (Week 4)
+Day 1: Offline Support Testing
+
+Test offline functionality:
+bashcd client
+npm start
+
+Simulate offline condition:
+
+Disconnect from internet (or use browser's network panel)
+Try to use the application
+Verify that essential functions work offline
+Create a new receipt while offline
+Reconnect and verify synchronization
+
+
+
+Day 2: Theme Testing
+
+Test theme switching:
+bashcd client
+npm start
+
+Verify light/dark mode:
+
+Toggle between light and dark modes
+Check that all components update correctly
+Verify system preference detection
+
+
+Test color customization:
+
+Use the color picker to change theme colors
+Verify that changes apply throughout the application
+Check that preferences are saved
+
+
+
+Day 3: Error Monitoring Setup
+
+Create Sentry account and get DSN key
+Update environment configuration:
+bash# Add to client/.env.development:
+echo "REACT_APP_SENTRY_DSN=your-sentry-dsn" >> client/.env.development
+
+# Add to server/.env:
+echo "SENTRY_DSN=your-sentry-dsn" >> server/.env
+
+Test error reporting:
+
+Trigger some known errors
+Verify that errors appear in Sentry dashboard
+
+
+
+Day 4: PWA Testing
+
+Build production version:
+bashcd client
+npm run build
+
+Serve production build:
+bashnpx serve -s build
+
+Test PWA features:
+
+Install application to home screen
+Test offline capability
+Verify caching of assets
+
+
+
+Day 5: Final Feature Testing
+
+Run full test suite:
+bashcd client
+npm test
+
+cd ../server
+npm test
+
+Perform manual tests of all new features
+Create test report document
+
+Phase 5: Hebrew/RTL Support Testing (Week 5)
+Day 1: Hebrew Font Setup
+
+Add Hebrew font to application:
+html<!-- Add to public/index.html -->
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+Update Tailwind configuration:
+bash# Edit tailwind.config.js to include Hebrew font
+nano tailwind.config.js
+
+
+Day 2: Hebrew OCR Testing
+
+Prepare Hebrew test receipts
+Test OCR with Hebrew content:
+bashcd server
+npm test -- --grep "Hebrew OCR"
+
+Manually upload Hebrew receipts and verify text extraction
+
+Day 3: RTL Interface Testing
+
+Test RTL layout:
+bashcd client
+npm start
+
+Switch to Hebrew interface and verify:
+
+Layout correctly flips
+Text alignment is appropriate
+Icons and buttons are properly positioned
+Charts display correctly in RTL mode
+
+
+
+Day 4: Bidirectional Text Testing
+
+Test mixed content handling:
+
+Create content with both Hebrew and English
+Verify that text direction is handled correctly
+Check that numbers and punctuation display properly
+
+
+Test bidirectional forms:
+
+Fill out forms with Hebrew content
+Verify that cursor behavior is correct
+Check that submission works properly
+
+
+
+Day 5: Final Testing and Documentation Review
+
+Perform final comprehensive testing
+Review all documentation updates
+Prepare deployment checklist
+
+Phase 6: Deployment Preparation (Week 6)
+Day 1: Production Build
+
+Create production build:
+bashcd client
+NODE_ENV=production npm run build
+
+Test production build locally:
+bashnpx serve -s build
+
+
+Day 2: Staging Deployment
+
+Deploy to staging environment:
+bashfirebase use staging
+firebase deploy --only hosting
+
+Test staging environment
+Perform security audit on staging
+
+Day 3: Database Rules Deployment
+
+Deploy Firestore rules:
+bashfirebase deploy --only firestore:rules
+
+Deploy Storage rules:
+bashfirebase deploy --only storage:rules
+
+Test rules in staging environment
+
+Day 4: Backend Deployment
+
+Deploy Cloud Functions:
+bashfirebase deploy --only functions
+
+Test API endpoints in staging environment
+Verify error monitoring and logging
+
+Day 5: Final Production Deployment
+
+Switch to production environment:
+bashfirebase use production
+
+Deploy entire application:
+bashfirebase deploy
+
+Perform post-deployment verification
+Monitor application performance and errors
+
+
+These detailed work plans provide step-by-step instructions for both the EDI (Cline) and the human developer, ensuring a coordinated approach to enhancing the Receipt Scanner application. The plans are organized by phases and days, with clear tasks, steps, commands, and deliverables for each day.

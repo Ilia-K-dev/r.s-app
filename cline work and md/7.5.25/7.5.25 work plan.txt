@@ -1,0 +1,931 @@
+Updated Work Plan for Cline (EDI Assistant)
+Phase 1: Foundation Stabilization (Weeks 1-2)
+Task 1.1: Security Rule Updates
+javascript// File: storage.rules
+// SEARCH (lines 35-40):
+match /inventory/{userId}/{productId}/images/{imageId} {
+  allow write: if isOwner(userId);
+}
+
+// REPLACE WITH:
+match /inventory/{userId}/{productId}/images/{imageId} {
+  allow write: if request.auth != null 
+    && request.auth.uid == userId
+    && exists(/databases/$(database)/documents/inventory/$(inventoryId))
+    && get(/databases/$(database)/documents/inventory/$(inventoryId)).data.userId == userId
+    && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+    && request.resource.contentType.matches('image/.*');
+}
+Task 1.2: Environment Configuration Cleanup
+javascript// Create .env templates
+Create: /client/.env.template
+Create: /server/.env.template
+
+// Update Firebase config to use environment variables
+// File: client/src/core/config/firebase.js
+// SEARCH:
+const firebaseConfig = {
+  apiKey: "AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ123456",
+  authDomain: "receipt-scanner.firebaseapp.com",
+  projectId: "receipt-scanner",
+  storageBucket: "receipt-scanner.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef1234567890"
+};
+
+// REPLACE WITH:
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
+};
+Task 1.3: Button Component Consolidation
+javascript// Document all Button usages
+const buttonUsageAudit = {
+  formsButton: [
+    'client/src/features/auth/components/LoginPage.js:45',
+    'client/src/features/auth/components/RegisterPage.js:67',
+    'client/src/features/receipts/components/ReceiptForm.js:123'
+  ],
+  uiButton: [
+    'client/src/features/analytics/components/Dashboard.js:78',
+    'client/src/shared/components/layout/Navbar.js:34'
+  ]
+};
+
+// Create consolidated Button component
+Create: /client/src/design-system/components/Button.jsx
+Task 1.4: Performance Quick Wins
+javascript// Implement React.lazy for route splitting
+// File: client/src/routes.js
+// SEARCH:
+import DashboardPage from './features/analytics/pages/DashboardPage';
+import ReportsPage from './features/analytics/pages/ReportsPage';
+import ReceiptListPage from './features/receipts/pages/ReceiptListPage';
+
+// REPLACE WITH:
+const DashboardPage = React.lazy(() => import('./features/analytics/pages/DashboardPage'));
+const ReportsPage = React.lazy(() => import('./features/analytics/pages/ReportsPage'));
+const ReceiptListPage = React.lazy(() => import('./features/receipts/pages/ReceiptListPage'));
+Task 1.5: Fix Client-Side Environment Variable Loading
+javascript// Fix client/index.js .env loading issues
+// File: client/src/index.js
+// SEARCH:
+// IMPORTANT: Replace with environment variables once .env issues are resolved
+
+// REPLACE WITH:
+import './core/config/environment'; // Create this file to handle env loading
+
+Create: /client/src/core/config/environment.js
+// Environment variable loader for client
+const loadEnvironment = () => {
+  if (process.env.NODE_ENV === 'development') {
+    require('dotenv').config({ path: '.env.development' });
+  } else if (process.env.NODE_ENV === 'production') {
+    require('dotenv').config({ path: '.env.production' });
+  }
+};
+
+loadEnvironment();
+Task 1.6: Consolidate Axios Instances
+javascript// Fix duplicate Axios instances
+// File: client/src/core/config/api.config.js
+// Remove duplicate Axios instance
+
+// File: client/src/shared/services/api.js
+// Update to use single Axios instance from config
+import { API_CONFIG } from '../../core/config/api.config';
+
+const api = axios.create({
+  baseURL: API_CONFIG.baseURL
+});
+Task 1.7: Fix Firestore Indexes
+javascript// Update firestore.indexes.json for Hebrew support
+// File: firestore.indexes.json
+{
+  "indexes": [
+    {
+      "collectionGroup": "receipts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "receipts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "merchantHe", "order": "ASCENDING" }
+      ]
+    }
+  ]
+}
+Task 1.8: API Documentation Generation
+javascript// Create Swagger configuration
+Create: /server/src/config/swagger.js
+const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+
+const swaggerDefinition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'Receipt Scanner API',
+    version: '1.0.0',
+    description: 'API documentation for Receipt Scanner application',
+  },
+  servers: [
+    {
+      url: 'http://localhost:5000',
+      description: 'Development server',
+    },
+    {
+      url: 'https://api.receiptscannerapp.com',
+      description: 'Production server',
+    },
+  ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    },
+  },
+};
+Task 1.9: Testing Infrastructure Setup
+javascript// Create Jest config
+Create: /client/jest.config.js
+module.exports = {
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
+  },
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+};
+Task 1.10: Security Enhancements
+javascript// Create security middleware
+Create: /server/src/middleware/security/security.js
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.RATE_LIMIT || 100,
+  message: {
+    status: 429,
+    error: 'Too many requests, please try again later.',
+  },
+});
+Phase 2: Architecture Modernization (Weeks 3-6)
+Task 2.1: DocumentProcessingService Refactor
+javascript// Create Base Service
+Create: /server/src/services/core/BaseService.js
+class BaseService {
+  constructor() {
+    this.logger = require('../../utils/logger');
+  }
+  
+  async execute() {
+    throw new Error('Method must be implemented');
+  }
+  
+  handleError(error) {
+    this.logger.error(error);
+    throw new AppError(error.message, error.statusCode || 500);
+  }
+}
+Task 2.2: Implement Dual OCR System
+javascriptCreate: /server/src/services/textExtraction/TesseractAdapter.js
+class TesseractAdapter {
+  constructor() {
+    this.tesseract = require('tesseract.js');
+  }
+  
+  async extract(imageBuffer, config = {}) {
+    const { language = 'eng', enableHeb = false } = config;
+    const langs = enableHeb ? ['eng', 'heb'] : [language];
+    
+    const result = await this.tesseract.recognize(
+      imageBuffer,
+      langs.join('+'),
+      {
+        logger: m => console.log(m),
+        preserve_interword_spaces: '1'
+      }
+    );
+    
+    return {
+      text: result.data.text,
+      confidence: result.data.confidence,
+      language: result.data.languages,
+      blocks: result.data.blocks
+    };
+  }
+}
+Task 2.3: Create Processing Orchestrator
+javascriptCreate: /server/src/services/orchestration/DocumentProcessingOrchestrator.js
+class DocumentProcessingOrchestrator extends BaseService {
+  constructor() {
+    super();
+    this.imageOptimizer = new ImageOptimizationService();
+    this.textExtractor = new TextExtractionService();
+    this.classifier = new DocumentClassificationService();
+    this.dataExtractor = new DataExtractionService();
+  }
+  
+  async processDocument(documentId, userId) {
+    try {
+      // Implementation details...
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+}
+Task 2.4: Dependency Optimization
+javascript// Update package.json files
+// Remove unused dependencies
+updatePackageJson('client', {
+  remove: [
+    '@heroicons/react',
+    'react-chartjs-2',
+    'chart.js',
+    'react-native-chart-kit'
+  ],
+  add: [
+    'recharts',
+    'framer-motion'
+  ]
+});
+Task 2.5: Clean Missing Files
+javascriptCreate: /analysis/missing-files-audit.md
+
+## Missing Files Cleanup
+- [ ] Remove references to server/src/middleware/errorHandler.js
+- [ ] Remove references to server/src/middleware/requestLogger.js
+- [ ] Remove references to missing service files
+- [ ] Update import statements
+Task 2.6: Create Missing Critical Files
+javascriptCreate: /server/src/services/receipts/ReceiptProcessingService.js
+class ReceiptProcessingService extends BaseService {
+  constructor() {
+    super();
+    this.textExtractor = new TextExtractionService();
+    this.dataExtractor = new ReceiptDataExtractor();
+  }
+  
+  async processReceipt(imageBuffer, userId) {
+    try {
+      // Implementation details...
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+}
+Phase 3: UI/UX Transformation (Weeks 7-9)
+Task 3.1: Design System Setup
+javascriptCreate: /client/src/design-system/index.js
+
+// Design System Foundation
+export const designTokens = {
+  colors: {
+    primary: {
+      50: '#f0f9ff',
+      100: '#e0f2fe',
+      // More color definitions...
+    },
+    // More color sections...
+  },
+  // Typography, spacing, etc...
+};
+Task 3.2: Modern Component Implementation
+jsxCreate: /client/src/design-system/components/Button.jsx
+import React from 'react';
+import { cva } from 'class-variance-authority';
+import { Loader2 } from 'lucide-react';
+import { buttonVariants } from '../index';
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'default' | 'secondary' | 'outline' | 'ghost' | 'gradient' | 'destructive' | 'glass';
+  size?: 'sm' | 'default' | 'lg' | 'icon';
+  rounded?: 'default' | 'full' | 'lg';
+  isLoading?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  className?: string;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  // Implementation details...
+);
+Task 3.3: Dashboard Modernization
+jsxCreate: /client/src/features/analytics/components/dashboard/ModernDashboard.jsx
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
+import { 
+  TrendingUp, 
+  Receipt, 
+  PieChart, 
+  DollarSign,
+  ArrowRight 
+} from 'lucide-react';
+// Implementation details...
+Task 3.4: Chart Migration to Recharts
+javascriptCreate: /scripts/migrate-charts.js
+
+// Chart Migration Script
+const chartMigration = {
+  analytics: {
+    'AnalyticsDashboard.js': [
+      {
+        from: 'react-chartjs-2/Bar',
+        to: 'recharts/BarChart'
+      },
+      // More chart conversions...
+    ]
+  }
+};
+Task 3.5: Accessibility Implementation
+javascriptCreate: /client/src/utils/a11y/index.js
+export const announceToScreenReader = (message) => {
+  const announcement = document.createElement('div');
+  announcement.setAttribute('aria-live', 'polite');
+  announcement.setAttribute('class', 'sr-only');
+  announcement.textContent = message;
+  
+  document.body.appendChild(announcement);
+  setTimeout(() => document.body.removeChild(announcement), 1000);
+};
+Phase 4: Internationalization & State Management (Weeks 10-11)
+Task 4.1: Complete Hebrew Translation Implementation
+javascriptCreate: /client/src/locales/index.js
+
+import i18next from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
+
+// Import all translations
+import en from './en';
+import he from './he';
+
+const resources = {
+  en,
+  he
+};
+
+// Configuration details...
+Task 4.2: Component Translation Integration
+jsx// Script to add useTranslation hook to all components
+const componentsToTranslate = [
+  'client/src/features/auth/components/',
+  'client/src/features/receipts/components/',
+  // More component directories...
+];
+
+// Example component transformation
+// Before:
+const LoginPage = () => {
+  return (
+    <div>
+      <h1>Login</h1>
+      <input placeholder="Email" />
+      <button>Submit</button>
+    </div>
+  );
+};
+
+// After:
+const LoginPage = () => {
+  const { t } = useTranslation('auth');
+  
+  return (
+    <div>
+      <h1>{t('login.title')}</h1>
+      <input placeholder={t('login.email')} />
+      <button>{t('login.submit')}</button>
+    </div>
+  );
+};
+Task 4.3: RTL Support Implementation
+javascriptCreate: /client/src/hooks/useRTL.js
+
+import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
+
+export const useRTL = () => {
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === 'he';
+  
+  useEffect(() => {
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    document.documentElement.lang = i18n.language;
+  }, [isRTL, i18n.language]);
+  
+  return { isRTL, toggleDirection: () => i18n.changeLanguage(isRTL ? 'en' : 'he') };
+};
+Task 4.4: Redux Toolkit Setup
+javascriptCreate: /client/src/store/index.js
+
+import { configureStore } from '@reduxjs/toolkit';
+import { setupListeners } from '@reduxjs/toolkit/query';
+import { receiptApi } from './services/receiptApi';
+import { analyticsApi } from './services/analyticsApi';
+import authReducer from './slices/authSlice';
+import uiReducer from './slices/uiSlice';
+
+export const store = configureStore({
+  // Configuration details...
+});
+Task 4.5: Migrate Hooks to RTK Query
+javascript// Update useReceipts hook to use RTK Query
+// File: client/src/features/receipts/hooks/useReceipts.js
+import { useGetReceiptsQuery, useUploadReceiptMutation } from '@/store/services/receiptApi';
+
+export const useReceipts = (page = 1, limit = 20) => {
+  const { data, isLoading, error } = useGetReceiptsQuery({ page, limit });
+  const [uploadReceipt, { isLoading: isUploading }] = useUploadReceiptMutation();
+  
+  return {
+    receipts: data?.receipts || [],
+    hasMore: data?.hasMore || false,
+    isLoading,
+    error,
+    uploadReceipt,
+    isUploading,
+  };
+};
+Task 4.6: Create Complete Hebrew Translation Files
+javascript// Create translation directory structure and files
+/client/src/locales/
+  ├── en/
+  │   ├── common.json
+  │   ├── dashboard.json
+  │   ├── auth.json
+  │   ├── receipts.json
+  │   ├── analytics.json
+  │   ├── inventory.json
+  │   └── settings.json
+  └── he/
+      ├── common.json
+      ├── dashboard.json
+      ├── auth.json
+      ├── receipts.json
+      ├── analytics.json
+      ├── inventory.json
+      └── settings.json
+Phase 5: Final Polish & Testing (Week 12)
+Task 5.1: Performance Optimizations
+javascriptCreate: /client/src/utils/performance/cache.js
+
+import LRU from 'lru-cache';
+
+// Client-side caching
+export const runtimeCache = new LRU({
+  max: 500,
+  maxAge: 1000 * 60 * 5 // 5 minutes
+});
+
+export const cachedApiCall = async (key, apiCall) => {
+  // Implementation details...
+};
+Task 5.2: PWA Configuration
+javascriptCreate: /client/public/manifest.json
+{
+  "name": "Receipt Scanner",
+  "short_name": "Receipts",
+  "description": "Modern receipt management and analytics",
+  "icons": [
+    // Icon definitions...
+  ],
+  "theme_color": "#0ea5e9",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "orientation": "any",
+  "dir": "ltr"
+}
+Task 5.3: Final Testing & Validation
+javascriptCreate: /scripts/final-validation.js
+
+// Comprehensive validation script
+const finalValidation = {
+  security: [
+    'validateFirebaseRules',
+    'checkEnvironmentVariables',
+    'validateAPIEndpoints'
+  ],
+  // More validation categories...
+};
+Task 5.4: Add Dark Mode Support
+javascriptCreate: /client/src/contexts/ThemeContext.js
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+const ThemeContext = createContext();
+
+export const ThemeProvider =RetryClaude hit the max length for a message and has paused its response. You can write Continue to keep the chat going.IContinueEditLet me finish the updated work plan for Cline (EDI Assistant):
+Task 5.4: Add Dark Mode Support
+javascriptCreate: /client/src/contexts/ThemeContext.js
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+const ThemeContext = createContext();
+
+export const ThemeProvider = ({ children }) => {
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return saved ? saved === 'dark' : prefersDark;
+  });
+  
+  useEffect(() => {
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', isDark);
+  }, [isDark]);
+  
+  return (
+    <ThemeContext.Provider value={{ isDark, setIsDark }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+export const useTheme = () => useContext(ThemeContext);
+Task 5.5: Add Monitoring and Error Tracking
+javascriptCreate: /client/src/utils/monitoring/sentry.js
+import * as Sentry from '@sentry/react';
+import { BrowserTracing } from '@sentry/tracing';
+
+export const initSentry = () => {
+  Sentry.init({
+    dsn: process.env.REACT_APP_SENTRY_DSN,
+    integrations: [new BrowserTracing()],
+    tracesSampleRate: 1.0,
+    environment: process.env.NODE_ENV,
+  });
+};
+
+Create: /client/src/utils/monitoring/webVitals.js
+import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+
+export const reportWebVitals = () => {
+  getCLS(console.log);
+  getFID(console.log);
+  getFCP(console.log);
+  getLCP(console.log);
+  getTTFB(console.log);
+};
+Task 5.6: Create Data Formatters for Hebrew
+javascriptCreate: /client/src/utils/formatters/hebrew.js
+export const formatHebrewCurrency = (amount) => {
+  return new Intl.NumberFormat('he-IL', {
+    style: 'currency',
+    currency: 'ILS',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
+export const formatHebrewDate = (date) => {
+  return new Intl.DateTimeFormat('he-IL', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  }).format(new Date(date));
+};
+
+export const formatHebrewNumber = (number) => {
+  return new Intl.NumberFormat('he-IL').format(number);
+};
+
+// Update useFormatters hook
+// File: client/src/utils/formatters.js
+import { formatHebrewCurrency, formatHebrewDate } from './hebrew';
+
+export const useFormatters = () => {
+  const { i18n } = useTranslation();
+  
+  return {
+    formatCurrency: (amount) => {
+      if (i18n.language === 'he') {
+        return formatHebrewCurrency(amount);
+      }
+      return formatEnglishCurrency(amount);
+    },
+    formatDate: (date) => {
+      if (i18n.language === 'he') {
+        return formatHebrewDate(date);
+      }
+      return formatEnglishDate(date);
+    }
+  };
+};
+Task 5.7: Update Charts for RTL Support
+javascript// Modify all chart components for RTL support
+// File: client/src/features/analytics/components/charts/ModernSpendingChart.jsx
+const ModernSpendingChart = () => {
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === 'he';
+  
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <AreaChart 
+        data={data}
+        margin={{ 
+          top: 10, 
+          right: isRTL ? 0 : 30, 
+          left: isRTL ? 30 : 0, 
+          bottom: 0 
+        }}
+      >
+        <XAxis 
+          dataKey="month" 
+          reversed={isRTL}
+          orientation={isRTL ? 'right' : 'left'}
+        />
+        <YAxis 
+          reversed={isRTL}
+          orientation={isRTL ? 'right' : 'left'}
+          tickFormatter={formatHebrewCurrency}
+        />
+        <Tooltip 
+          position={{ x: isRTL ? 'left' : 'right' }}
+          formatter={(value) => [formatHebrewCurrency(value), 'סכום']}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+};
+Task 5.8: Add OCR Hebrew Text Normalization
+javascriptCreate: /server/src/utils/text/hebrewNormalizer.js
+class HebrewNormalizer {
+  static normalizeHebrewText(text) {
+    // Remove niqqud (vowel points)
+    text = text.replace(/[\u0591-\u05C7]/g, '');
+    
+    // Normalize final letters
+    const finalLetters = {
+      'ך': 'כ',
+      'ם': 'מ',
+      'ן': 'נ',
+      'ף': 'פ',
+      'ץ': 'צ'
+    };
+    
+    text = text.replace(/[ךםןףץ]/g, char => finalLetters[char]);
+    
+    // Remove extra spaces
+    text = text.replace(/\s+/g, ' ').trim();
+    
+    return text;
+  }
+  
+  static detectHebrewText(text) {
+    const hebrewRegex = /[\u0590-\u05FF\uFB1D-\uFB4F]/;
+    return hebrewRegex.test(text);
+  }
+}
+
+// Update TextExtractionService to use normalizer
+// File: server/src/services/textExtraction/TextExtractionService.js
+async extractText(imageBuffer, config) {
+  const result = await super.extractText(imageBuffer, config);
+  
+  if (HebrewNormalizer.detectHebrewText(result.text)) {
+    result.normalizedText = HebrewNormalizer.normalizeHebrewText(result.text);
+  }
+  
+  return result;
+}
+Task 5.9: Update Firestore Queries for Hebrew
+javascript// Update search functions for Hebrew
+// File: client/src/features/receipts/services/receiptSearch.js
+export const searchReceipts = async (searchTerm) => {
+  const { i18n } = useTranslation();
+  const isHebrew = i18n.language === 'he';
+  
+  // For Hebrew, search both normalized and original text
+  let queries = [];
+  
+  if (isHebrew) {
+    const hebrewSearchTerm = HebrewNormalizer.normalizeHebrewText(searchTerm);
+    queries = [
+      firestore()
+        .collection('receipts')
+        .where('merchantHe', '>=', hebrewSearchTerm)
+        .where('merchantHe', '<=', hebrewSearchTerm + '\uf8ff'),
+      firestore()
+        .collection('receipts')
+        .where('itemsHe', 'array-contains', hebrewSearchTerm)
+    ];
+  } else {
+    queries = [
+      firestore()
+        .collection('receipts')
+        .where('merchant', '>=', searchTerm)
+        .where('merchant', '<=', searchTerm + '\uf8ff')
+    ];
+  }
+  
+  const results = await Promise.all(queries.map(q => q.get()));
+  return results.flatMap(snapshot => snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+};
+Task 5.10: Add Progress Indicators for Document Processing
+javascriptCreate: /client/src/features/receipts/components/ReceiptUploadProgress.jsx
+import React from 'react';
+import { motion } from 'framer-motion';
+import { CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+
+const ReceiptUploadProgress = ({ status, progress, message }) => {
+  const stages = [
+    { key: 'uploading', label: 'מעלה קובץ', icon: Loader2 },
+    { key: 'processing', label: 'מעבד תמונה', icon: Loader2 },
+    { key: 'extracting', label: 'מזהה טקסט', icon: Loader2 },
+    { key: 'parsing', label: 'מפרק נתונים', icon: Loader2 },
+    { key: 'complete', label: 'הושלם', icon: CheckCircle },
+    { key: 'error', label: 'שגיאה', icon: AlertCircle }
+  ];
+  
+  const currentStage = stages.findIndex(s => s.key === status);
+  
+  return (
+    <div className="w-full p-6">
+      <div className="relative">
+        {/* Progress bar */}
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-primary-500"
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
+        
+        {/* Stage indicators */}
+        <div className="flex justify-between mt-4">
+          {stages.map((stage, index) => {
+            const Icon = stage.icon;
+            const isActive = index === currentStage;
+            const isCompleted = index < currentStage;
+            const isError = status === 'error' && index === currentStage;
+            
+            return (
+              <div 
+                key={stage.key}
+                className={`flex flex-col items-center ${
+                  isActive ? 'text-primary-500' : 
+                  isCompleted ? 'text-green-500' :
+                  isError ? 'text-red-500' : 'text-gray-400'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${
+                  isActive ? 'border-primary-500' :
+                  isCompleted ? 'border-green-500' :
+                  isError ? 'border-red-500' : 'border-gray-300'
+                }`}>
+                  <Icon className={`w-5 h-5 ${isActive ? 'animate-spin' : ''}`} />
+                </div>
+                <span className="mt-2 text-sm font-medium">{stage.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      
+      {message && (
+        <div className={`mt-4 text-center ${
+          status === 'error' ? 'text-red-500' : 'text-gray-600'
+        }`}>
+          {message}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ReceiptUploadProgress;
+Task 5.11: Add Offline Support
+javascriptCreate: /client/src/utils/offline/syncManager.js
+import { openDB } from 'idb';
+
+class OfflineSyncManager {
+  constructor() {
+    this.dbName = 'receiptScannerOffline';
+    this.version = 1;
+  }
+  
+  async initDB() {
+    this.db = await openDB(this.dbName, this.version, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains('receipts')) {
+          db.createObjectStore('receipts', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('pendingActions')) {
+          db.createObjectStore('pendingActions', { keyPath: 'id', autoIncrement: true });
+        }
+      },
+    });
+  }
+  
+  async saveOfflineReceipt(receipt) {
+    await this.db.put('receipts', { ...receipt, syncStatus: 'pending' });
+    await this.db.add('pendingActions', {
+      type: 'CREATE_RECEIPT',
+      data: receipt,
+      timestamp: Date.now(),
+    });
+  }
+  
+  async syncPendingActions() {
+    const actions = await this.db.getAll('pendingActions');
+    
+    for (const action of actions) {
+      try {
+        switch (action.type) {
+          case 'CREATE_RECEIPT':
+            await createReceipt(action.data);
+            break;
+          case 'UPDATE_RECEIPT':
+            await updateReceipt(action.data.id, action.data);
+            break;
+          case 'DELETE_RECEIPT':
+            await deleteReceipt(action.data.id);
+            break;
+        }
+        
+        await this.db.delete('pendingActions', action.id);
+      } catch (error) {
+        console.error('Sync failed for action:', action, error);
+      }
+    }
+  }
+}
+
+export const syncManager = new OfflineSyncManager();
+Task 5.12: Add Color Customization
+javascriptCreate: /client/src/features/settings/components/ColorCustomizer.jsx
+import React from 'react';
+import { HexColorPicker } from 'react-colorful';
+
+const ColorCustomizer = ({ theme, onThemeChange }) => {
+  const colorAreas = [
+    { key: 'primary', label: 'צבע ראשי', description: 'צבע לכפתורים ולקישורים' },
+    { key: 'secondary', label: 'צבע משני', description: 'צבע לאלמנטים משניים' },
+    { key: 'accent', label: 'צבע מבטא', description: 'צבע להדגשות' },
+    { key: 'background', label: 'רקע', description: 'צבע הרקע הראשי' },
+  ];
+  
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-semibold">התאמה אישית של צבעים</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {colorAreas.map(area => (
+          <div key={area.key} className="bg-white p-4 rounded-lg shadow">
+            <div className="flex items-center gap-4 mb-2">
+              <div 
+                className="w-8 h-8 rounded-full border-2 border-gray-200"
+                style={{ backgroundColor: theme[area.key] }}
+              />
+              <div>
+                <h4 className="font-medium">{area.label}</h4>
+                <p className="text-sm text-gray-500">{area.description}</p>
+              </div>
+            </div>
+            
+            <HexColorPicker
+              color={theme[area.key]}
+              onChange={(color) => onThemeChange(area.key, color)}
+            />
+          </div>
+        ))}
+      </div>
+      
+      <div className="pt-4 border-t">
+        <Button onClick={() => onThemeChange('reset')}>
+          אפס לברירת מחדל
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default ColorCustomizer;

@@ -1,0 +1,12 @@
+{
+  "dashboard": {
+    "title": "לוח בקרה",
+    "total_receipts": "סה\"כ קבלות",
+    "spending_overview": "סקירת הוצאות",
+    "spending_trends": "מגמות הוצאות",
+    "category_breakdown": "הוצאות לפי קטגוריה",
+    "vendor_performance": "ביצועי ספקים",
+    "inventory_value": "שווי מלאי",
+    "turnover_rate": "קצב תחלופת מלאי"
+  }
+}

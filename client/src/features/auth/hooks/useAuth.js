@@ -1,14 +1,16 @@
-import { useContext, useState, useEffect } from 'react';//correct
-import { AuthContext } from '../../../core/contexts/AuthContext';//correct
-import { auth } from '../../../core/config/firebase';//correct
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
-  updateProfile
-} from 'firebase/auth';//correct
-import { useToast } from '../../../shared/hooks/useToast';//correct'
+  updateProfile,
+  signInAnonymously,
+} from 'firebase/auth';
+import { useContext, useState } from 'react';
+
+import { auth } from '../../../core/config/firebase';
+import { AuthContext } from '../../../core/contexts/AuthContext';
+import { useToast } from '../../../shared/hooks/useToast';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -21,6 +23,25 @@ export const useAuth = () => {
 
   const { user, setUser } = context;
 
+  // Anonymous login function
+  const loginAnonymously = async () => {
+    setLoading(true);
+    try {
+      const result = await signInAnonymously(auth);
+      setUser(result.user);
+      showToast('Signed in as guest', 'success');
+      return result.user;
+    } catch (error) {
+      let errorMessage = 'Failed to sign in anonymously';
+      console.error('Anonymous login error:', error);
+      showToast(errorMessage, 'error');
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Email/password login function
   const login = async (email, password) => {
     setLoading(true);
     try {
@@ -97,7 +118,7 @@ export const useAuth = () => {
     }
   };
 
-  const resetPassword = async (email) => {
+  const resetPassword = async email => {
     setLoading(true);
     try {
       await sendPasswordResetEmail(auth, email);
@@ -121,7 +142,7 @@ export const useAuth = () => {
     }
   };
 
-  const updateUserProfile = async (data) => {
+  const updateUserProfile = async data => {
     setLoading(true);
     try {
       await updateProfile(auth.currentUser, data);
@@ -139,10 +160,11 @@ export const useAuth = () => {
     user,
     loading,
     login,
+    loginAnonymously,
     register,
     logout,
     resetPassword,
-    updateUserProfile
+    updateUserProfile,
   };
 };
 

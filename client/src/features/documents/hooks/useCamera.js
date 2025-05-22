@@ -6,13 +6,13 @@ export const useCamera = () => {
 
   const startCamera = useCallback(async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: {
           facingMode: 'environment',
           width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          height: { ideal: 1080 },
         },
-        audio: false
+        audio: false,
       });
       setStream(mediaStream);
       setError(null);
@@ -39,21 +39,27 @@ export const useCamera = () => {
 
     try {
       await video.play();
-      
+
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      
+
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
 
-      return new Promise((resolve) => {
-        canvas.toBlob((blob) => {
-          resolve(new File([blob], 'captured-photo.jpg', {
-            type: 'image/jpeg',
-            lastModified: Date.now()
-          }));
-        }, 'image/jpeg', 0.9);
+      return new Promise(resolve => {
+        canvas.toBlob(
+          blob => {
+            resolve(
+              new File([blob], 'captured-photo.jpg', {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              })
+            );
+          },
+          'image/jpeg',
+          0.9
+        );
       });
     } catch (err) {
       setError('Failed to capture photo');
@@ -67,17 +73,17 @@ export const useCamera = () => {
     if (stream) {
       const currentFacingMode = stream.getVideoTracks()[0].getSettings().facingMode;
       const newFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-      
+
       stopCamera();
-      
+
       try {
         const newStream = await navigator.mediaDevices.getUserMedia({
-          video: { 
+          video: {
             facingMode: newFacingMode,
             width: { ideal: 1920 },
-            height: { ideal: 1080 }
+            height: { ideal: 1080 },
           },
-          audio: false
+          audio: false,
         });
         setStream(newStream);
         setError(null);
@@ -96,7 +102,7 @@ export const useCamera = () => {
     stopCamera,
     capturePhoto,
     switchCamera,
-    isActive: !!stream
+    isActive: !!stream,
   };
 };
 
