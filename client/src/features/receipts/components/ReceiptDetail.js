@@ -1,9 +1,9 @@
 import React from 'react';
-import { Card } from '../../../shared/components/ui/Card';
-import { formatCurrency } from '../../../shared/utils/currency';
-import { formatDate } from '../../../shared/utils/date';
+import { Card } from '@/shared/components/ui/Card';
+import { formatCurrency } from '@/shared/utils/currency';
+import { format } from 'date-fns';
 import { Download, Printer } from 'lucide-react';
-import { Button } from '../../../shared/components/ui/Button';
+import { Button } from '@/shared/components/ui/Button';
 
 export const ReceiptDetail = ({ 
   receipt,
@@ -46,7 +46,7 @@ export const ReceiptDetail = ({
               {receipt.merchant}
             </h3>
             <p className="text-sm text-gray-500">
-              {receipt.date ? formatDate(receipt.date) : 'Unknown Date'}
+              {receipt.date ? format(new Date(receipt.date), 'MMM dd, yyyy') : 'Unknown Date'}
             </p>
             {receipt.category && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
@@ -176,9 +176,9 @@ export const ReceiptDetail = ({
         {/* Metadata */}
         <div className="mt-6 pt-6 border-t">
           <div className="flex justify-between text-xs text-gray-500">
-            <span>Added on {receipt.createdAt ? formatDate(receipt.createdAt) : 'Unknown Date'}</span>
+            <span>Added on {receipt.createdAt ? format(new Date(receipt.createdAt), 'MMM dd, yyyy') : 'Unknown Date'}</span>
             {receipt.updatedAt && (
-              <span>Last updated {formatDate(receipt.updatedAt)}</span>
+              <span>Last updated {format(new Date(receipt.updatedAt), 'MMM dd, yyyy')}</span>
             )}
           </div>
         </div>

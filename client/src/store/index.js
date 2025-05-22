@@ -3,7 +3,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { receiptApi } from '../shared/services/receiptApi';
-import { analyticsApi } from './services/analyticsApi';
+import { analyticsApi } from '@/features/analytics/services/analyticsApi';
 import authReducer from './slices/authSlice';
 import uiReducer from './slices/uiSlice';
 

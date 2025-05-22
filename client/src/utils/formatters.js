@@ -18,7 +18,7 @@ const formatEnglishDate = (date) => {
   }).format(new Date(date));
 };
 
-import { formatHebrewCurrency, formatHebrewDate } from './hebrew';
+import { formatHebrewCurrency, formatHebrewDate } from './formatters/hebrew';
 
 export const useFormatters = () => {
   const { i18n } = useTranslation();

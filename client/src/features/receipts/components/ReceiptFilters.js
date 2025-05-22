@@ -1,9 +1,9 @@
 import { Search, Filter, X } from 'lucide-react';
 import React from 'react';
 
-import { Input } from '../../../shared/components/forms/Input';
-import { Button } from '../../../shared/components/ui/Button';
-import { Dropdown } from '../../../shared/components/forms/Dropdown';
+import { Input } from '@/shared/components/forms/Input';
+import { Button } from '@/shared/components/ui/Button';
+import { Dropdown } from '@/shared/components/forms/Dropdown';
 import { useCategories } from '../../categories/hooks/useCategories';
 
 const ReceiptFilters = ({ currentFilters, onFilterChange, onReset }) => {

@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Card } from '../../../shared/components/ui/Card';
-import { Button } from '../../../shared/components/forms/Button';
-import { Alert } from '../../../shared/components/ui/Alert';
-import { useToast } from '../../../shared/hooks/useToast';
+import { Card } from '@/shared/components/ui/Card';
+import { Button } from '@/shared/components/forms/Button';
+import { Alert } from '@/shared/components/ui/Alert';
+import { useToast } from '@/shared/hooks/useToast';
 import { useReceipts } from '../hooks/useReceipts';
 import { Camera, Upload, X, Image } from 'lucide-react';
 

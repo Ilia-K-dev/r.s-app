@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Card } from '../src/shared/components/ui/Card'; // Updated import path
-import { Button } from '../src/shared/components/forms/Button'; // Updated import path
+import { Card } from '@/shared/components/ui/Card'; // Updated import path
+import { Button } from '@/shared/components/forms/Button'; // Updated import path
 import { Camera, Upload } from 'lucide-react'; // Updated import path
-import { useToast } from '../src/shared/hooks/useToast'; // Updated import path
+import { useToast } from '@/shared/hooks/useToast'; // Updated import path
 
 const ScannerInterface = ({ onCapture, onUpload }) => {
   const fileInputRef = useRef(null);

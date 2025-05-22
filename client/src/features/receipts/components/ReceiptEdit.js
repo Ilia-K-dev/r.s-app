@@ -1,13 +1,13 @@
 import { Store, Calendar, DollarSign, Tag, Plus, Trash, Receipt, Save } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Input } from '../../../shared/components/forms/Input';
-import { Button } from '../../../shared/components/ui/Button';
-import { Dropdown } from '../../../shared/components/forms/Dropdown';
-import { Alert } from '../../../shared/components/ui/Alert';
-import { Card } from '../../../shared/components/ui/Card';
-import { DateRangePicker } from '../../../shared/components/ui/DateRangePicker';
-import { parseCurrencyInput, formatCurrency } from '../../../shared/utils/currency';
+import { Input } from '@/shared/components/forms/Input';
+import { Button } from '@/shared/components/ui/Button';
+import { Dropdown } from '@/shared/components/forms/Dropdown';
+import { Alert } from '@/shared/components/ui/Alert';
+import { Card } from '@/shared/components/ui/Card';
+import { DateRangePicker } from '@/shared/components/ui/DateRangePicker';
+import { parseCurrencyInput, formatCurrency } from '../../shared/utils/currency';
 import { useCategories } from '../../categories/hooks/useCategories';
 import { validateReceipt } from '../utils/validation';
 

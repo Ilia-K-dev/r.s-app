@@ -16,7 +16,7 @@ const App = () => {
           <RouterProvider router={router} />
           {/* Add version indicator for preview testing */}
           <div className="absolute bottom-2 right-2 text-xs text-gray-500">
-            Version: 1.0.0 (Preview Test) - {new Date().toLocaleDateString()}
+            Version: 1.0.0 (Preview Test) - {new Date().toISOString()}
           </div>
         </div>
       </ToastProvider>

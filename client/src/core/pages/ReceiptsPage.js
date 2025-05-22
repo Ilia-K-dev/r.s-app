@@ -6,7 +6,7 @@ import ReceiptForm from '../../features/receipts/components/ReceiptForm'; //corr
 import ReceiptList from '../../features/receipts/components/ReceiptList'; //correct
 import { ReceiptUploader } from '../../features/receipts/components/ReceiptUploader';
 import { useReceipts } from '../../features/receipts/hooks/useReceipts'; //correct
-import { Button } from '../../shared/components/forms/Button'; //correct
+import { Button } from '@/shared/components/forms/Button'; //correct
 import { Modal } from '../../shared/components/ui/Modal'; //correct
 import { useToast } from '../../shared/hooks/useToast';
 

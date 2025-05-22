@@ -1,13 +1,13 @@
 import { Store, Calendar, DollarSign, Tag, Plus, Trash, Save } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Input } from '../../..//shared/components/forms/Input';
-import Button from '../../../shared/components/ui/Button';
-import { Dropdown } from '../../../shared/components/forms/Dropdown';
-import { Alert } from '../../../shared/components/ui/Alert';
-import { Modal } from '../../../shared/components/ui/Modal';
-import { useToast } from '../../../shared/hooks/useToast';
-import { parseCurrencyInput, formatCurrency } from '../../../shared/utils/currency';
+import { Input } from '@/shared/components/forms/Input';
+import Button from '@/shared/components/ui/Button';
+import { Dropdown } from '@/shared/components/forms/Dropdown';
+import { Alert } from '@/shared/components/ui/Alert';
+import { Modal } from '@/shared/components/ui/Modal';
+import { useToast } from '@/shared/hooks/useToast';
+import { parseCurrencyInput, formatCurrency } from '../../shared/utils/currency';
 import { useCategories } from '../../categories/hooks/useCategories';
 import { validateAmount, validateRequired } from '../utils/validation';
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { logger } from '../../shared/utils/logger';
-import { Button } from '../../shared/components/forms/Button';
-import { Alert } from '../../shared/components/ui/Alert';
+import { logger } from '@/shared/utils/logger';
+import { Button } from '@/shared/components/forms/Button';
+import { Alert } from '@/shared/components/ui/Alert';
 import { RefreshCw, Home } from 'lucide-react';
 
 class ErrorBoundary extends React.Component {

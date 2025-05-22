@@ -3,12 +3,12 @@
 import { Download, Maximize, Minimize, RotateCw, Edit, Trash, Printer } from 'lucide-react'; //correct
 import React, { useState } from 'react'; //correct
 
-import { Button } from '../../../shared/components/forms/Button'; //correct
-import { Alert } from '../../../shared/components/ui/Alert'; //correct
-import { Card } from '../../../shared/components/ui/Card'; //correct
-import { Loading } from '../../../shared/components/ui/Loading'; //correct
-import { formatCurrency } from '../../../shared/utils/currency';
-import { formatDate } from '../../../shared/utils/date';
+import { Button } from '@/shared/components/forms/Button'; //correct
+import { Alert } from '@/shared/components/ui/Alert'; //correct
+import { Card } from '@/shared/components/ui/Card'; //correct
+import { Loading } from '@/shared/components/ui/Loading'; //correct
+import { formatCurrency } from '../../shared/utils/currency';
+import { formatDate } from '@/shared/utils/date';
 
 export const ReceiptPreview = ({
   receipt,
