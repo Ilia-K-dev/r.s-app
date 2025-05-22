@@ -1,0 +1,12 @@
+{
+  "inventory": {
+    "title": "מלאי",
+    "inventory_list": "רשימת מלאי",
+    "add_item": "הוסף פריט",
+    "item_details": "פרטי פריט",
+    "product_name": "שם מוצר",
+    "stock_quantity": "כמות במלאי",
+    "price": "מחיר",
+    "last_updated": "עודכן לאחרונה"
+  }
+}

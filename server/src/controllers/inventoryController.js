@@ -1,238 +1,131 @@
-const Product = require('../models/Product'); //good
-const StockMovement = require('../models/StockMovement'); //good
-const InventoryAlert = require('../models/InventoryAlert'); //good
-const { AppError } = require('../utils/error/AppError'); //good
-const logger = require('../utils/logger');  //good
+const inventoryService = require('../services/inventory/inventoryService'); // Assuming service location
+const { handleError } = require('../utils/errorHandler'); // Assuming error handler utility
+const { logInfo } = require('../utils/logger'); // Assuming logger utility
 
-const inventoryController = {
-  // Product Management
-  async createProduct(req, res, next) {
-    try {
-      const productData = {
-        ...req.body,
-        userId: req.user.uid
-      };
-
-      const product = new Product(productData);
-      await product.save();
-
-      res.status(201).json({
-        status: 'success',
-        data: { product }
-      });
-    } catch (error) {
-      logger.error('Error creating product:', error);
-      next(new AppError(error.message, 400));
-    }
-  },
-
-  async updateProduct(req, res, next) {
-    try {
-      const product = await Product.findById(req.params.id);
-      if (!product || product.userId !== req.user.uid) {
-        throw new AppError('Product not found', 404);
-      }
-
-      Object.assign(product, req.body);
-      await product.save();
-
-      res.status(200).json({
-        status: 'success',
-        data: { product }
-      });
-    } catch (error) {
-      logger.error('Error updating product:', error);
-      next(new AppError(error.message, 400));
-    }
-  },
-
-  async getProducts(req, res, next) {
-    try {
-      const {
-        category,
-        status,
-        stockLevel,
-        search,
-        sortBy = 'name',
-        sortOrder = 'asc'
-      } = req.query;
-
-      const filters = {
-        category,
-        status,
-        stockLevel
-      };
-
-      const products = await Product.findByUser(req.user.uid, filters);
-
-      // Apply search filter if provided
-      let filteredProducts = products;
-      if (search) {
-        const searchLower = search.toLowerCase();
-        filteredProducts = products.filter(product =>
-          product.name.toLowerCase().includes(searchLower) ||
-          product.sku?.toLowerCase().includes(searchLower) ||
-          product.barcode?.toLowerCase().includes(searchLower)
-        );
-      }
-
-      // Apply sorting
-      filteredProducts.sort((a, b) => {
-        const aValue = a[sortBy];
-        const bValue = b[sortBy];
-        return sortOrder === 'asc' ? 
-          (aValue > bValue ? 1 : -1) :
-          (aValue < bValue ? 1 : -1);
-      });
-
-      res.status(200).json({
-        status: 'success',
-        data: { products: filteredProducts }
-      });
-    } catch (error) {
-      logger.error('Error fetching products:', error);
-      next(new AppError(error.message, 400));
-    }
-  },
-
-  // Stock Management
-  async updateStock(req, res, next) {
-    try {
-      const { quantity, type, reason } = req.body;
-      const product = await Product.findById(req.params.id);
-      
-      if (!product || product.userId !== req.user.uid) {
-        throw new AppError('Product not found', 404);
-      }
-
-      const movement = await product.updateStock(quantity, type, reason);
-
-      res.status(200).json({
-        status: 'success',
-        data: { 
-          product,
-          movement
-        }
-      });
-    } catch (error) {
-      logger.error('Error updating stock:', error);
-      next(new AppError(error.message, 400));
-    }
-  },
-
-  async getStockMovements(req, res, next) {
-    try {
-      const { startDate, endDate, type } = req.query;
-      const movements = await StockMovement.findByDateRange(
-        req.user.uid,
-        new Date(startDate),
-        new Date(endDate)
-      );
-
-      // Filter by type if provided
-      const filteredMovements = type ? 
-        movements.filter(m => m.type === type) :
-        movements;
-
-      res.status(200).json({
-        status: 'success',
-        data: { movements: filteredMovements }
-      });
-    } catch (error) {
-      logger.error('Error fetching stock movements:', error);
-      next(new AppError(error.message, 400));
-    }
-  },
-
-  // Alert Management
-  async getAlerts(req, res, next) {
-    try {
-      const { status, level } = req.query;
-      let alerts;
-
-      if (level === 'critical') {
-        alerts = await InventoryAlert.findCriticalAlerts(req.user.uid);
-      } else {
-        alerts = await InventoryAlert.findActiveAlerts(req.user.uid);
-      }
-
-      // Filter by status if provided
-      if (status) {
-        alerts = alerts.filter(alert => alert.status === status);
-      }
-
-      res.status(200).json({
-        status: 'success',
-        data: { alerts }
-      });
-    } catch (error) {
-      logger.error('Error fetching alerts:', error);
-      next(new AppError(error.message, 400));
-    }
-  },
-
-  async resolveAlert(req, res, next) {
-    try {
-      const { notes } = req.body;
-      const alert = await InventoryAlert.findById(req.params.id);
-      
-      if (!alert || alert.userId !== req.user.uid) {
-        throw new AppError('Alert not found', 404);
-      }
-
-      await alert.resolve(req.user.uid, notes);
-
-      res.status(200).json({
-        status: 'success',
-        data: { alert }
-      });
-    } catch (error) {
-      logger.error('Error resolving alert:', error);
-      next(new AppError(error.message, 400));
-    }
-  },
-
-  // Inventory Analysis
-  async getInventoryStatus(req, res, next) {
-    try {
-      const products = await Product.findByUser(req.user.uid);
-      
-      const status = {
-        totalProducts: products.length,
-        totalValue: products.reduce((sum, p) => sum + (p.currentStock * p.unitPrice), 0),
-        lowStock: products.filter(p => p.currentStock <= p.minStockLevel).length,
-        outOfStock: products.filter(p => p.currentStock === 0).length,
-        needsReorder: products.filter(p => p.currentStock <= p.reorderPoint).length,
-        categories: {}
-      };
-
-      // Calculate category statistics
-      products.forEach(product => {
-        if (!status.categories[product.category]) {
-          status.categories[product.category] = {
-            count: 0,
-            value: 0,
-            lowStock: 0
-          };
-        }
-
-        const cat = status.categories[product.category];
-        cat.count++;
-        cat.value += product.currentStock * product.unitPrice;
-        if (product.currentStock <= product.minStockLevel) {
-          cat.lowStock++;
-        }
-      });
-
-      res.status(200).json({
-        status: 'success',
-        data: { status }
-      });
-    } catch (error) {
-      logger.error('Error getting inventory status:', error);
-      next(new AppError(error.message, 400));
-    }
+// GET /api/inventory - List all inventory items for a user
+exports.listInventory = async (req, res) => {
+  try {
+    const userId = req.user.uid; // Assuming user ID is available from authentication middleware
+    logInfo(`User ${userId} requesting inventory list.`);
+    const inventory = await inventoryService.listInventory(userId);
+    res.status(200).json(inventory);
+  } catch (error) {
+    handleError(res, error);
   }
 };
 
-module.exports = inventoryController;
+// GET /api/inventory/:id - Get a specific inventory item
+exports.getInventoryItem = async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const itemId = req.params.id;
+    logInfo(`User ${userId} requesting inventory item: ${itemId}`);
+    const item = await inventoryService.getInventoryItem(userId, itemId);
+    if (!item) {
+      return res.status(404).json({ message: 'Inventory item not found.' });
+    }
+    res.status(200).json(item);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// POST /api/inventory - Create a new inventory item
+exports.createInventoryItem = async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const itemData = req.body;
+    logInfo(`User ${userId} creating inventory item with data:`, itemData);
+    const newItem = await inventoryService.createInventoryItem(userId, itemData);
+    res.status(201).json(newItem);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// PUT /api/inventory/:id - Update an inventory item
+exports.updateInventoryItem = async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const itemId = req.params.id;
+    const updateData = req.body;
+    logInfo(`User ${userId} updating inventory item ${itemId} with data:`, updateData);
+    const updatedItem = await inventoryService.updateInventoryItem(userId, itemId, updateData);
+    if (!updatedItem) {
+      return res.status(404).json({ message: 'Inventory item not found.' });
+    }
+    res.status(200).json(updatedItem);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// DELETE /api/inventory/:id - Delete an inventory item
+exports.deleteInventoryItem = async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const itemId = req.params.id;
+    logInfo(`User ${userId} deleting inventory item: ${itemId}`);
+    await inventoryService.deleteInventoryItem(userId, itemId);
+    res.status(204).send(); // No content on successful deletion
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// PUT /api/inventory/:id/stock - Update stock levels
+exports.updateStock = async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const itemId = req.params.id;
+    const { quantityChange, movementType } = req.body; // Assuming these fields are in the request body
+    logInfo(`User ${userId} updating stock for item ${itemId} by ${quantityChange} (${movementType})`);
+    const updatedItem = await inventoryService.updateStock(userId, itemId, quantityChange, movementType);
+     if (!updatedItem) {
+      return res.status(404).json({ message: 'Inventory item not found.' });
+    }
+    res.status(200).json(updatedItem);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// GET /api/inventory/movements - Get stock movement history
+exports.getStockMovements = async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    // Add filtering/pagination options from req.query if needed
+    logInfo(`User ${userId} requesting stock movement history.`);
+    const movements = await inventoryService.getStockMovements(userId, req.query);
+    res.status(200).json(movements);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// POST /api/inventory/movements - Create a stock movement record
+// This might be handled internally by updateStock, but including for completeness if needed
+exports.createStockMovement = async (req, res) => {
+   try {
+    const userId = req.user.uid;
+    const movementData = req.body;
+    logInfo(`User ${userId} creating stock movement record:`, movementData);
+    const newMovement = await inventoryService.createStockMovement(userId, movementData);
+    res.status(201).json(newMovement);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+
+// GET /api/inventory/low-stock - Get low stock alerts
+exports.getLowStockAlerts = async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    logInfo(`User ${userId} requesting low stock alerts.`);
+    const alerts = await inventoryService.getLowStockAlerts(userId);
+    res.status(200).json(alerts);
+  } catch (error) {
+    handleError(res, error);
+  }
+};

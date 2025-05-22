@@ -1,20 +1,26 @@
-import React, { useState } from 'react';//correct
-import { Link, useNavigate } from 'react-router-dom';//correct
-import { Input } from '../../../shared/components/forms/Input';//correct
-import { Button } from '../../../shared/components/forms/Button';//correct
-import { Alert } from '../../../shared/components/ui/Alert';//correct
-import { useAuth } from '../../auth/hooks/useAuth';//correct
-import { Mail, Lock } from 'lucide-react';//correct
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Input } from '../../../shared/components/forms/Input';
+import { Button } from '../../../shared/components/ui/Button';
+import { Alert } from '../../../shared/components/ui/Alert';
+import { useAuth } from '../hooks/useAuth';
+import { Mail, Lock, UserX } from 'lucide-react';
 
 export const LoginPage = () => {
+  const { t } = useTranslation('auth'); // Use the 'auth' namespace
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
+  const { login, loginAnonymously } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Get the redirect path if user was redirected to login
+  const from = location.state?.from?.pathname || '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +29,23 @@ export const LoginPage = () => {
 
     try {
       await login(formData.email, formData.password);
-      navigate('/');
+      // Redirect to the page user was trying to access or home
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle anonymous login
+  const handleAnonymousLogin = async () => {
+    setError('');
+    setLoading(true);
+    
+    try {
+      await loginAnonymously();
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -36,7 +58,7 @@ export const LoginPage = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-            Sign in to your account
+            {t('auth.login.title')}
           </h2>
         </div>
 
@@ -48,7 +70,7 @@ export const LoginPage = () => {
           <div className="rounded-md shadow-sm space-y-4">
             <Input
               type="email"
-              label="Email address"
+              label={t('auth.login.email_label')}
               icon={Mail}
               required
               value={formData.email}
@@ -57,7 +79,7 @@ export const LoginPage = () => {
 
             <Input
               type="password"
-              label="Password"
+              label={t('auth.login.password_label')}
               icon={Lock}
               required
               value={formData.password}
@@ -74,7 +96,7 @@ export const LoginPage = () => {
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
+                {t('auth.login.remember_me')}
               </label>
             </div>
 
@@ -82,7 +104,7 @@ export const LoginPage = () => {
               to="/forgot-password"
               className="text-sm font-medium text-primary-600 hover:text-primary-500"
             >
-              Forgot your password?
+              {t('auth.login.forgot_password')}
             </Link>
           </div>
 
@@ -91,17 +113,33 @@ export const LoginPage = () => {
             fullWidth
             loading={loading}
           >
-            Sign in
+            {t('auth.login.sign_in_button')}
+          </Button>
+
+          {/* Anonymous Login Section */}
+          <div className="text-center">
+            <span className="text-sm text-gray-600">{t('auth.login.or_separator')}</span>
+          </div>
+          
+          <Button
+            type="button"
+            variant="secondary"
+            fullWidth
+            onClick={handleAnonymousLogin}
+            icon={UserX}
+            disabled={loading}
+          >
+            {t('auth.login.continue_as_guest_button')}
           </Button>
 
           <div className="text-center">
             <span className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              {t('auth.login.no_account_text')}{' '}
               <Link
                 to="/register"
                 className="font-medium text-primary-600 hover:text-primary-500"
               >
-                Sign up
+                {t('auth.login.sign_up_link')}
               </Link>
             </span>
           </div>
@@ -110,3 +148,5 @@ export const LoginPage = () => {
     </div>
   );
 };
+
+export default LoginPage;

@@ -1,7 +1,8 @@
-import React from 'react';//correct
-import { useAnalytics } from '../../analytics/hooks/useAnalytics';//correct
-import ChartWrapper from '../../../shared/components/charts/ChartWrapper';//corret
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';//correct
+import React from 'react'; //correct
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'; //correct
+
+import ChartWrapper from '../../../shared/components/charts/ChartWrapper'; //corret
+import { useAnalytics } from '../../analytics/hooks/useAnalytics'; //correct
 
 const PredictiveAnalytics = () => {
   const { spendingAnalytics, loading, error } = useAnalytics();

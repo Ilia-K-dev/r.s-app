@@ -1,33 +1,40 @@
 module.exports = {
-    content: ["./src/**/*.{js,jsx}"],
-    theme: {
-      extend: {
-        colors: {
-          primary: {
-            50: '#F0F9FF',
-            100: '#E0F2FE',
-            200: '#BAE6FD',
-            300: '#7DD3FC',
-            400: '#38BDF8',
-            500: '#0EA5E9',
-            600: '#0284C7',
-          },
-          success: {
-            50: '#F0FDF4',
-            500: '#22C55E',
-          },
-          warning: {
-            50: '#FEFCE8',
-            500: '#EAB308',
-          },
-        },
-        fontFamily: {
-          sans: ['Roboto', 'Arial', 'sans-serif'],
-        },
-        borderRadius: {
-          DEFAULT: '0.5rem',
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
         },
       },
     },
-    plugins: [],
-  };
+  },
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./public/index.html",
+  ],
+  plugins: [
+    require('@tailwindcss/forms'),
+    plugin(function ({ addVariant }) {
+      addVariant('rtl', ['[dir="rtl"] &']);
+      addVariant('ltr', ['[dir="ltr"] &']);
+    }),
+  ],
+  // Enable RTL support
+  variants: {
+    extend: {
+      margin: ['rtl'],
+      padding: ['rtl'],
+      borderRadius: ['rtl'],
+      textAlign: ['rtl'],
+    },
+  },
+};

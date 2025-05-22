@@ -1,25 +1,26 @@
-import React, { useState } from 'react';//correct 
-import { useParams, useNavigate } from 'react-router-dom';//correct 
-import { PageHeader } from '../../../shared/components/layout/PageHeader';//correct 
-import { Card } from '../../../shared/components/ui/Card';//correct 
-import { Button } from '../../../shared/components/forms/Button';//correct 
-import { Alert } from '../../../shared/components/ui//Alert';//correct 
-import { Loading } from '../../../shared/components/ui/Loading';//correct
-import { ReportFilters } from '../../../features/analytics/components/reports/ReportFilters';//correct
-import { SpendingChart } from '../../../features/analytics/components/SpendingChart';//correct
-import { CategoryChart, DonutChart, LineChart } from '../../../shared/components/charts/ChartComponent';//correct
-import { useReports } from '../../../features/analytics/hooks/useReports';//correct
-import { useToast } from '../../../shared/hooks/useToast';//correct
-import { formatCurrency } from '../../../shared/utils/currency';//correct
-import { formatDate } from '../../../shared/utils/date';//correct
-import { Download, Share, ChevronLeft, Filter } from 'lucide-react';//correct
+import { Download, Share, ChevronLeft, Filter } from 'lucide-react'; //correct
+import React, { useState } from 'react'; //correct
+import { useParams, useNavigate } from 'react-router-dom'; //correct
+
+import { ReportFilters } from '../../../features/analytics/components/reports/ReportFilters'; //correct
+import { SpendingChart } from '../../../features/analytics/components/SpendingChart'; //correct
+import { useReports } from '../../../features/analytics/hooks/useReports'; //correct
+import { ChartComponent as CategoryChart, ChartComponent as DonutChart, ChartComponent as LineChart } from '../../../shared/components/charts/ChartComponent'; //correct
+import { Button } from '../../../shared/components/forms/Button'; //correct
+import PageHeader from '../../../shared/components/layout/PageHeader'; //correct
+import { Alert } from '../../../shared/components/ui//Alert'; //correct
+import { Card } from '../../../shared/components/ui/Card'; //correct
+import { Loading } from '../../../shared/components/ui/Loading'; //correct
+import { useToast } from '../../../shared/hooks/useToast'; //correct
+import { formatCurrency } from '../../../shared/utils/currency'; //correct
+import { formatDate } from '../../../shared/utils/date'; //correct
 
 const ReportDetailPage = () => {
   const { type } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [showFilters, setShowFilters] = useState(false);
-  
+
   const {
     loading,
     error,
@@ -29,7 +30,7 @@ const ReportDetailPage = () => {
     categoryAnalysis,
     trendAnalysis,
     updateFilters,
-    exportReport
+    exportReport,
   } = useReports();
 
   // Report type configurations
@@ -37,13 +38,13 @@ const ReportDetailPage = () => {
     spending: {
       title: 'Spending Analysis',
       description: 'Detailed breakdown of your spending patterns',
-      component: SpendingChart
+      component: SpendingChart,
     },
     category: {
       title: 'Category Analysis',
       description: 'Analysis of spending by category',
-      component: CategoryChart
-    }
+      component: CategoryChart,
+    },
   };
 
   const currentReport = reportTypes[type];
@@ -83,10 +84,10 @@ const ReportDetailPage = () => {
       const shareParams = new URLSearchParams({
         startDate: filters.startDate,
         endDate: filters.endDate,
-        type: type
+        type,
       });
       const shareUrl = `${window.location.origin}/reports/${type}?${shareParams}`;
-      
+
       await navigator.clipboard.writeText(shareUrl);
       showToast('Report link copied to clipboard', 'success');
     } catch (error) {
@@ -110,38 +111,20 @@ const ReportDetailPage = () => {
         showBack
         action={
           <div className="flex space-x-2">
-            <Button
-              variant="secondary"
-              icon={Filter}
-              onClick={() => setShowFilters(!showFilters)}
-            >
+            <Button variant="secondary" icon={Filter} onClick={() => setShowFilters(!showFilters)}>
               Filters
             </Button>
-            <Button
-              variant="secondary"
-              icon={Share}
-              onClick={handleShare}
-            >
+            <Button variant="secondary" icon={Share} onClick={handleShare}>
               Share
             </Button>
-            <Button
-              variant="primary"
-              icon={Download}
-              onClick={() => handleExport('csv')}
-            >
+            <Button variant="primary" icon={Download} onClick={() => handleExport('csv')}>
               Export
             </Button>
           </div>
         }
       />
 
-      {error && (
-        <Alert
-          type="error"
-          title="Error loading report"
-          message={error}
-        />
-      )}
+      {error && <Alert type="error" title="Error loading report" message={error} />}
 
       {showFilters && (
         <Card className="mb-6">
@@ -184,9 +167,7 @@ const ReportDetailPage = () => {
               <p className="mt-2 text-3xl font-semibold text-gray-900">
                 {(trendAnalysis?.growth || 0).toFixed(1)}%
               </p>
-              <p className="mt-2 text-sm text-gray-500">
-                Compared to previous period
-              </p>
+              <p className="mt-2 text-sm text-gray-500">Compared to previous period</p>
             </div>
           </Card>
         </div>
@@ -196,7 +177,7 @@ const ReportDetailPage = () => {
           {React.createElement(currentReport.component, {
             data: type === 'spending' ? reports.spending : categoryAnalysis,
             loading,
-            error
+            error,
           })}
         </Card>
 
@@ -211,9 +192,7 @@ const ReportDetailPage = () => {
                 </p>
                 {trendAnalysis.forecast.map((forecast, index) => (
                   <div key={index} className="flex justify-between border-b pb-2">
-                    <span className="text-gray-600">
-                      {formatDate(forecast.date)}
-                    </span>
+                    <span className="text-gray-600">{formatDate(forecast.date)}</span>
                     <span className="font-medium text-gray-900">
                       {formatCurrency(forecast.amount)}
                     </span>
@@ -238,10 +217,10 @@ const ReportDetailPage = () => {
             <h3 className="text-lg font-medium mb-4">Category Breakdown</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                {categoryAnalysis.map((category) => (
+                {categoryAnalysis.map(category => (
                   <div key={category.id} className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
-                      <div 
+                      <div
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: category.color || '#000' }}
                       />
@@ -278,24 +257,21 @@ const ReportDetailPage = () => {
             </div>
             <div className="divide-y">
               {reports.receipts.map(receipt => (
-                <div 
+                <div
                   key={receipt.id}
                   className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
                   onClick={() => navigate(`/receipts/${receipt.id}`)}
+                  role="link"
+                  tabIndex={0}
+                  onKeyDown={(e) => {if (e.key === 'Enter') navigate(`/receipts/${receipt.id}`)}}
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-medium text-gray-900">
-                        {receipt.merchant}
-                      </h4>
-                      <p className="text-sm text-gray-500">
-                        {formatDate(receipt.date)}
-                      </p>
+                      <h4 className="font-medium text-gray-900">{receipt.merchant}</h4>
+                      <p className="text-sm text-gray-500">{formatDate(receipt.date)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">
-                        {formatCurrency(receipt.total)}
-                      </p>
+                      <p className="font-medium text-gray-900">{formatCurrency(receipt.total)}</p>
                       {receipt.category && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                           {receipt.category}

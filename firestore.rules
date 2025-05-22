@@ -1,34 +1,295 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Receipts Collection
-    match /receipts/{receiptId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null 
-                   && request.resource.data.userId == request.auth.uid
-                   && resource.data.userId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+
+    // --- Helper Functions ---
+    function isAuthenticated() {
+      return request.auth != null;
     }
-    
-    // Categories Collection
-    match /categories/{categoryId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null 
-                   && request.resource.data.userId == request.auth.uid
-                   && resource.data.userId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+
+    // Checks if the requesting user is the owner of the resource.
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
-    
-    // Users Collection
+
+    // Checks if the user ID matches the document's userId field.
+    function isResourceOwner(resource) {
+        return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    // Checks if the incoming data has the correct owner ID.
+    function isDataOwner(data) {
+        return isAuthenticated() && request.auth.uid == data.userId;
+    }
+
+    // --- Data Validation Functions ---
+    function isValidString(str, minLen, maxLen) {
+      return str is string && str.size() >= minLen && str.size() <= maxLen;
+    }
+
+    function isValidNumber(num, minVal, maxVal) {
+      return (num is number || num is float) && num >= minVal && num <= maxVal;
+    }
+
+    function isValidTimestamp(ts) {
+        // Allow server timestamp or a valid request timestamp
+        return ts == request.time || (ts is timestamp && ts <= request.time);
+    }
+
+    function isValidUserDoc(data) {
+      return isValidString(data.email, 1, 100) // Assuming email is stored
+          && data.createdAt is timestamp;
+          // Add other required user fields if necessary
+    }
+
+    // Validates the structure and data types of a receipt document.
+    function isValidReceipt(data) {
+      return isDataOwner(data)
+          && isValidString(data.title, 1, 200) // Validate title
+          && isValidString(data.merchant, 1, 100) // Validate merchant name
+          && data.date is timestamp // Ensure date is a timestamp
+          && isValidNumber(data.total, 0.01, 1000000) // Validate total amount (positive number)
+          && data.createdAt is timestamp // Ensure createdAt is a timestamp (set by server)
+          // Optional fields validation:
+          && (!('items' in data) || (data.items is list && data.items.size() <= 500)); // Optional items array (
+          // Add validation for items array content if applicable
+          // && (data.items.size() == 0 || data.items.all(item =>
+          //     isValidString(item.name, 1, 100) && isValidNumber(item.price, 0, 1000000)
+          // ));
+    }
+
+    function isValidCategory(data) {
+        return isDataOwner(data)
+            && isValidString(data.name, 1, 50)
+            && (!('budget' in data) || isValidNumber(data.budget, 0, 1000000)) // Optional budget
+            && (!('color' in data) || (data.color is string && data.color.matches('^#[0-9A-Fa-f]{6}$'))); // Optional color
+    }
+
+    function isValidProduct(data) {
+      return isDataOwner(data)
+          && isValidString(data.name, 1, 100)
+          && isValidNumber(data.unitPrice, 0, 1000000)
+          && (!('description' in data) || isValidString(data.description, 0, 500)); // Optional description
+    }
+
+    // Validates the structure and data types of an inventory item document.
+    function isValidInventory(data) {
+      return isDataOwner(data)
+          && isValidString(data.name, 1, 200) // Validate name (required)
+          && isValidString(data.category, 1, 100) // Validate category (required)
+          && isValidString(data.productId, 1, 100) // Link to product (required)
+          && isValidNumber(data.quantity, 0, 1000000) // Validate quantity (non-negative, allow 0)
+          && (!('location' in data) || isValidString(data.location, 0, 100)) // Optional location
+          && (!('description' in data) || isValidString(data.description, 0, 500)) // Optional description
+          && (!('imageUrl' in data) || isValidString(data.imageUrl, 0, 1024)); // Optional image URL
+          // Add other required/optional inventory fields if necessary
+    }
+
+    function isValidStockMovement(data) {
+      return isDataOwner(data)
+          && isValidString(data.itemId, 1, 100) // Link to inventory/product
+          && data.quantity is number // Can be positive or negative
+          && isValidString(data.movementType, 1, 50) // e.g., 'purchase', 'sale', 'adjustment'
+          && data.timestamp is timestamp; // Should be set by server ideally
+    }
+
+    function isValidAlert(data) {
+      return isDataOwner(data)
+          && isValidString(data.itemId, 1, 100) // Link to inventory/product
+          && isValidString(data.message, 1, 200)
+          && data.isRead is bool
+          && data.createdAt is timestamp;
+    }
+
+    function isValidVendor(data) {
+      return isDataOwner(data)
+          && isValidString(data.name, 1, 100)
+          && (!('contactEmail' in data) || isValidString(data.contactEmail, 0, 100)) // Optional fields
+          && (!('phone' in data) || isValidString(data.phone, 0, 30));
+    }
+
+    function isValidDocument(data) {
+      return isDataOwner(data)
+          && (data.fileName is string && data.fileName.size() > 0 && data.fileName.size() <= 1024) // Check if fileName is a non-empty string
+          && isValidString(data.imageUrl, 1, 1024) // URL validation is tricky, check length
+          && isValidString(data.gcsUri, 1, 1024)
+          && data.classification is map // Check if classification is an object
+          && data.createdAt is timestamp;
+          // Add more checks based on document structure
+    }
+
+    function isValidNotification(data) {
+      // Primarily created by server, validation might be less strict on client reads/updates
+      return isDataOwner(data)
+          && isValidString(data.message, 1, 500)
+          && data.isRead is bool
+          && data.createdAt is timestamp;
+    }
+
+    function isValidNotificationPreferences(data) {
+      return isDataOwner(data)
+          && data.preferences is map; // Ensure preferences is an object
+          // Could add specific checks for keys within preferences if needed
+    }
+
+    // --- Collection Rules ---
+
+    // Users: Only the user themselves can read/write their own document.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, update, delete: if isAuthenticated() && request.auth.uid == userId;
+      // Disallow direct creation? Usually handled by Firebase Auth trigger or backend.
+      allow create: if isAuthenticated() && request.auth.uid == userId && isValidUserDoc(request.resource.data);
     }
-    
-    // Test Collection (for diagnostics)
-    match /_test/{docId} {
-      allow read, write: if request.auth != null;
+
+    // Receipts: Owned data, requires valid fields on create/update.
+    match /receipts/{receiptId} {
+      // Allow read access (get and list) only if the requesting user is authenticated
+      // and the owner of the receipt document.
+      // Authentication is verified by checking request.auth != null.
+      // Ownership is determined by comparing the authenticated user's UID (request.auth.uid)
+      // with the userId field in the document (resource.data.userId).
+      // For list operations, the emulator enforces that the query must be constrained by this condition.
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // Allow create access only if the requesting user is authenticated,
+      // the user ID in the incoming data matches the authenticated user's UID,
+      // and the incoming data is valid according to isValidReceipt.
+      // Authentication is verified by checking request.auth != null.
+      // Ownership for creation is determined by comparing the authenticated user's UID (request.auth.uid)
+      // with the userId field in the incoming data (request.resource.data.userId).
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid && isValidReceipt(request.resource.data);
+
+      // Allow update access only if the requesting user is authenticated,
+      // the user is the owner of the existing receipt document,
+      // the user ID in the incoming data matches the authenticated user's UID,
+      // the incoming data is valid according to isValidReceipt,
+      // and the userId field is not being changed.
+      // Authentication is verified by checking request.auth != null.
+      // Ownership for update is verified against both the existing document (resource.data.userId)
+      // and the incoming data (request.resource.data.userId) to ensure consistency.
+      // The rule explicitly prevents changing the userId field during an update.
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == request.auth.uid // Ensure userId in update data matches owner
+                    && isValidReceipt(request.resource.data)
+                    && request.resource.data.userId == resource.data.userId; // Explicitly prevent changing userId
+
+      // Allow delete access only if the requesting user is authenticated and the owner of the receipt document.
+      // Authentication is verified by checking request.auth != null.
+      // Ownership is determined by comparing the authenticated user's UID (request.auth.uid)
+      // with the userId field in the existing document (resource.data.userId).
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // Categories: Owned data, requires valid fields on create/update.
+    match /categories/{categoryId} {
+      allow read: if isResourceOwner(resource);
+      allow create: if isDataOwner(request.resource.data) && isValidCategory(request.resource.data);
+      allow update: if isResourceOwner(resource) && isValidCategory(request.resource.data);
+      allow delete: if isResourceOwner(resource);
+    }
+
+    // Products: Owned data, requires valid fields on create/update.
+    match /products/{productId} {
+      allow read: if isResourceOwner(resource);
+      allow create: if isDataOwner(request.resource.data) && isValidProduct(request.resource.data);
+      allow update: if isResourceOwner(resource) && isValidProduct(request.resource.data);
+      allow delete: if isResourceOwner(resource);
+    }
+
+    // Inventory: Owned data, requires valid fields on create/update.
+    match /inventory/{inventoryId} {
+      allow read: if isResourceOwner(resource);
+      allow create: if isDataOwner(request.resource.data) && isValidInventory(request.resource.data);
+      // Allow update access if the user is the owner, the incoming data is valid,
+      // the userId is not being changed, the updatedAt timestamp is set to server time,
+      // and stock quantity is non-negative unless explicitly allowed.
+      allow update: if isResourceOwner(resource)
+                    && isValidInventory(request.resource.data)
+                    && request.resource.data.userId == resource.data.userId // Prevent changing userId
+                    && request.resource.data.updatedAt == request.time // Ensure updatedAt is server timestamp
+                    // Prevent negative stock unless allowNegativeStock is true
+                    && (!('allowNegativeStock' in request.resource.data) || request.resource.data.allowNegativeStock == false ? request.resource.data.quantity >= 0 : true);
+      allow delete: if isResourceOwner(resource);
+    }
+
+    // StockMovements: Owned data, immutable after creation.
+    match /stockMovements/{stockMovementId} {
+      allow read: if isResourceOwner(resource);
+      // Allow create access only if the requesting user is authenticated,
+      // the user ID in the incoming data matches the authenticated user's UID,
+      // the incoming data is valid according to isValidStockMovement,
+      // AND the referenced inventory item exists and is owned by the user.
+      allow create: if isDataOwner(request.resource.data)
+                    && isValidStockMovement(request.resource.data)
+                    // Cross-collection validation: Ensure referenced inventory item exists and is owned
+                    && get(/databases/$(database)/documents/inventory/$(request.resource.data.itemId)).exists()
+                    && get(/databases/$(database)/documents/inventory/$(request.resource.data.itemId)).data.userId == request.auth.uid;
+      allow update: if false; // Immutable
+      allow delete: if false; // Keep for audit trail
+    }
+
+    // Alerts: Owned data, requires valid fields.
+    match /alerts/{alertId} {
+      allow read: if isResourceOwner(resource);
+      // Create might be restricted to backend/functions
+      allow create: if isDataOwner(request.resource.data) && isValidAlert(request.resource.data);
+      allow update: if isResourceOwner(resource) && isValidAlert(request.resource.data); // Allow updating 'isRead' status
+      allow delete: if isResourceOwner(resource); // Allow deletion
+    }
+
+    // Vendors: Owned data, requires valid fields.
+    match /vendors/{vendorId} {
+      allow read: if isResourceOwner(resource);
+      allow create: if isDataOwner(request.resource.data) && isValidVendor(request.resource.data);
+      allow update: if isResourceOwner(resource) && isValidVendor(request.resource.data);
+      allow delete: if isResourceOwner(resource);
+    }
+
+    // Documents: Owned data, requires valid fields.
+    match /documents/{documentId} {
+      // Allow read access (get and list) only if the requesting user is authenticated
+      // and the owner of the document.
+      allow read: if isResourceOwner(resource);
+
+      // Allow create access only if the requesting user is authenticated,
+      // the user ID in the incoming data matches the authenticated user's UID,
+      // and the incoming data is valid according to isValidDocument.
+      allow create: if isDataOwner(request.resource.data) && isValidDocument(request.resource.data);
+
+      // Allow update access only if the requesting user is authenticated,
+      // the user is the owner of the existing document,
+      // the user ID in the incoming data matches the authenticated user's UID,
+      // the incoming data is valid according to isValidDocument,
+      // and the userId field is not being changed.
+      allow update: if isResourceOwner(resource)
+                    && request.resource.data.userId == request.auth.uid // Ensure userId in update data matches owner
+                    && isValidDocument(request.resource.data)
+                    && request.resource.data.userId == resource.data.userId; // Explicitly prevent changing userId
+
+      // Allow delete access only if the requesting user is authenticated and the owner of the document.
+      allow delete: if isResourceOwner(resource);
+    }
+
+    // Notifications: Owned data, server-created, client can update read status or delete.
+     match /notifications/{notificationId} {
+      allow read: if isResourceOwner(resource);
+      allow create: if false; // Only server/functions create notifications
+      // Allow update only if the user is the owner, only the 'isRead' field is being updated,
+      // and the userId is not being changed.
+      allow update: if isResourceOwner(resource)
+                    && request.resource.data.keys().hasOnly(['isRead']) // Ensure only isRead is being updated
+                    && request.resource.data.isRead is bool
+                    && request.resource.data.userId == resource.data.userId; // Explicitly prevent changing userId
+      allow delete: if isResourceOwner(resource);
+    }
+
+    // NotificationPreferences: Owned data, requires valid fields.
+    // Assume only one doc per user, with document ID equal to the userId.
+    match /notificationPreferences/{userId} {
+      allow read: if debug('read - auth.uid:', request.auth.uid) && debug('read - userId:', userId) && isOwner(userId);
+      allow create: if debug('create - auth.uid:', request.auth.uid) && debug('create - userId:', userId) && isOwner(userId) && isValidNotificationPreferences(request.resource.data);
+      allow update: if debug('update - auth.uid:', request.auth.uid) && debug('update - userId:', userId) && isOwner(userId) && isValidNotificationPreferences(request.resource.data);
+      allow delete: if debug('delete - auth.uid:', request.auth.uid) && debug('delete - userId:', userId) && isOwner(userId); // Or disallow delete?
     }
   }
 }

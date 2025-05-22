@@ -1,11 +1,11 @@
-import React from 'react';//correct
-import { Card } from '../../../shared/components/ui/Card'; //correct
-import { formatCurrency } from '../../../shared/utils/currency'; //correct
-import { formatDate } from '../../../shared/utils/date';//correct
-import { Download, Printer } from 'lucide-react';//correct
-import { Button } from '../../../shared/components/forms/Button';//correct
+import React from 'react';
+import { Card } from '@/shared/components/ui/Card';
+import { formatCurrency } from '@/shared/utils/currency';
+import { format } from 'date-fns';
+import { Download, Printer } from 'lucide-react';
+import { Button } from '@/shared/components/ui/Button';
 
-const ReceiptDetail = ({ 
+export const ReceiptDetail = ({ 
   receipt,
   onDownload,
   onPrint,
@@ -15,7 +15,7 @@ const ReceiptDetail = ({
     <div className="space-y-2">
       <div className="flex justify-between text-sm text-gray-500">
         <span>Subtotal</span>
-        <span>{formatCurrency(receipt.subtotal)}</span>
+        <span>{formatCurrency(receipt.subtotal || receipt.total)}</span>
       </div>
       {receipt.tax > 0 && (
         <div className="flex justify-between text-sm text-gray-500">
@@ -46,7 +46,7 @@ const ReceiptDetail = ({
               {receipt.merchant}
             </h3>
             <p className="text-sm text-gray-500">
-              {formatDate(receipt.date)}
+              {receipt.date ? format(new Date(receipt.date), 'MMM dd, yyyy') : 'Unknown Date'}
             </p>
             {receipt.category && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
@@ -65,7 +65,7 @@ const ReceiptDetail = ({
                 Print
               </Button>
             )}
-            {onDownload && (
+            {onDownload && receipt.imageUrl && (
               <Button
                 variant="secondary"
                 size="sm"
@@ -102,11 +102,11 @@ const ReceiptDetail = ({
                   </div>
                   <div className="text-right">
                     <span className="text-sm font-medium text-gray-900">
-                      {formatCurrency(item.price)}
+                      {formatCurrency(item.price * (item.quantity || 1))}
                     </span>
                     {item.quantity > 1 && (
                       <p className="text-xs text-gray-500">
-                        {formatCurrency(item.price / item.quantity)} each
+                        {formatCurrency(item.price)} each
                       </p>
                     )}
                   </div>
@@ -176,9 +176,9 @@ const ReceiptDetail = ({
         {/* Metadata */}
         <div className="mt-6 pt-6 border-t">
           <div className="flex justify-between text-xs text-gray-500">
-            <span>Added on {formatDate(receipt.createdAt)}</span>
+            <span>Added on {receipt.createdAt ? format(new Date(receipt.createdAt), 'MMM dd, yyyy') : 'Unknown Date'}</span>
             {receipt.updatedAt && (
-              <span>Last updated {formatDate(receipt.updatedAt)}</span>
+              <span>Last updated {format(new Date(receipt.updatedAt), 'MMM dd, yyyy')}</span>
             )}
           </div>
         </div>

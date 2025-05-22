@@ -1,0 +1,74 @@
+{
+  "firestore": {
+    "rules": {
+      "test_suite": [
+        {
+          "description": "Users can read stock movements for their inventory items",
+          "request": {
+            "auth": { "uid": "user1" },
+            "path": "/databases/(default)/documents/stockMovements/movement1",
+            "method": "get"
+          },
+          "resource": {
+            "data": {
+              "inventoryId": "item1",
+              "userId": "user1",
+              "quantity": 5,
+              "type": "add"
+            }
+          },
+          "expectation": "allowed"
+        },
+        {
+          "description": "Users cannot read stock movements for other users' items",
+          "request": {
+            "auth": { "uid": "user2" },
+            "path": "/databases/(default)/documents/stockMovements/movement1",
+            "method": "get"
+          },
+          "resource": {
+            "data": {
+              "inventoryId": "item1",
+              "userId": "user1",
+              "quantity": 5,
+              "type": "add"
+            }
+          },
+          "expectation": "denied"
+        },
+        {
+          "description": "Users can create stock movement records for their items",
+          "request": {
+            "auth": { "uid": "user1" },
+            "path": "/databases/(default)/documents/stockMovements/movement2",
+            "method": "create",
+            "data": {
+              "inventoryId": "item1",
+              "userId": "user1",
+              "quantity": 3,
+              "type": "remove",
+              "timestamp": { "__timestamp__": { "seconds": 1622576000, "nanos": 0 } }
+            }
+          },
+          "expectation": "allowed"
+        },
+        {
+          "description": "Users cannot create stock movements for other users' items",
+          "request": {
+            "auth": { "uid": "user1" },
+            "path": "/databases/(default)/documents/stockMovements/movement3",
+            "method": "create",
+            "data": {
+              "inventoryId": "item2",
+              "userId": "user2",
+              "quantity": 2,
+              "type": "add",
+              "timestamp": { "__timestamp__": { "seconds": 1622576000, "nanos": 0 } }
+            }
+          },
+          "expectation": "denied"
+        }
+      ]
+    }
+  }
+}

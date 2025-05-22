@@ -1,52 +1,37 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';//correct
-import { auth } from '../config/firebase';//correct
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { auth } from '../config/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
-const AuthContext = createContext({});
+export const AuthContext = createContext({
+  user: null,
+  setUser: () => {},
+  loading: true
+});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Listen for auth state changes
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
     });
 
-    return unsubscribe;
+    // Clean up subscription
+    return () => unsubscribe();
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      const result = await auth.signInWithEmailAndPassword(email, password);
-      return result.user;
-    } catch (error) {
-      throw new Error(error.message);
-    }
+  // Create the context value - just the state management, logic is in useAuth.js
+  const value = {
+    user,
+    setUser,
+    loading
   };
 
-  const signup = async (email, password) => {
-    try {
-      const result = await auth.createUserWithEmailAndPassword(email, password);
-      return result.user;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await auth.signOut();
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, login, signup, logout, loading }}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// Basic hook for compatibility
 export const useAuth = () => useContext(AuthContext);

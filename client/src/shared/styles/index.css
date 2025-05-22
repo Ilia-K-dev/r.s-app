@@ -151,3 +151,10 @@
     display: none;
   }
 }
+
+@layer components {
+  .hover\:text-primary-700:hover {
+    color: theme('colors.primary.700');
+  }
+  /* Add other custom classes here */
+}

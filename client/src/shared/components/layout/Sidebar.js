@@ -1,13 +1,19 @@
-import React from 'react';//correct
-import { Link, useLocation } from 'react-router-dom';//correct
-import { 
-  Home, 
-  Receipt, 
-  PieChart, 
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import {
+  Home,
+  Receipt,
+  PieChart,
   Settings,
   Upload
-} from 'lucide-react';//correct
+} from 'lucide-react';
 
+/**
+ * @desc The main application Sidebar component.
+ * Provides side navigation links to different sections of the application (Dashboard, Receipts, Upload, Reports, Settings).
+ * Highlights the active link based on the current route.
+ * @returns {JSX.Element} - The rendered Sidebar component.
+ */
 export const Sidebar = () => {
   const location = useLocation();
 
@@ -32,8 +38,8 @@ export const Sidebar = () => {
               to={item.path}
               className={`
                 flex items-center space-x-2 p-2 rounded-lg mb-1
-                ${isActive 
-                  ? 'bg-primary-50 text-primary-600' 
+                ${isActive
+                  ? 'bg-primary-50 text-primary-600'
                   : 'text-gray-600 hover:bg-gray-50'}
               `}
             >
@@ -46,3 +52,5 @@ export const Sidebar = () => {
     </div>
   );
 };
+
+export default Sidebar;

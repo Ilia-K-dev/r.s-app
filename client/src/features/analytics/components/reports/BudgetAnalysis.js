@@ -1,50 +1,45 @@
-import React, { useMemo } from 'react';
-import { Card } from '../common/Card';
-import { Alert } from '../common/Alert';
-import { Loading } from '../common/Loading';
-import { Progress } from '../common/Progress';
-import { formatCurrency } from '../../utils/currency';
 import { AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import React, { useMemo } from 'react';
 
-const BudgetAnalysis = ({
-  categories = [],
-  spending = {},
-  loading = false,
-  error = null
-}) => {
-  const budgetAnalysis = useMemo(() => {
-    return categories
+import { Alert } from '../../../shared/components/ui/Alert';
+import { Card } from '../../../shared/components/ui/Card';
+import { Loading } from '../../../shared/components/ui/Loading';
+import { Progress } from '../../../shared/components/ui/Progress';
+import { formatCurrency } from '../../../shared/utils/currency';
+
+const BudgetAnalysis = ({ categories = [], spending = {}, loading = false, error = null }) => {
+  const budgetAnalysis = useMemo(() => categories
       .filter(category => category.budget > 0)
       .map(category => {
         const spent = spending[category.id] || 0;
         const remaining = category.budget - spent;
         const percentage = (spent / category.budget) * 100;
-        const status = percentage >= 100 ? 'exceeded' 
-          : percentage >= 80 ? 'warning' 
-          : 'normal';
+        const status = percentage >= 100 ? 'exceeded' : percentage >= 80 ? 'warning' : 'normal';
 
         return {
           ...category,
           spent,
           remaining,
           percentage,
-          status
+          status,
         };
       })
-      .sort((a, b) => b.percentage - a.percentage);
-  }, [categories, spending]);
+      .sort((a, b) => b.percentage - a.percentage), [categories, spending]);
 
   const summary = useMemo(() => {
-    const total = budgetAnalysis.reduce((acc, curr) => {
-      acc.totalBudget += curr.budget;
-      acc.totalSpent += curr.spent;
-      return acc;
-    }, { totalBudget: 0, totalSpent: 0 });
+    const total = budgetAnalysis.reduce(
+      (acc, curr) => {
+        acc.totalBudget += curr.budget;
+        acc.totalSpent += curr.spent;
+        return acc;
+      },
+      { totalBudget: 0, totalSpent: 0 }
+    );
 
     return {
       ...total,
       remaining: total.totalBudget - total.totalSpent,
-      percentage: (total.totalSpent / total.totalBudget) * 100
+      percentage: (total.totalSpent / total.totalBudget) * 100,
     };
   }, [budgetAnalysis]);
 
@@ -68,7 +63,7 @@ const BudgetAnalysis = ({
     );
   }
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
       case 'exceeded':
         return 'text-red-600';
@@ -79,7 +74,7 @@ const BudgetAnalysis = ({
     }
   };
 
-  const getProgressColor = (percentage) => {
+  const getProgressColor = percentage => {
     if (percentage >= 100) return 'red';
     if (percentage >= 80) return 'yellow';
     return 'green';
@@ -88,9 +83,7 @@ const BudgetAnalysis = ({
   return (
     <Card>
       <div className="p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">
-          Budget Analysis
-        </h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Budget Analysis</h3>
 
         {/* Overall Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -117,17 +110,12 @@ const BudgetAnalysis = ({
         {/* Overall Progress */}
         <div className="mb-8">
           <div className="flex justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
-              Overall Budget Usage
-            </span>
+            <span className="text-sm font-medium text-gray-700">Overall Budget Usage</span>
             <span className="text-sm font-medium text-gray-700">
               {summary.percentage.toFixed(1)}%
             </span>
           </div>
-          <Progress 
-            value={summary.percentage} 
-            color={getProgressColor(summary.percentage)} 
-          />
+          <Progress value={summary.percentage} color={getProgressColor(summary.percentage)} />
         </div>
 
         {/* Category Breakdown */}
@@ -136,9 +124,7 @@ const BudgetAnalysis = ({
             <div key={category.id}>
               <div className="flex justify-between mb-2">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">
-                    {category.name}
-                  </p>
+                  <p className="text-sm font-medium text-gray-700">{category.name}</p>
                   <p className="text-xs text-gray-500">
                     {formatCurrency(category.spent)} of {formatCurrency(category.budget)}
                   </p>
@@ -148,16 +134,13 @@ const BudgetAnalysis = ({
                     {category.percentage.toFixed(1)}%
                   </p>
                   <p className="text-xs text-gray-500">
-                    {category.remaining > 0 
+                    {category.remaining > 0
                       ? `${formatCurrency(category.remaining)} remaining`
                       : `${formatCurrency(Math.abs(category.remaining))} over`}
                   </p>
                 </div>
               </div>
-              <Progress 
-                value={category.percentage} 
-                color={getProgressColor(category.percentage)}
-              />
+              <Progress value={category.percentage} color={getProgressColor(category.percentage)} />
             </div>
           ))}
         </div>

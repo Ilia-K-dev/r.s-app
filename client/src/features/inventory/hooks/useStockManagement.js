@@ -1,32 +1,25 @@
-import { useState } from 'react';//correct
-import { db } from '../../../core/config/firebase';//correct
+import { useState } from 'react';
+import { inventoryService } from '../services/inventoryService';
+import { useToast } from '../../../shared/hooks/useToast';
 
 export const useStockManagement = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { showToast } = useToast();
 
   const updateStock = async (itemId, quantity, action) => {
     try {
       setLoading(true);
       setError(null);
 
-      const itemRef = db.collection('inventory').doc(itemId);
-      const itemDoc = await itemRef.get();
+      // Call the inventory service to update stock
+      await inventoryService.updateStock(itemId, quantity);
 
-      if (!itemDoc.exists) {
-        throw new Error('Item not found');
-      }
-
-      const currentStock = itemDoc.data().quantity;
-      const newStock = action === 'add' ? currentStock + quantity : currentStock - quantity;
-
-      if (newStock < 0) {
-        throw new Error('Stock quantity cannot be negative');
-      }
-
-      await itemRef.update({ quantity: newStock });
+      showToast('Stock updated successfully', 'success');
     } catch (error) {
       setError(error.message);
+      showToast(error.message, 'error');
+      console.error('Error updating stock:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -36,6 +29,8 @@ export const useStockManagement = () => {
   return {
     loading,
     error,
-    updateStock
+    updateStock,
   };
 };
+
+export default useStockManagement;

@@ -1,0 +1,15 @@
+{
+  "name": "rules-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore \"node test-rules.js\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@firebase/rules-unit-testing": "^2.0.0"
+  }
+}

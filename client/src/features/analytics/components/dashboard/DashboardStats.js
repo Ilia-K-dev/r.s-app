@@ -1,10 +1,11 @@
-import React from 'react';//correct
-import { Card } from '../../../../shared/components/ui/Card';//correct
-import { formatCurrency } from '../../../../shared/utils/currency';//correct
-import { Trend, ArrowUp, ArrowDown, Receipt, CreditCard, PieChart } from 'lucide-react';//correct
+import { TrendingUp, ArrowUp, ArrowDown, Receipt, CreditCard, PieChart } from 'lucide-react';
+import React from 'react';
+
+import { Card } from '../../../../shared/components/ui/Card';
+import { formatCurrency } from '../../../../shared/utils/currency';
 
 const StatCard = ({ title, value, icon: Icon, trend = null, loading = false }) => {
-  const getTrendColor = (trend) => {
+  const getTrendColor = trend => {
     if (!trend) return 'text-gray-500';
     return trend > 0 ? 'text-green-500' : 'text-red-500';
   };
@@ -30,8 +31,8 @@ const StatCard = ({ title, value, icon: Icon, trend = null, loading = false }) =
           <div className="h-8 mt-1 bg-gray-200 animate-pulse rounded" />
         ) : (
           <p className="mt-1 text-2xl font-semibold text-gray-900">
-            {typeof value === 'number' && value.toString().includes('.') 
-              ? formatCurrency(value) 
+            {typeof value === 'number' && value.toString().includes('.')
+              ? formatCurrency(value)
               : value}
           </p>
         )}
@@ -48,7 +49,7 @@ const DashboardStats = ({ stats, loading = false }) => {
     receiptCount: 0,
     avgPerReceipt: 0,
     spendingTrend: 0,
-    categoryCount: 0
+    categoryCount: 0,
   };
 
   const currentStats = stats || defaultStats;
@@ -77,7 +78,8 @@ const DashboardStats = ({ stats, loading = false }) => {
       <StatCard
         title="Categories Used"
         value={currentStats.categoryCount}
-        icon={Trend}
+        icon={TrendingUp}
+        trend={currentStats.spendingTrend}
         loading={loading}
       />
     </div>

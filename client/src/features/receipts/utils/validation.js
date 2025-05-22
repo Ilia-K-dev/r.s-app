@@ -1,16 +1,15 @@
-import { RECEIPT_CONFIG } from '../../../core/config/constants';//correct
 
-export const validateEmail = (email) => {
+export const validateEmail = email => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return {
     isValid: emailRegex.test(email),
-    error: emailRegex.test(email) ? null : 'Please enter a valid email address'
+    error: emailRegex.test(email) ? null : 'Please enter a valid email address',
   };
 };
 
-export const validatePassword = (password) => {
+export const validatePassword = password => {
   const errors = [];
-  
+
   if (password.length < 8) {
     errors.push('Password must be at least 8 characters long');
   }
@@ -29,11 +28,11 @@ export const validatePassword = (password) => {
 
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 };
 
-export const validateReceipt = (receipt) => {
+export const validateReceipt = receipt => {
   const errors = {};
 
   // Required fields
@@ -59,11 +58,11 @@ export const validateReceipt = (receipt) => {
   if (receipt.items && Array.isArray(receipt.items)) {
     const itemErrors = receipt.items.map(item => {
       const itemError = {};
-      
+
       if (!item.name?.trim()) {
         itemError.name = 'Item name is required';
       }
-      
+
       if (!item.price) {
         itemError.price = 'Price is required';
       } else if (isNaN(parseFloat(item.price))) {
@@ -88,34 +87,7 @@ export const validateReceipt = (receipt) => {
 
   return {
     isValid: Object.keys(errors).length === 0,
-    errors
-  };
-};
-
-export const validateFile = (file) => {
-  const errors = [];
-
-  if (!file) {
-    errors.push('Please select a file');
-    return {
-      isValid: false,
-      errors
-    };
-  }
-
-  // Check file size
-  if (file.size > RECEIPT_CONFIG.maxFileSize) {
-    errors.push(`File size must not exceed ${RECEIPT_CONFIG.maxFileSize / (1024 * 1024)}MB`);
-  }
-
-  // Check file type
-  if (!RECEIPT_CONFIG.allowedFileTypes.includes(file.type)) {
-    errors.push(`File type must be one of: ${RECEIPT_CONFIG.allowedFileTypes.join(', ')}`);
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors
+    errors,
   };
 };
 
@@ -136,11 +108,11 @@ export const validateDateRange = (startDate, endDate) => {
 
   return {
     isValid: Object.keys(errors).length === 0,
-    errors
+    errors,
   };
 };
 
-export const validateCategory = (category) => {
+export const validateCategory = category => {
   const errors = {};
 
   if (!category.name?.trim()) {
@@ -157,7 +129,7 @@ export const validateCategory = (category) => {
 
   return {
     isValid: Object.keys(errors).length === 0,
-    errors
+    errors,
   };
 };
 
@@ -207,6 +179,18 @@ export const validateForm = (values, schema) => {
 
   return {
     isValid: Object.keys(errors).length === 0,
-    errors
+    errors,
   };
+};
+
+export const validateRequired = value => {
+  if (!value) return 'This field is required';
+  return null;
+};
+
+export const validateAmount = value => {
+  if (!value) return 'Amount is required';
+  if (isNaN(parseFloat(value))) return 'Amount must be a number';
+  if (parseFloat(value) <= 0) return 'Amount must be greater than zero';
+  return null;
 };

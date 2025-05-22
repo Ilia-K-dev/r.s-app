@@ -1,5 +1,16 @@
-import React from 'react';//correct
+import React from 'react';
 
+/**
+ * @typedef {object} LoadingProps
+ * @property {'sm'|'md'|'lg'} [size='md'] - The size of the loading spinner ('sm', 'md', or 'lg').
+ */
+
+/**
+ * @desc A reusable Loading spinner component.
+ * Displays a simple animated spinner to indicate loading state.
+ * @param {LoadingProps} props - The component props.
+ * @returns {JSX.Element} - The rendered Loading component.
+ */
 export const Loading = ({ size = 'md' }) => {
   const sizes = {
     sm: 'h-4 w-4',
@@ -13,3 +24,5 @@ export const Loading = ({ size = 'md' }) => {
     </div>
   );
 };
+
+export default Loading;
