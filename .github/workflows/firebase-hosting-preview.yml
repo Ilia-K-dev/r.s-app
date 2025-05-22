@@ -1,5 +1,4 @@
 name: Deploy Frontend to Firebase Preview Channel
-
 on:
   push:
     branches:
@@ -7,15 +6,16 @@ on:
       - develop
       - 'feature/**'
       - 'task/**'
+      - 'test/**'
     paths:
       - 'client/**'
   pull_request:
     branches:
       - main
       - develop
+      - 'test/**'
     paths:
       - 'client/**'
-
 jobs:
   build_and_preview:
     runs-on: ubuntu-latest

@@ -1,77 +1,51 @@
-# Environment Files
-.env
-.env.*
-.env.local
-.env.development
-.env.production
-
-# Firebase Service Account and Credentials
-server/config/service-account.json
-serviceAccountKey.json
-firebase-adminsdk.json
-google-credentials.json
-
-# Other Credentials and Secrets
-*.key
-*.pem
-*.p12
-*.cer
-*.pfx
-*.jks
-*.gpg
-*.secret
-*.credentials
-
-# Dependency Directories
-node_modules/
-client/node_modules/
-server/node_modules/
-functions/node_modules/
-
-# Build and Distribution Directories
-build/
-dist/
-out/
-client/build/
-client/dist/
-client/out/
-client/web-build/
-server/build/
-server/dist/
-server/out/
-functions/lib/
-functions/dist/
-
-# Logs and Temporary Files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-*.log
-.tmp
-temp/
-tmp/
-firebase-debug.log
-
-# IDE and Editor Specific Files
-.vscode/
-.idea/
-*.swp
-*.swo
-*.bak
-*~
-.expo/
-
-# OS Specific Files
-.DS_Store
-ehthumbs.db
-Thumbs.db
-Icon?
-
-# Firebase Emulator Data
-.firebase/
-firebase-debug.log*
-ui-debug.log
-
-# Testing
-coverage/
-.nyc_output
+name: Deploy Frontend to Firebase Preview Channel
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'task/**'
+      - 'test/**'
+    paths:
+      - 'client/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'test/**'
+    paths:
+      - 'client/**'
+jobs:
+  build_and_preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+          cache-dependency-path: 'client/package-lock.json'
+      
+      - name: Install Dependencies
+        run: |
+          cd client
+          npm ci || npm install
+      
+      - name: Build Frontend
+        run: |
+          cd client
+          CI=false npm run build
+      
+      - name: Deploy to Firebase Preview Channel
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+          projectId: project-reciept-reader-id
+          channelId: preview-${{ github.ref_name }}-${{ github.sha }}
+          expires: 14d
+        env:
+          FIREBASE_CLI_PREVIEWS: hostingchannels
